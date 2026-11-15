@@ -12,6 +12,13 @@ Word documents.
 **The product rule: process in the browser whenever possible.** A server is the
 exception, used only where the browser genuinely cannot do the job.
 
+### Rename semantics
+
+Renaming means *setting the target name*: `abc.pdf` becomes `xyz.pdf` because the
+user typed it. Find and replace, prefixes, suffixes, and numbering are **bulk
+helpers** that pre-fill those names, not the main interaction. Anything that
+rewrites content belongs to a different tool.
+
 ## Who it is for
 
 More than a handful of people, but not a large public product. Designed for many
@@ -30,6 +37,7 @@ billing are deliberately deferred.
 | Database | None for now | Add when there is real data worth keeping |
 | Queue (Redis) | None for now | Add when in-process jobs actually hurt |
 | File handling | Process, return, delete | No accounts and no storage means no privacy liability |
+| Zip creation | `fflate` | Tiny, zero-dependency, browser-friendly. Needed for "download all" and reused by the zip tool |
 
 ## Known constraints
 
@@ -44,8 +52,8 @@ billing are deliberately deferred.
 ## Roadmap
 
 - **Phase 0** — repository, build, one page that runs. *Done.*
-- **Phase 1** — browser tools: rename, zip/unzip, PDF merge/split, image
-  conversion, DOCX to HTML/Markdown.
+- **Phase 1** — browser tools: rename *(done)*, zip/unzip, PDF merge/split,
+  image conversion, DOCX to HTML/Markdown.
 - **Phase 2** — server and container for DOCX to PDF and OCR.
 - **Phase 3** — accounts, history, limits, expiry and cleanup.
 - **Phase 4** — remaining features, decided later.

@@ -28,10 +28,15 @@ npm run lint    # check code for mistakes
 
 ```
 src/
-  main.tsx      entry point, mounts React into index.html
-  App.tsx       the page you see
-  index.css     global styles (Tailwind)
-public/         static files served as-is
+  main.tsx        entry point, mounts React into index.html
+  App.tsx         the page you see
+  index.css       global styles (Tailwind)
+  components/     React UI pieces
+  tools/          plain functions that do the actual document work
+public/           static files served as-is
 ```
+
+The split matters: nothing in `tools/` imports React, so the logic can be tested
+and reused without a browser render.
 
 See `AGENTS.md` for the decisions behind the code and the plan ahead.
