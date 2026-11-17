@@ -18,8 +18,8 @@ const TARGETS: { id: Target; label: string }[] = [
 
 type Result = { file: File; blob: Blob; name: string }
 
-export function ConvertTool() {
-  const [files, setFiles] = useState<File[]>([])
+export function ConvertTool({ initialFiles }: { initialFiles?: File[] }) {
+  const [files, setFiles] = useState<File[]>(initialFiles ?? [])
   const [target, setTarget] = useState<Target>('png')
   const [quality, setQuality] = useState(0.9)
 
@@ -103,13 +103,13 @@ export function ConvertTool() {
       />
 
       {files.length > 0 && (
-        <section className="rounded-xl border border-slate-200 bg-white p-5">
+        <section className="rounded-xl border border-line bg-surface p-5">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
-              <span className="block text-sm font-medium text-slate-700">
+              <span className="block text-sm font-medium text-ink">
                 Convert to
               </span>
-              <div className="mt-1 inline-flex gap-1 rounded-lg border border-slate-300 p-1">
+              <div className="mt-1 inline-flex gap-1 rounded-lg border border-edge p-1">
                 {TARGETS.map((option) => (
                   <button
                     key={option.id}
@@ -120,8 +120,8 @@ export function ConvertTool() {
                     }}
                     className={`rounded-md px-3 py-1 text-sm font-medium ${
                       target === option.id
-                        ? 'bg-slate-900 text-white'
-                        : 'text-slate-600 hover:text-slate-900'
+                        ? 'bg-accent text-accent-ink'
+                        : 'text-muted hover:text-ink'
                     }`}
                   >
                     {option.label}
@@ -131,7 +131,7 @@ export function ConvertTool() {
             </div>
 
             {lossy && (
-              <label className="text-sm text-slate-600">
+              <label className="text-sm text-muted">
                 Quality {Math.round(quality * 100)}%
                 <input
                   type="range"
@@ -151,13 +151,13 @@ export function ConvertTool() {
               type="button"
               onClick={run}
               disabled={busy}
-              className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:opacity-50"
+              className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50"
             >
               {busy ? 'Converting…' : 'Convert'}
             </button>
           </div>
 
-          <p className="mt-3 text-sm text-slate-500">
+          <p className="mt-3 text-sm text-muted">
             {target === 'pdf'
               ? 'Each image gets its own PDF page, sized to A4.'
               : 'JPG has no transparency, so transparent areas turn white.'}
@@ -171,7 +171,7 @@ export function ConvertTool() {
           {problems.map((problem) => (
             <li
               key={problem}
-              className="rounded-xl border border-red-200 bg-red-50 px-5 py-3 text-sm text-red-800"
+              className="rounded-xl border border-bad/30 bg-bad-soft px-5 py-3 text-sm text-bad"
             >
               {problem}
             </li>
@@ -180,11 +180,11 @@ export function ConvertTool() {
       )}
 
       {results && results.length > 0 && (
-        <section className="rounded-xl border border-slate-200 bg-white">
-          <header className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-5 py-3">
+        <section className="rounded-xl border border-line bg-surface">
+          <header className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-3">
             <div>
-              <h2 className="text-sm font-medium text-slate-700">Converted</h2>
-              <p className="text-sm text-slate-500">
+              <h2 className="text-sm font-medium text-ink">Converted</h2>
+              <p className="text-sm text-muted">
                 Saved with the same name and the new extension.
               </p>
             </div>
@@ -192,13 +192,13 @@ export function ConvertTool() {
               type="button"
               onClick={saveAll}
               disabled={saving}
-              className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:opacity-50"
+              className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50"
             >
               {saving ? 'Saving…' : 'Download all'}
             </button>
           </header>
 
-          <ul className="divide-y divide-slate-100">
+          <ul className="divide-y divide-line">
             {results.map((result) => (
               <li key={result.name} className="px-5 py-4">
                 <div className="flex items-start gap-4">
@@ -208,15 +208,15 @@ export function ConvertTool() {
                       blob={result.file}
                       variant="wide"
                     />
-                    <p className="mt-1 truncate text-xs text-slate-500">
+                    <p className="mt-1 truncate text-xs text-muted">
                       {result.file.name}
                     </p>
-                    <p className="text-xs text-slate-400">
+                    <p className="text-xs text-faint">
                       {formatSize(result.file.size)}
                     </p>
                   </div>
 
-                  <span className="pt-8 text-slate-400">→</span>
+                  <span className="pt-8 text-faint">→</span>
 
                   <div className="w-28 shrink-0">
                     <FilePreview
@@ -224,10 +224,10 @@ export function ConvertTool() {
                       blob={result.blob}
                       variant="wide"
                     />
-                    <p className="mt-1 truncate text-xs font-medium text-slate-700">
+                    <p className="mt-1 truncate text-xs font-medium text-ink">
                       {result.name}
                     </p>
-                    <p className="text-xs text-slate-400">
+                    <p className="text-xs text-faint">
                       {formatSize(result.blob.size)}
                     </p>
                   </div>
@@ -235,7 +235,7 @@ export function ConvertTool() {
                   <button
                     type="button"
                     onClick={() => downloadBlob(result.blob, result.name)}
-                    className="ml-auto shrink-0 text-sm text-slate-500 underline-offset-2 hover:text-slate-900 hover:underline"
+                    className="ml-auto shrink-0 text-sm text-muted underline-offset-2 hover:text-ink hover:underline"
                   >
                     Download
                   </button>
