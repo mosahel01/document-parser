@@ -9,7 +9,14 @@ keeps the product private, cheap to run, and simple to reason about.
 
 ## Status
 
-Phase 0: the skeleton runs. None of the tools work yet.
+Phase 1, browser-only: merge and split PDFs, zip and unzip, find and replace,
+image and Word conversions, gzip compression, and renaming (which converts an
+image when the extension changes).
+
+Word files can be read as HTML, Markdown, or plain text, and the words can move
+between Word and PDF in either direction. That transfer keeps paragraphs,
+headings, and lists; it does not keep images, tables, fonts, or exact page
+layout. A faithful Word to PDF needs LibreOffice, so that stays server work.
 
 ## Requirements
 
@@ -22,6 +29,7 @@ npm install     # install dependencies, run once after cloning
 npm run dev     # start the dev server at http://localhost:5173
 npm run build   # type-check and build for production
 npm run lint    # check code for mistakes
+npm test        # run the unit tests
 ```
 
 ## Layout
@@ -33,6 +41,7 @@ src/
   index.css       global styles (Tailwind)
   components/     React UI pieces
   tools/          plain functions that do the actual document work
+  lib/            small shared helpers with no domain logic
 public/           static files served as-is
 ```
 
