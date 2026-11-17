@@ -1,17 +1,84 @@
 import { PDFDocument } from 'pdf-lib'
+import { formatSize } from '../lib/format'
 
 /** Each page becomes a whole PDF, so a huge document would fill memory fast. */
 export const MAX_SPLIT_PAGES = 200
 
+/** pdf-lib parses on the main thread, so a vast file freezes the tab first. */
+export const MAX_PDF_BYTES = 100 * 1024 * 1024
+
 export type NamedPdf = { name: string; blob: Blob }
 
-async function load(bytes: Uint8Array): Promise<PDFDocument> {
+async function read(file: File): Promise<Uint8Array> {
+  if (file.size > MAX_PDF_BYTES) {
+    throw new Error(
+      `${file.name} is ${formatSize(file.size)}. PDFs over ${formatSize(MAX_PDF_BYTES)} are not opened in the browser, because the tab would freeze before the work finished.`,
+    )
+  }
+
   try {
-    return await PDFDocument.load(bytes)
+    return new Uint8Array(await file.arrayBuffer())
   } catch {
     throw new Error(
-      'That PDF could not be opened. It may be damaged or password protected.',
+      `${file.name} could not be read from disk. If it moved or was deleted, add it again.`,
     )
+  }
+}
+
+/**
+ * Say which file failed and why. pdf-lib's own text ("Failed to parse PDF
+ * document (line 3 col 12): ...") is thin on its own, so it goes after a
+ * sentence that names the file. Some files parse but then break while their
+ * pages are read, so every read goes through `openPdf`, not just the load.
+ */
+function failure(file: File, problem: unknown): Error {
+  if (problem instanceof Error && problem.message.includes(file.name)) {
+    return problem
+  }
+  const reason = problem instanceof Error ? problem.message : String(problem)
+  return new Error(`${file.name} could not be opened as a PDF. ${reason}`)
+}
+
+async function load(file: File): Promise<PDFDocument> {
+  const bytes = await read(file)
+
+  // The header may sit after a little junk; the format allows it within the
+  // first kilobyte.
+  const head = String.fromCharCode(...bytes.subarray(0, 1024))
+  if (!head.includes('%PDF-')) {
+    throw new Error(
+      `${file.name} does not start like a PDF. It may be a different file type with a .pdf name.`,
+    )
+  }
+
+  let document: PDFDocument
+  try {
+    // Read first, ask later: loading with encryption ignored tells us whether
+    // the file is protected, which is a different problem from a broken file.
+    document = await PDFDocument.load(bytes, { ignoreEncryption: true })
+  } catch (problem) {
+    throw failure(file, problem)
+  }
+
+  if (document.isEncrypted) {
+    throw new Error(
+      `${file.name} is password protected. Remove the password first, then try again.`,
+    )
+  }
+
+  return document
+}
+
+/** Load a PDF and run `work` on it, naming the file if either step fails. */
+async function openPdf<T>(
+  file: File,
+  work: (document: PDFDocument) => T | Promise<T>,
+): Promise<T> {
+  const document = await load(file)
+  try {
+    return await work(document)
+  } catch (problem) {
+    throw failure(file, problem)
   }
 }
 
@@ -29,17 +96,17 @@ export async function mergePdfs(files: File[]): Promise<Blob> {
   const merged = await PDFDocument.create()
 
   for (const file of files) {
-    const source = await load(new Uint8Array(await file.arrayBuffer()))
-    const pages = await merged.copyPages(source, source.getPageIndices())
-    for (const page of pages) merged.addPage(page)
+    await openPdf(file, async (source) => {
+      const pages = await merged.copyPages(source, source.getPageIndices())
+      for (const page of pages) merged.addPage(page)
+    })
   }
 
   return save(merged)
 }
 
 export async function countPages(file: File): Promise<number> {
-  const document = await load(new Uint8Array(await file.arrayBuffer()))
-  return document.getPageCount()
+  return openPdf(file, (document) => document.getPageCount())
 }
 
 /** One PDF per page, numbered to match the page count width. */
@@ -47,29 +114,30 @@ export async function splitIntoPages(
   file: File,
   baseName: string,
 ): Promise<NamedPdf[]> {
-  const source = await load(new Uint8Array(await file.arrayBuffer()))
-  const total = source.getPageCount()
+  return openPdf(file, async (source) => {
+    const total = source.getPageCount()
 
-  if (total > MAX_SPLIT_PAGES) {
-    throw new Error(
-      `That PDF has ${total} pages. Splitting stops at ${MAX_SPLIT_PAGES} pages, so the tab keeps up.`,
-    )
-  }
+    if (total > MAX_SPLIT_PAGES) {
+      throw new Error(
+        `That PDF has ${total} pages. Splitting stops at ${MAX_SPLIT_PAGES} pages, so the tab keeps up.`,
+      )
+    }
 
-  const width = String(total).length
-  const results: NamedPdf[] = []
+    const width = String(total).length
+    const results: NamedPdf[] = []
 
-  for (let index = 0; index < total; index += 1) {
-    const single = await PDFDocument.create()
-    const [page] = await single.copyPages(source, [index])
-    single.addPage(page)
-    results.push({
-      name: `${baseName}-${String(index + 1).padStart(width, '0')}.pdf`,
-      blob: await save(single),
-    })
-  }
+    for (let index = 0; index < total; index += 1) {
+      const single = await PDFDocument.create()
+      const [page] = await single.copyPages(source, [index])
+      single.addPage(page)
+      results.push({
+        name: `${baseName}-${String(index + 1).padStart(width, '0')}.pdf`,
+        blob: await save(single),
+      })
+    }
 
-  return results
+    return results
+  })
 }
 
 /** Build one PDF from the chosen pages, in the order given. */
@@ -77,11 +145,14 @@ export async function extractPages(
   file: File,
   indices: number[],
 ): Promise<Blob> {
-  const source = await load(new Uint8Array(await file.arrayBuffer()))
-  const output = await PDFDocument.create()
+  const output = await openPdf(file, async (source) => {
+    const made = await PDFDocument.create()
 
-  const pages = await output.copyPages(source, indices)
-  for (const page of pages) output.addPage(page)
+    const pages = await made.copyPages(source, indices)
+    for (const page of pages) made.addPage(page)
+
+    return made
+  })
 
   return save(output)
 }
