@@ -19,7 +19,7 @@ export function PdfPreview({ blob, title = 'Preview' }: PdfPreviewProps) {
     <iframe
       src={url}
       title={title}
-      className="h-96 w-full rounded-lg border border-slate-200 bg-white"
+      className="h-96 w-full rounded-lg border border-line bg-surface"
     />
   )
 }
