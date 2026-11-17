@@ -1,5 +1,125 @@
 @import 'tailwindcss';
 
-html {
+/* The theme is a class on <html>, not the OS setting, so the button wins. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --paper: #f7f0e3;
+  --surface: #fffaf0;
+  --sunk: #f1e7d5;
+  --hover: #ece0cc;
+  --line: #e6d9c3;
+  --edge: #d5c3a9;
+  --ink: #2a2118;
+  --muted: #6d5d4b;
+  --faint: #9a8873;
+  --accent: #3d2f22;
+  --accent-hover: #584431;
+  --accent-ink: #fff8ec;
+  --good: #3f6b36;
+  --good-soft: #e6efdb;
+  --bad: #96392a;
+  --bad-soft: #f8e5dc;
+  --warn: #8a5a12;
+  --warn-soft: #f7e9cc;
+}
+
+.dark {
+  --paper: #14110d;
+  --surface: #1e1913;
+  --sunk: #191510;
+  --hover: #292118;
+  --line: #332a20;
+  --edge: #473a2b;
+  --ink: #f3e9d9;
+  --muted: #b4a390;
+  --faint: #83735f;
+  --accent: #e8d5b6;
+  --accent-hover: #f6e8cf;
+  --accent-ink: #241b12;
+  --good: #a6c78f;
+  --good-soft: #222f1c;
+  --bad: #e7a390;
+  --bad-soft: #35201a;
+  --warn: #dcae62;
+  --warn-soft: #322614;
+}
+
+:root {
   color-scheme: light;
+}
+
+.dark {
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-surface: var(--surface);
+  --color-sunk: var(--sunk);
+  --color-hover: var(--hover);
+  --color-line: var(--line);
+  --color-edge: var(--edge);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-ink: var(--accent-ink);
+  --color-good: var(--good);
+  --color-good-soft: var(--good-soft);
+  --color-bad: var(--bad);
+  --color-bad-soft: var(--bad-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+}
+
+@theme {
+  /*
+   * Berkeley Mono is sold, not downloadable, so nothing is bundled. The stack
+   * asks the OS for the fonts on this machine, in the order they were named,
+   * and falls back to whatever mono the system calls its own.
+   */
+  --font-sans:
+    'BerkeleyMono Nerd Font', 'Berkeley Mono', 'Iosevka Nerd Font', 'Iosevka',
+    'Ubuntu Mono', 'Ubuntu', ui-monospace, 'SF Mono', Menlo, Consolas,
+    monospace;
+  --font-mono:
+    'BerkeleyMono Nerd Font', 'Berkeley Mono', 'Iosevka Nerd Font', 'Iosevka',
+    'Ubuntu Mono', 'Ubuntu', ui-monospace, 'SF Mono', Menlo, Consolas,
+    monospace;
+
+  /* A notch larger than Tailwind's default scale: 13 / 15 / 17 / 19 / 22 / 26 / 32. */
+  --text-xs: 0.8125rem;
+  --text-sm: 0.9375rem;
+  --text-base: 1.0625rem;
+  --text-lg: 1.1875rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.625rem;
+  --text-3xl: 2rem;
+}
+
+body {
+  background-color: var(--paper);
+  color: var(--ink);
+  font-size: var(--text-base);
+  /* Mono is wide; a little slack between lines keeps prose readable. */
+  line-height: 1.55;
+}
+
+/*
+ * The tab strip scrolls sideways instead of wrapping. Wrapping was three rows
+ * tall on a phone, which pushed the page down before it had started.
+ */
+.nav-scroll {
+  scrollbar-width: none;
+}
+
+.nav-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+::selection {
+  background-color: var(--accent);
+  color: var(--accent-ink);
 }
