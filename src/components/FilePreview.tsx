@@ -71,8 +71,8 @@ export function FilePreview({ name, blob, variant = 'thumb' }: FilePreviewProps)
         alt=""
         className={
           variant === 'wide'
-            ? 'max-h-56 w-full rounded-lg bg-white object-contain ring-1 ring-slate-200'
-            : 'size-9 shrink-0 rounded object-cover ring-1 ring-slate-200'
+            ? 'max-h-56 w-full rounded-lg bg-surface object-contain ring-1 ring-line'
+            : 'size-9 shrink-0 rounded object-cover ring-1 ring-line'
         }
       />
     )
@@ -85,8 +85,8 @@ export function FilePreview({ name, blob, variant = 'thumb' }: FilePreviewProps)
       <pre
         className={
           variant === 'wide'
-            ? 'max-h-40 overflow-hidden whitespace-pre-wrap rounded-lg bg-slate-50 p-3 text-xs text-slate-600'
-            : 'max-w-56 overflow-hidden whitespace-pre-wrap text-xs text-slate-500'
+            ? 'max-h-40 overflow-hidden whitespace-pre-wrap rounded-lg bg-sunk p-3 text-xs text-muted'
+            : 'max-w-56 overflow-hidden whitespace-pre-wrap text-xs text-muted'
         }
       >
         {snippet.slice(0, variant === 'wide' ? 1200 : SNIPPET_CHARACTERS)}
@@ -98,8 +98,8 @@ export function FilePreview({ name, blob, variant = 'thumb' }: FilePreviewProps)
     <span
       className={
         variant === 'wide'
-          ? 'inline-flex rounded bg-slate-100 px-2 py-1 text-xs font-medium text-slate-500'
-          : 'inline-flex w-9 shrink-0 justify-center rounded bg-slate-100 px-1 py-1 text-[10px] font-medium text-slate-500'
+          ? 'inline-flex rounded bg-hover px-2 py-1 text-xs font-medium text-muted'
+          : 'inline-flex w-9 shrink-0 justify-center rounded bg-hover px-1 py-1 text-[0.7rem] font-medium text-muted'
       }
     >
       {extensionLabel(name)}
