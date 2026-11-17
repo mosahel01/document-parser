@@ -26,10 +26,10 @@ type Row = {
 }
 
 const field =
-  'rounded-lg border border-slate-300 bg-white px-3 py-2 outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10'
+  'rounded-lg border border-edge bg-surface px-3 py-2 outline-none focus:border-accent focus:ring-2 focus:ring-accent/25'
 
-export function ReplaceTool() {
-  const [files, setFiles] = useState<File[]>([])
+export function ReplaceTool({ initialFiles }: { initialFiles?: File[] }) {
+  const [files, setFiles] = useState<File[]>(initialFiles ?? [])
   const [skipped, setSkipped] = useState<string[]>([])
   const [find, setFind] = useState('')
   const [replacement, setReplacement] = useState('')
@@ -132,7 +132,7 @@ export function ReplaceTool() {
       />
 
       {skipped.length > 0 && (
-        <p className="rounded-xl border border-amber-200 bg-amber-50 px-5 py-3 text-sm text-amber-900">
+        <p className="rounded-xl border border-warn/30 bg-warn-soft px-5 py-3 text-sm text-warn">
           Skipped {skipped.length} {skipped.length === 1 ? 'file' : 'files'}{' '}
           this tool cannot rewrite: {skipped.join(', ')}. PDFs, Word files, and
           images hold no plain text to search.
@@ -152,9 +152,9 @@ export function ReplaceTool() {
       />
 
       {files.length > 0 && (
-        <section className="rounded-xl border border-slate-200 bg-white p-5">
+        <section className="rounded-xl border border-line bg-surface p-5">
           <div className="grid gap-4 sm:grid-cols-2">
-            <label className="text-sm font-medium text-slate-700">
+            <label className="text-sm font-medium text-ink">
               Find
               <input
                 value={find}
@@ -163,7 +163,7 @@ export function ReplaceTool() {
                 className={`mt-1 w-full ${field}`}
               />
             </label>
-            <label className="text-sm font-medium text-slate-700">
+            <label className="text-sm font-medium text-ink">
               Replace with
               <input
                 value={replacement}
@@ -174,7 +174,7 @@ export function ReplaceTool() {
             </label>
           </div>
 
-          <div className="mt-4 flex flex-wrap items-center gap-4 text-sm text-slate-600">
+          <div className="mt-4 flex flex-wrap items-center gap-4 text-sm text-muted">
             <label className="inline-flex items-center gap-2">
               <input
                 type="checkbox"
@@ -193,7 +193,7 @@ export function ReplaceTool() {
             </label>
           </div>
 
-          <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <div className="mt-4 rounded-xl border border-warn/30 bg-warn-soft px-4 py-3 text-sm text-warn">
             <p className="font-medium">Before you replace</p>
             <p className="mt-1">
               This rewrites the text inside the {files.length}{' '}
@@ -218,13 +218,13 @@ export function ReplaceTool() {
               type="button"
               onClick={run}
               disabled={busy || find === ''}
-              className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:opacity-50"
+              className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50"
             >
               {busy ? 'Reading…' : 'Preview changes'}
             </button>
           </div>
 
-          <p className="mt-3 text-sm text-slate-500">
+          <p className="mt-3 text-sm text-muted">
             Preview checks the text in memory and shows the change; nothing is
             written until you download a copy. Files keep their own names.
             {regex ? ' In a pattern, $1 stands for the first bracketed group.' : ''}
@@ -237,7 +237,7 @@ export function ReplaceTool() {
           {problems.map((problem) => (
             <li
               key={problem}
-              className="rounded-xl border border-red-200 bg-red-50 px-5 py-3 text-sm text-red-800"
+              className="rounded-xl border border-bad/30 bg-bad-soft px-5 py-3 text-sm text-bad"
             >
               {problem}
             </li>
@@ -246,13 +246,13 @@ export function ReplaceTool() {
       )}
 
       {rows && (
-        <section className="rounded-xl border border-slate-200 bg-white">
-          <header className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-5 py-3">
+        <section className="rounded-xl border border-line bg-surface">
+          <header className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-3">
             <div>
-              <h2 className="text-sm font-medium text-slate-700">
+              <h2 className="text-sm font-medium text-ink">
                 {rows.length} {rows.length === 1 ? 'file' : 'files'} would change
               </h2>
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-muted">
                 {rows.length === 0
                   ? 'Nothing to download.'
                   : 'Download the copies you want. Your originals stay untouched.'}
@@ -266,14 +266,14 @@ export function ReplaceTool() {
                 type="button"
                 onClick={saveAll}
                 disabled={saving}
-                className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:opacity-50"
+                className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50"
               >
                 {saving ? 'Saving…' : 'Download all'}
               </button>
             )}
           </header>
 
-          <ul className="divide-y divide-slate-100">
+          <ul className="divide-y divide-line">
             {rows.map((row, index) => (
               <li
                 key={`${row.name}-${index}`}
@@ -281,38 +281,38 @@ export function ReplaceTool() {
               >
                 <FilePreview name={row.name} blob={row.file} />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium text-slate-700">{row.name}</p>
-                  <p className="text-xs text-slate-500">
+                  <p className="truncate font-medium text-ink">{row.name}</p>
+                  <p className="text-xs text-muted">
                     {row.count} {row.count === 1 ? 'match' : 'matches'}
                   </p>
                   {row.preview && (
                     <div className="mt-1 space-y-1 font-mono text-xs">
                       <p className="flex items-baseline gap-2">
-                        <span className="w-9 shrink-0 rounded bg-slate-100 px-1 text-[10px] font-medium uppercase text-slate-500">
+                        <span className="w-9 shrink-0 rounded bg-hover px-1 text-[0.7rem] font-medium uppercase text-muted">
                           now
                         </span>
-                        <span className="truncate text-slate-500">
+                        <span className="truncate text-muted">
                           {row.preview.before}
                         </span>
                       </p>
                       <p className="flex items-baseline gap-2">
-                        <span className="w-9 shrink-0 rounded bg-emerald-50 px-1 text-[10px] font-medium uppercase text-emerald-700">
+                        <span className="w-9 shrink-0 rounded bg-good-soft px-1 text-[0.7rem] font-medium uppercase text-good">
                           after
                         </span>
-                        <span className="truncate text-emerald-900">
+                        <span className="truncate text-good">
                           {row.preview.after}
                         </span>
                       </p>
                     </div>
                   )}
                 </div>
-                <span className="shrink-0 text-xs text-slate-400">
+                <span className="shrink-0 text-xs text-faint">
                   {formatSize(row.blob.size)}
                 </span>
                 <button
                   type="button"
                   onClick={() => downloadBlob(row.blob, row.name)}
-                  className="shrink-0 text-sm text-slate-500 underline-offset-2 hover:text-slate-900 hover:underline"
+                  className="shrink-0 text-sm text-muted underline-offset-2 hover:text-ink hover:underline"
                 >
                   Download
                 </button>
