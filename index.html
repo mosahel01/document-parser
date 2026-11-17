@@ -9,6 +9,22 @@
       content="Convert, rename, merge, and compress documents without uploading them."
     />
     <title>Document Toolkit</title>
+    <script>
+      // Set the theme before the first paint, or a dark-mode visitor gets a
+      // flash of cream while React boots.
+      (() => {
+        try {
+          const stored = localStorage.getItem('document-toolkit-theme');
+          const dark =
+            stored === 'dark' ||
+            (stored === null &&
+              matchMedia('(prefers-color-scheme: dark)').matches);
+          if (dark) document.documentElement.classList.add('dark');
+        } catch {
+          // A blocked localStorage only costs the saved choice, not the page.
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
