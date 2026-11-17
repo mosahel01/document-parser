@@ -17,12 +17,18 @@ type Row = { file: File; blob: Blob; name: string }
 
 const tabClass = (active: boolean) =>
   `rounded-md px-4 py-1.5 text-sm font-medium ${
-    active ? 'bg-slate-900 text-white' : 'text-slate-600 hover:text-slate-900'
+    active ? 'bg-accent text-accent-ink' : 'text-muted hover:text-ink'
   }`
 
-export function CompressTool() {
-  const [mode, setMode] = useState<Mode>('compress')
-  const [files, setFiles] = useState<File[]>([])
+export function CompressTool({
+  initialFiles,
+  initialMode,
+}: {
+  initialFiles?: File[]
+  initialMode?: Mode
+}) {
+  const [mode, setMode] = useState<Mode>(initialMode ?? 'compress')
+  const [files, setFiles] = useState<File[]>(initialFiles ?? [])
   const [rows, setRows] = useState<Row[] | null>(null)
   const [problems, setProblems] = useState<string[]>([])
   const [busy, setBusy] = useState(false)
@@ -87,7 +93,7 @@ export function CompressTool() {
 
   return (
     <div className="space-y-8">
-      <div className="inline-flex gap-1 rounded-lg border border-slate-300 bg-white p-1">
+      <div className="inline-flex gap-1 rounded-lg border border-edge bg-surface p-1">
         <button
           type="button"
           onClick={() => switchTo('compress')}
@@ -134,15 +140,15 @@ export function CompressTool() {
       />
 
       {files.length > 0 && (
-        <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-5 py-3">
-          <p className="text-sm text-slate-500">
+        <div className="flex items-center justify-between rounded-xl border border-line bg-surface px-5 py-3">
+          <p className="text-sm text-muted">
             {files.length} {files.length === 1 ? 'file' : 'files'} ready.
           </p>
           <button
             type="button"
             onClick={run}
             disabled={busy}
-            className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:opacity-50"
+            className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50"
           >
             {busy
               ? 'Working…'
@@ -158,7 +164,7 @@ export function CompressTool() {
           {problems.map((problem) => (
             <li
               key={problem}
-              className="rounded-xl border border-red-200 bg-red-50 px-5 py-3 text-sm text-red-800"
+              className="rounded-xl border border-bad/30 bg-bad-soft px-5 py-3 text-sm text-bad"
             >
               {problem}
             </li>
@@ -167,13 +173,13 @@ export function CompressTool() {
       )}
 
       {rows && rows.length > 0 && (
-        <section className="rounded-xl border border-slate-200 bg-white">
-          <header className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-5 py-3">
+        <section className="rounded-xl border border-line bg-surface">
+          <header className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-3">
             <div>
-              <h2 className="text-sm font-medium text-slate-700">
+              <h2 className="text-sm font-medium text-ink">
                 {rows.length} {rows.length === 1 ? 'file' : 'files'} done
               </h2>
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-muted">
                 Each one downloads under its own name.
               </p>
             </div>
@@ -181,13 +187,13 @@ export function CompressTool() {
               type="button"
               onClick={saveAll}
               disabled={saving}
-              className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:opacity-50"
+              className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50"
             >
               {saving ? 'Saving…' : 'Download all'}
             </button>
           </header>
 
-          <ul className="divide-y divide-slate-100">
+          <ul className="divide-y divide-line">
             {rows.map((row) => (
               <li
                 key={row.name}
@@ -196,13 +202,13 @@ export function CompressTool() {
                 <span className="min-w-0 flex-1 truncate font-medium">
                   {row.name}
                 </span>
-                <span className="shrink-0 text-slate-400">
+                <span className="shrink-0 text-faint">
                   {formatSize(row.file.size)} → {formatSize(row.blob.size)}
                 </span>
                 <button
                   type="button"
                   onClick={() => downloadBlob(row.blob, row.name)}
-                  className="shrink-0 text-sm text-slate-500 underline-offset-2 hover:text-slate-900 hover:underline"
+                  className="shrink-0 text-sm text-muted underline-offset-2 hover:text-ink hover:underline"
                 >
                   Download
                 </button>
