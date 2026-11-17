@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { FileDrop } from './FileDrop'
 import { FilePreview } from './FilePreview'
 import { PdfPreview } from './PdfPreview'
@@ -35,7 +35,7 @@ const FORMATS: { id: Format; label: string; mime: string }[] = [
 
 const tabClass = (active: boolean) =>
   `rounded-md px-3 py-1.5 text-sm font-medium ${
-    active ? 'bg-slate-900 text-white' : 'text-slate-600 hover:text-slate-900'
+    active ? 'bg-accent text-accent-ink' : 'text-muted hover:text-ink'
   }`
 
 const PREVIEW_CHARACTERS = 3000
@@ -45,11 +45,11 @@ function TextSample({ text }: { text: string }) {
 
   return (
     <div>
-      <pre className="max-h-72 overflow-auto whitespace-pre-wrap rounded-lg bg-slate-50 p-4 text-xs text-slate-700">
+      <pre className="max-h-72 overflow-auto whitespace-pre-wrap rounded-lg bg-sunk p-4 text-xs text-ink">
         {shown}
       </pre>
       {text.length > shown.length && (
-        <p className="mt-1 text-xs text-slate-400">
+        <p className="mt-1 text-xs text-faint">
           Showing the first {PREVIEW_CHARACTERS} characters. The download is the
           whole document.
         </p>
@@ -58,8 +58,14 @@ function TextSample({ text }: { text: string }) {
   )
 }
 
-export function WordTool() {
-  const [mode, setMode] = useState<Mode>('read')
+export function WordTool({
+  initialFiles,
+  initialMode,
+}: {
+  initialFiles?: File[]
+  initialMode?: Mode
+}) {
+  const [mode, setMode] = useState<Mode>(initialMode ?? 'read')
 
   const [source, setSource] = useState<File | null>(null)
   const [blocks, setBlocks] = useState<DocxBlock[] | null>(null)
@@ -83,7 +89,7 @@ export function WordTool() {
     setBusy(false)
   }
 
-  async function open(file: File) {
+  const open = useCallback(async (file: File, current: Mode) => {
     setBusy(true)
     setError(null)
     setSource(file)
@@ -92,9 +98,9 @@ export function WordTool() {
     setDocx(null)
 
     try {
-      if (mode === 'read') {
+      if (current === 'read') {
         setBlocks(await readDocx(file))
-      } else if (mode === 'toPdf') {
+      } else if (current === 'toPdf') {
         setPdf(await docxToPdf(file))
       } else {
         setDocx(await pdfToDocx(file))
@@ -108,7 +114,21 @@ export function WordTool() {
     } finally {
       setBusy(false)
     }
-  }
+  }, [])
+
+  // A file handed over by the Home screen is opened once, on arrival. The mode
+  // travels with it, because state updates are not visible to this first run.
+  const handedOver = useRef<{ file: File; mode: Mode } | null>(
+    initialMode && initialFiles?.[0]
+      ? { file: initialFiles[0], mode: initialMode }
+      : null,
+  )
+  useEffect(() => {
+    const started = handedOver.current
+    if (!started) return
+    handedOver.current = null
+    void open(started.file, started.mode)
+  }, [open])
 
   function convertedText(fileName: string): { text: string; mime: string } {
     if (!blocks) return { text: '', mime: 'text/plain' }
@@ -144,7 +164,7 @@ export function WordTool() {
       <FileDrop
         onFiles={(incoming) => {
           const chosen = incoming[0]
-          if (chosen) void open(chosen)
+          if (chosen) void open(chosen, mode)
         }}
         accept={mode === 'fromPdf' ? '.pdf,application/pdf' : DOCX_ACCEPT}
         multiple={false}
@@ -160,24 +180,24 @@ export function WordTool() {
         }
       />
 
-      {busy && <p className="text-sm text-slate-500">Working…</p>}
+      {busy && <p className="text-sm text-muted">Working…</p>}
 
       {error && (
-        <p className="rounded-xl border border-red-200 bg-red-50 px-5 py-3 text-sm text-red-800">
+        <p className="rounded-xl border border-bad/30 bg-bad-soft px-5 py-3 text-sm text-bad">
           {error}
         </p>
       )}
 
       {source && (
-        <section className="rounded-xl border border-slate-200 bg-white">
-          <header className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-5 py-3">
+        <section className="rounded-xl border border-line bg-surface">
+          <header className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-3">
             <div className="flex min-w-0 items-center gap-3">
               <FilePreview name={source.name} blob={source} />
               <div className="min-w-0">
-                <h2 className="truncate text-sm font-medium text-slate-700">
+                <h2 className="truncate text-sm font-medium text-ink">
                   {outputName(source, mode)}
                 </h2>
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-muted">
                   {source.name} · {formatSize(source.size)}
                 </p>
               </div>
@@ -195,7 +215,7 @@ export function WordTool() {
                   }
                 }}
                 disabled={(mode === 'toPdf' && !pdf) || (mode === 'fromPdf' && !docx)}
-                className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:opacity-50"
+                className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50"
               >
                 Download
               </button>
@@ -206,7 +226,7 @@ export function WordTool() {
             {mode === 'read' && blocks && (
               <div className="space-y-3">
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div className="inline-flex gap-1 rounded-lg border border-slate-300 p-1">
+                  <div className="inline-flex gap-1 rounded-lg border border-edge p-1">
                     {FORMATS.map((option) => (
                       <button
                         key={option.id}
@@ -228,7 +248,7 @@ export function WordTool() {
                         replaceExtension(source.name, format),
                       )
                     }}
-                    className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700"
+                    className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover"
                   >
                     Download
                   </button>
@@ -239,7 +259,7 @@ export function WordTool() {
             )}
 
             {mode === 'read' && blocks && blocks.length === 0 && (
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-muted">
                 This document has no text, so there is nothing to convert.
               </p>
             )}
@@ -251,7 +271,7 @@ export function WordTool() {
             {mode === 'fromPdf' && docx && (
               <div className="space-y-2">
                 <TextSample text={docx.paragraphs.join('\n\n')} />
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-faint">
                   {docx.paragraphs.length}{' '}
                   {docx.paragraphs.length === 1 ? 'paragraph' : 'paragraphs'} found.
                 </p>
