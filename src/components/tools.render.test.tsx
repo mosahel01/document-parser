@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { renderToString } from 'react-dom/server'
+import App from '../App'
+import { HomeTool } from './HomeTool'
 import { RenameTool } from './RenameTool'
 import { ZipTool } from './ZipTool'
 import { ReplaceTool } from './ReplaceTool'
@@ -21,6 +23,27 @@ describe('first paint', () => {
       WordTool,
     ]) {
       expect(renderToString(<Tool />).length).toBeGreaterThan(100)
+    }
+  })
+
+  it('renders the home screen with a tab for every tool', () => {
+    expect(
+      renderToString(<HomeTool onStart={() => {}} />).length,
+    ).toBeGreaterThan(100)
+
+    // The app crashed once because a tab existed without a tool behind it.
+    const page = renderToString(<App />)
+    for (const label of [
+      'Home',
+      'PDF',
+      'Word',
+      'Zip',
+      'Replace',
+      'Images',
+      'Compress',
+      'Rename',
+    ]) {
+      expect(page).toContain(label)
     }
   })
 })
