@@ -37,9 +37,9 @@ npm test        # run the unit tests
 ```
 src/
   main.tsx        entry point, mounts React into index.html
-  App.tsx         the page you see
+  App.tsx         the page you see: tabs, titles, and which tool is open
   index.css       global styles (Tailwind)
-  components/     React UI pieces
+  components/     React UI pieces, Home included
   tools/          plain functions that do the actual document work
   lib/            small shared helpers with no domain logic
 public/           static files served as-is
@@ -47,5 +47,9 @@ public/           static files served as-is
 
 The split matters: nothing in `tools/` imports React, so the logic can be tested
 and reused without a browser render.
+
+Start at Home: drop any file and its type decides the buttons. Each button hands
+the files to the matching tool, and every tab still opens the same tool directly.
+The light/dark switch sits in the header and remembers the choice.
 
 See `AGENTS.md` for the decisions behind the code and the plan ahead.
