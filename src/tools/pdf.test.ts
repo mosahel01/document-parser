@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { PDFDocument } from 'pdf-lib'
 import {
+  MAX_PDF_BYTES,
+  countPages,
   extractPages,
   mergePdfs,
   parsePageSelection,
@@ -20,6 +22,38 @@ async function pageCountOf(blob: Blob): Promise<number> {
   const document = await PDFDocument.load(await blob.arrayBuffer())
   return document.getPageCount()
 }
+
+describe('opening a PDF', () => {
+  it('names the file that could not be parsed', async () => {
+    const broken = new File(
+      [new TextEncoder().encode('%PDF-1.7\nthis is not the rest of one')],
+      'broken.pdf',
+      { type: 'application/pdf' },
+    )
+
+    await expect(mergePdfs([broken, await sample(1)])).rejects.toThrow(
+      'broken.pdf could not be opened as a PDF.',
+    )
+  })
+
+  it('says so when the file only has a PDF name', async () => {
+    const text = new File(['just notes'], 'notes.pdf', { type: 'text/plain' })
+
+    await expect(countPages(text)).rejects.toThrow(
+      'notes.pdf does not start like a PDF.',
+    )
+  })
+
+  it('refuses a file over the size cap without reading it', async () => {
+    const huge = {
+      name: 'huge.pdf',
+      size: MAX_PDF_BYTES + 1,
+      arrayBuffer: () => Promise.reject(new Error('should not be read')),
+    } as unknown as File
+
+    await expect(countPages(huge)).rejects.toThrow('over 100.0 MB')
+  })
+})
 
 describe('mergePdfs', () => {
   it('adds up the pages of every file in the order given', async () => {
