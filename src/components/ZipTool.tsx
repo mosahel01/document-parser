@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { FileDrop } from './FileDrop'
 import { FileList } from './FileList'
 import { FilePreview } from './FilePreview'
@@ -16,13 +16,21 @@ type Mode = 'create' | 'open'
 
 const tabClass = (active: boolean) =>
   `rounded-md px-4 py-1.5 text-sm font-medium ${
-    active ? 'bg-slate-900 text-white' : 'text-slate-600 hover:text-slate-900'
+    active ? 'bg-accent text-accent-ink' : 'text-muted hover:text-ink'
   }`
 
-export function ZipTool() {
-  const [mode, setMode] = useState<Mode>('create')
+export function ZipTool({
+  initialFiles,
+  initialMode,
+}: {
+  initialFiles?: File[]
+  initialMode?: Mode
+}) {
+  const [mode, setMode] = useState<Mode>(initialMode ?? 'create')
 
-  const [files, setFiles] = useState<File[]>([])
+  const [files, setFiles] = useState<File[]>(
+    initialMode === 'open' ? [] : (initialFiles ?? []),
+  )
   const [zipping, setZipping] = useState(false)
 
   const [archive, setArchive] = useState<File | null>(null)
@@ -60,7 +68,7 @@ export function ZipTool() {
     }
   }
 
-  async function openArchive(incoming: File) {
+  const openArchive = useCallback(async (incoming: File) => {
     setArchive(incoming)
     setEntries(null)
     setError(null)
@@ -74,7 +82,18 @@ export function ZipTool() {
     } finally {
       setReading(false)
     }
-  }
+  }, [])
+
+  // An archive handed over by the Home screen is opened once, on arrival.
+  const handedOver = useRef(
+    initialMode === 'open' ? (initialFiles?.[0] ?? null) : null,
+  )
+  useEffect(() => {
+    const archive = handedOver.current
+    if (!archive) return
+    handedOver.current = null
+    void openArchive(archive)
+  }, [openArchive])
 
   async function downloadEverything() {
     if (!entries) return
@@ -93,7 +112,7 @@ export function ZipTool() {
 
   return (
     <div className="space-y-8">
-      <div className="inline-flex gap-1 rounded-lg border border-slate-300 bg-white p-1">
+      <div className="inline-flex gap-1 rounded-lg border border-edge bg-surface p-1">
         <button
           type="button"
           onClick={() => setMode('create')}
@@ -127,8 +146,8 @@ export function ZipTool() {
           />
 
           {files.length > 0 && (
-            <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-5 py-3">
-              <p className="text-sm text-slate-500">
+            <div className="flex items-center justify-between rounded-xl border border-line bg-surface px-5 py-3">
+              <p className="text-sm text-muted">
                 {files.length} {files.length === 1 ? 'file' : 'files'},{' '}
                 {formatSize(packedSize)}
               </p>
@@ -136,7 +155,7 @@ export function ZipTool() {
                 type="button"
                 onClick={createArchive}
                 disabled={zipping}
-                className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:opacity-50"
+                className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50"
               >
                 {zipping ? 'Packing…' : `Download ${zipName}`}
               </button>
@@ -156,22 +175,22 @@ export function ZipTool() {
             hint="Only zip for now. RAR and 7z are not supported."
           />
 
-          {reading && <p className="text-sm text-slate-500">Reading…</p>}
+          {reading && <p className="text-sm text-muted">Reading…</p>}
 
           {error && (
-            <p className="rounded-xl border border-red-200 bg-red-50 px-5 py-3 text-sm text-red-800">
+            <p className="rounded-xl border border-bad/30 bg-bad-soft px-5 py-3 text-sm text-bad">
               {error}
             </p>
           )}
 
           {archive && !error && entries && (
-            <section className="rounded-xl border border-slate-200 bg-white">
-              <header className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 px-5 py-3">
+            <section className="rounded-xl border border-line bg-surface">
+              <header className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-5 py-3">
                 <div>
-                  <h2 className="text-sm font-medium text-slate-700">
+                  <h2 className="text-sm font-medium text-ink">
                     {archive.name}
                   </h2>
-                  <p className="text-sm text-slate-500">
+                  <p className="text-sm text-muted">
                     {entries.length}{' '}
                     {entries.length === 1 ? 'file' : 'files'},{' '}
                     {formatSize(unpackedSize)} unpacked. Each file downloads as
@@ -183,7 +202,7 @@ export function ZipTool() {
                     type="button"
                     onClick={downloadEverything}
                     disabled={saving}
-                    className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:opacity-50"
+                    className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50"
                   >
                     {saving ? 'Saving…' : 'Download all'}
                   </button>
@@ -193,7 +212,7 @@ export function ZipTool() {
                       setArchive(null)
                       setEntries(null)
                     }}
-                    className="text-sm text-slate-500 hover:text-slate-900"
+                    className="text-sm text-muted hover:text-ink"
                   >
                     Close archive
                   </button>
@@ -201,20 +220,20 @@ export function ZipTool() {
               </header>
 
               {entries.length === 0 ? (
-                <p className="px-5 py-4 text-sm text-slate-500">
+                <p className="px-5 py-4 text-sm text-muted">
                   This archive is empty.
                 </p>
               ) : (
                 <div className="max-h-96 overflow-auto">
                   <table className="w-full text-left text-sm">
-                    <thead className="sticky top-0 bg-slate-50 text-slate-500">
+                    <thead className="sticky top-0 bg-sunk text-muted">
                       <tr>
                         <th className="px-5 py-2 font-medium">File</th>
                         <th className="px-5 py-2 font-medium">Size</th>
                         <th className="px-5 py-2" />
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody className="divide-y divide-line">
                       {entries.map((entry, index) => (
                         <tr key={entry.path}>
                           <td className="px-5 py-2 align-middle">
@@ -226,7 +245,7 @@ export function ZipTool() {
                               <span className="break-all">{entry.path}</span>
                             </div>
                           </td>
-                          <td className="shrink-0 px-5 py-2 text-slate-500">
+                          <td className="shrink-0 px-5 py-2 text-muted">
                             {formatSize(entry.bytes.length)}
                           </td>
                           <td className="px-5 py-2 text-right">
@@ -238,7 +257,7 @@ export function ZipTool() {
                                   names[index],
                                 )
                               }
-                              className="text-sm text-slate-500 underline-offset-2 hover:text-slate-900 hover:underline"
+                              className="text-sm text-muted underline-offset-2 hover:text-ink hover:underline"
                             >
                               Download
                             </button>
