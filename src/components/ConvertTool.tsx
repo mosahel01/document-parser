@@ -1,0 +1,250 @@
+import { useState } from 'react'
+import { FileDrop } from './FileDrop'
+import { FileList } from './FileList'
+import { FilePreview } from './FilePreview'
+import { downloadBlob, downloadEach } from '../tools/download'
+import { convertFile } from '../tools/convert'
+import { replaceExtension } from '../tools/rename'
+import { formatSize } from '../lib/format'
+
+type Target = 'png' | 'jpg' | 'webp' | 'pdf'
+
+const TARGETS: { id: Target; label: string }[] = [
+  { id: 'png', label: 'PNG' },
+  { id: 'jpg', label: 'JPG' },
+  { id: 'webp', label: 'WebP' },
+  { id: 'pdf', label: 'PDF' },
+]
+
+type Result = { file: File; blob: Blob; name: string }
+
+export function ConvertTool() {
+  const [files, setFiles] = useState<File[]>([])
+  const [target, setTarget] = useState<Target>('png')
+  const [quality, setQuality] = useState(0.9)
+
+  const [results, setResults] = useState<Result[] | null>(null)
+  const [problems, setProblems] = useState<string[]>([])
+  const [busy, setBusy] = useState(false)
+  const [saving, setSaving] = useState(false)
+
+  const lossy = target === 'jpg' || target === 'webp'
+
+  async function run() {
+    setBusy(true)
+    setProblems([])
+    setResults(null)
+
+    const done: Result[] = []
+    const failed: string[] = []
+
+    try {
+      // One at a time: a run of large photos would otherwise hold several full
+      // canvases in memory at once.
+      for (const file of files) {
+        try {
+          done.push({
+            file,
+            blob: await convertFile(file, target, quality),
+            name: replaceExtension(file.name, target),
+          })
+          setResults([...done])
+        } catch (problem) {
+          failed.push(
+            problem instanceof Error
+              ? problem.message
+              : 'That file could not be converted.',
+          )
+        }
+      }
+
+      setProblems(failed)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function saveAll() {
+    if (!results) return
+    setSaving(true)
+    try {
+      await downloadEach(
+        results.map((result) => ({ blob: result.blob, name: result.name })),
+      )
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  function reset() {
+    setFiles([])
+    setResults(null)
+    setProblems([])
+  }
+
+  return (
+    <div className="space-y-8">
+      <FileDrop
+        onFiles={(incoming) => {
+          setFiles([...files, ...incoming])
+          setResults(null)
+        }}
+        accept="image/*"
+        label="Drop the images to convert"
+        hint="PNG, JPG, WebP, GIF, BMP, AVIF, or SVG. Nothing is uploaded."
+      />
+
+      <FileList
+        files={files}
+        onRemove={(index) =>
+          setFiles(files.filter((_, position) => position !== index))
+        }
+        onClear={reset}
+      />
+
+      {files.length > 0 && (
+        <section className="rounded-xl border border-slate-200 bg-white p-5">
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <span className="block text-sm font-medium text-slate-700">
+                Convert to
+              </span>
+              <div className="mt-1 inline-flex gap-1 rounded-lg border border-slate-300 p-1">
+                {TARGETS.map((option) => (
+                  <button
+                    key={option.id}
+                    type="button"
+                    onClick={() => {
+                      setTarget(option.id)
+                      setResults(null)
+                    }}
+                    className={`rounded-md px-3 py-1 text-sm font-medium ${
+                      target === option.id
+                        ? 'bg-slate-900 text-white'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {lossy && (
+              <label className="text-sm text-slate-600">
+                Quality {Math.round(quality * 100)}%
+                <input
+                  type="range"
+                  min={40}
+                  max={100}
+                  step={5}
+                  value={quality * 100}
+                  onChange={(event) =>
+                    setQuality(Number(event.target.value) / 100)
+                  }
+                  className="mt-1 block w-40"
+                />
+              </label>
+            )}
+
+            <button
+              type="button"
+              onClick={run}
+              disabled={busy}
+              className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:opacity-50"
+            >
+              {busy ? 'Converting…' : 'Convert'}
+            </button>
+          </div>
+
+          <p className="mt-3 text-sm text-slate-500">
+            {target === 'pdf'
+              ? 'Each image gets its own PDF page, sized to A4.'
+              : 'JPG has no transparency, so transparent areas turn white.'}
+            {lossy ? ' Lower quality makes smaller files.' : ''}
+          </p>
+        </section>
+      )}
+
+      {problems.length > 0 && (
+        <ul className="space-y-2">
+          {problems.map((problem) => (
+            <li
+              key={problem}
+              className="rounded-xl border border-red-200 bg-red-50 px-5 py-3 text-sm text-red-800"
+            >
+              {problem}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {results && results.length > 0 && (
+        <section className="rounded-xl border border-slate-200 bg-white">
+          <header className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-5 py-3">
+            <div>
+              <h2 className="text-sm font-medium text-slate-700">Converted</h2>
+              <p className="text-sm text-slate-500">
+                Saved with the same name and the new extension.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={saveAll}
+              disabled={saving}
+              className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:opacity-50"
+            >
+              {saving ? 'Saving…' : 'Download all'}
+            </button>
+          </header>
+
+          <ul className="divide-y divide-slate-100">
+            {results.map((result) => (
+              <li key={result.name} className="px-5 py-4">
+                <div className="flex items-start gap-4">
+                  <div className="w-28 shrink-0">
+                    <FilePreview
+                      name={result.file.name}
+                      blob={result.file}
+                      variant="wide"
+                    />
+                    <p className="mt-1 truncate text-xs text-slate-500">
+                      {result.file.name}
+                    </p>
+                    <p className="text-xs text-slate-400">
+                      {formatSize(result.file.size)}
+                    </p>
+                  </div>
+
+                  <span className="pt-8 text-slate-400">→</span>
+
+                  <div className="w-28 shrink-0">
+                    <FilePreview
+                      name={result.name}
+                      blob={result.blob}
+                      variant="wide"
+                    />
+                    <p className="mt-1 truncate text-xs font-medium text-slate-700">
+                      {result.name}
+                    </p>
+                    <p className="text-xs text-slate-400">
+                      {formatSize(result.blob.size)}
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => downloadBlob(result.blob, result.name)}
+                    className="ml-auto shrink-0 text-sm text-slate-500 underline-offset-2 hover:text-slate-900 hover:underline"
+                  >
+                    Download
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+    </div>
+  )
+}
