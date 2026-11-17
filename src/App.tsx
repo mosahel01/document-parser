@@ -1,10 +1,13 @@
 import { Suspense, lazy, useState, type ReactElement } from "react";
+import { HomeTool } from "./components/HomeTool";
+import { ThemeToggle } from "./components/ThemeToggle";
 import { RenameTool } from "./components/RenameTool";
 import { ZipTool } from "./components/ZipTool";
 import { ReplaceTool } from "./components/ReplaceTool";
 import { ConvertTool } from "./components/ConvertTool";
 import { CompressTool } from "./components/CompressTool";
 import { WordTool } from "./components/WordTool";
+import type { HomeOperation } from "./tools/fileKind";
 
 // pdf-lib and pdf.js are about a megabyte. Only fetch them when the PDF tab is
 // opened, so renaming a file does not pay for them.
@@ -12,102 +15,158 @@ const PdfTool = lazy(() =>
   import("./components/PdfTool").then((module) => ({ default: module.PdfTool })),
 );
 
-const TOOL_IDS = [
-  "pdf",
-  "word",
-  "zip",
-  "replace",
-  "convert",
-  "compress",
-  "rename",
-] as const;
-type ToolId = (typeof TOOL_IDS)[number];
-
 type Tool = {
   label: string;
   title: string;
   blurb: string;
-  element: ReactElement;
 };
 
-const tools: Record<ToolId, Tool> = {
+/**
+ * The tab order, and the only list of tools in the app. Ids and labels come
+ * from one object, so a tab can never point at a tool that is not there.
+ */
+const tools = {
+  home: {
+    label: "Home",
+    title: "Start with a file",
+    blurb:
+      "Drop any file and the options follow from what it is. A PDF can be merged, split, or read as Word; a photo can be converted; a Word file can be read or made into a PDF.",
+  },
   pdf: {
     label: "PDF",
     title: "Merge and split PDFs",
     blurb:
       "Combine several PDFs into one, or pull out single pages and ranges. Every page is previewed first.",
-    element: <PdfTool />,
   },
   word: {
     label: "Word",
     title: "Word documents and PDFs",
     blurb:
       "Read a .docx as HTML, Markdown, or text, or move the words between Word and PDF. Layout stays basic; images stay behind.",
-    element: <WordTool />,
   },
   zip: {
-    label: "Zip / unzip",
+    label: "Zip",
     title: "Zip and unzip",
     blurb: "Pack files into one archive, or open a zip and take out what you need.",
-    element: <ZipTool />,
   },
   replace: {
-    label: "Find & replace",
+    label: "Replace",
     title: "Find and replace in files",
     blurb: "Change text inside many files at once. Plain text, or a pattern when you need one.",
-    element: <ReplaceTool />,
   },
   convert: {
-    label: "Convert images",
+    label: "Images",
     title: "Convert images",
     blurb:
       "Turn images into PNG, JPG, WebP, or a one-page PDF, with the result previewed before you save.",
-    element: <ConvertTool />,
   },
   compress: {
     label: "Compress",
     title: "Compress and decompress",
     blurb:
       "Shrink a file into a .gz archive, or expand one back. The name inside the archive is reused.",
-    element: <CompressTool />,
   },
   rename: {
     label: "Rename",
     title: "Rename files",
     blurb:
       "Type one name for the whole batch, numbered automatically. Change the extension to convert an image on the way out.",
-    element: <RenameTool />,
   },
-};
+} satisfies Record<string, Tool>;
 
-const upcoming = ["OCR for scanned PDFs", "Exact Word layout in PDF"];
+type ToolId = keyof typeof tools;
+
+const TOOL_IDS = Object.keys(tools) as ToolId[];
+
+const upcoming = [
+  "Crop, resize, and rotate photos",
+  "OCR for scanned PDFs",
+  "Exact Word layout in PDF",
+];
 
 function App() {
-  const [active, setActive] = useState<ToolId>("pdf");
+  const [active, setActive] = useState<ToolId>("home");
+  /** What the Home screen handed over, read once by the tool it opens. */
+  const [pending, setPending] = useState<HomeOperation | null>(null);
+
   const tool = tools[active];
+  const files = pending?.files ?? [];
 
   function select(id: ToolId) {
     setActive(id);
+    setPending(null);
     // Otherwise a long page clamps the scroll and the whole layout jumps.
     window.scrollTo({ top: 0 });
   }
 
-  return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
-      <header className="sticky top-0 z-20 border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-3xl flex-wrap items-center justify-between gap-3 px-6 py-4">
-          <span className="font-semibold tracking-tight">Document Toolkit</span>
+  function start(operation: HomeOperation) {
+    setPending(operation);
+    setActive(operation.tool);
+    window.scrollTo({ top: 0 });
+  }
 
-          <nav className="flex flex-wrap gap-1">
+  function renderTool(): ReactElement {
+    switch (active) {
+      case "home":
+        return <HomeTool onStart={start} />;
+      case "pdf":
+        return (
+          <PdfTool
+            initialFiles={files}
+            initialMode={pending?.tool === "pdf" ? pending.mode : undefined}
+          />
+        );
+      case "word":
+        return (
+          <WordTool
+            initialFiles={files}
+            initialMode={pending?.tool === "word" ? pending.mode : undefined}
+          />
+        );
+      case "zip":
+        return (
+          <ZipTool
+            initialFiles={files}
+            initialMode={pending?.tool === "zip" ? pending.mode : undefined}
+          />
+        );
+      case "compress":
+        return (
+          <CompressTool
+            initialFiles={files}
+            initialMode={pending?.tool === "compress" ? pending.mode : undefined}
+          />
+        );
+      case "replace":
+        return <ReplaceTool initialFiles={files} />;
+      case "convert":
+        return <ConvertTool initialFiles={files} />;
+      case "rename":
+        return <RenameTool initialFiles={files} />;
+    }
+  }
+
+  return (
+    <div className="min-h-screen bg-paper text-ink">
+      <header className="sticky top-0 z-20 border-b border-line bg-surface/95 backdrop-blur">
+        <div className="mx-auto max-w-2xl px-6">
+          <div className="flex items-center justify-between gap-3 pt-4">
+            <span className="text-lg font-semibold tracking-tight">
+              Document Toolkit
+            </span>
+            <ThemeToggle />
+          </div>
+
+          <nav className="nav-scroll -mx-2 flex flex-nowrap gap-1 overflow-x-auto px-2 pb-3 pt-1">
             {TOOL_IDS.map((id) => (
               <button
                 key={id}
                 type="button"
                 onClick={() => select(id)}
                 aria-current={id === active ? "page" : undefined}
-                className={`rounded-md px-3 py-1.5 text-sm font-medium ${id === active
-                    ? "bg-slate-100 text-slate-900"
-                    : "text-slate-500 hover:text-slate-900"
+                className={`shrink-0 rounded-md px-3 py-1.5 text-sm font-medium ${id === active
+                    ? "bg-hover text-ink"
+                    : "text-muted hover:text-ink"
                   }`}
               >
                 {tools[id].label}
@@ -117,24 +176,24 @@ function App() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-3xl px-6 py-12">
+      <main className="mx-auto max-w-2xl px-6 py-12">
         <h1 className="text-3xl font-semibold tracking-tight">{tool.title}</h1>
-        <p className="mt-2 text-slate-600">{tool.blurb}</p>
-        <p className="mt-3 inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-800">
-          <span className="size-1.5 rounded-full bg-emerald-600" />
+        <p className="mt-3 max-w-prose text-muted">{tool.blurb}</p>
+        <p className="mt-4 inline-flex items-center gap-2 rounded-full bg-good-soft px-3 py-1 text-xs font-medium text-good">
+          <span className="size-1.5 rounded-full bg-good" />
           Runs in your browser. Nothing is uploaded.
         </p>
 
         <div className="mt-8">
-          <Suspense fallback={<p className="text-sm text-slate-500">Loading the tool…</p>}>
-            {tool.element}
+          <Suspense fallback={<p className="text-sm text-muted">Loading the tool…</p>}>
+            {renderTool()}
           </Suspense>
         </div>
       </main>
 
-      <footer className="mx-auto max-w-3xl px-6 pb-16">
-        <h2 className="text-sm font-medium text-slate-500">Coming next</h2>
-        <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-500">
+      <footer className="mx-auto max-w-2xl px-6 pb-16">
+        <h2 className="text-sm font-medium text-muted">Coming next</h2>
+        <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted">
           {upcoming.map((name) => (
             <li key={name}>{name}</li>
           ))}
