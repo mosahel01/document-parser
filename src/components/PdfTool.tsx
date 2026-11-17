@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { FileDrop } from './FileDrop'
 import { FilePreview } from './FilePreview'
 import { PdfPagePreview } from './PdfPagePreview'
@@ -19,13 +19,21 @@ type Mode = 'merge' | 'split'
 
 const tabClass = (active: boolean) =>
   `rounded-md px-4 py-1.5 text-sm font-medium ${
-    active ? 'bg-slate-900 text-white' : 'text-slate-600 hover:text-slate-900'
+    active ? 'bg-accent text-accent-ink' : 'text-muted hover:text-ink'
   }`
 
-export function PdfTool() {
-  const [mode, setMode] = useState<Mode>('merge')
+export function PdfTool({
+  initialFiles,
+  initialMode,
+}: {
+  initialFiles?: File[]
+  initialMode?: Mode
+}) {
+  const [mode, setMode] = useState<Mode>(initialMode ?? 'merge')
 
-  const [mergeFiles, setMergeFiles] = useState<File[]>([])
+  const [mergeFiles, setMergeFiles] = useState<File[]>(
+    initialMode === 'split' ? [] : (initialFiles ?? []),
+  )
   const [merging, setMerging] = useState(false)
   const [mergeError, setMergeError] = useState<string | null>(null)
 
@@ -86,7 +94,7 @@ export function PdfTool() {
     }
   }
 
-  async function openForSplit(file: File) {
+  const openForSplit = useCallback(async (file: File) => {
     setSplitFile(file)
     setSession((current) => current + 1)
     setPageCount(null)
@@ -100,7 +108,18 @@ export function PdfTool() {
         problem instanceof Error ? problem.message : 'That PDF could not be read.',
       )
     }
-  }
+  }, [])
+
+  // A PDF handed over by the Home screen is opened for splitting on arrival.
+  const handedOver = useRef(
+    initialMode === 'split' ? (initialFiles?.[0] ?? null) : null,
+  )
+  useEffect(() => {
+    const file = handedOver.current
+    if (!file) return
+    handedOver.current = null
+    void openForSplit(file)
+  }, [openForSplit])
 
   async function extractTo(destination: 'download' | 'preview') {
     if (!splitFile || !selection || selection.error) return
@@ -148,7 +167,7 @@ export function PdfTool() {
 
   return (
     <div className="space-y-8">
-      <div className="inline-flex gap-1 rounded-lg border border-slate-300 bg-white p-1">
+      <div className="inline-flex gap-1 rounded-lg border border-edge bg-surface p-1">
         <button
           type="button"
           onClick={() => chooseMode('merge')}
@@ -178,9 +197,9 @@ export function PdfTool() {
           />
 
           {mergeFiles.length > 0 && (
-            <section className="rounded-xl border border-slate-200 bg-white">
-              <header className="flex items-center justify-between border-b border-slate-200 px-5 py-3">
-                <h2 className="text-sm font-medium text-slate-700">
+            <section className="rounded-xl border border-line bg-surface">
+              <header className="flex items-center justify-between border-b border-line px-5 py-3">
+                <h2 className="text-sm font-medium text-ink">
                   {mergeFiles.length}{' '}
                   {mergeFiles.length === 1 ? 'file' : 'files'}, in this order
                 </h2>
@@ -190,23 +209,23 @@ export function PdfTool() {
                     setMergeFiles([])
                     setPreview(null)
                   }}
-                  className="text-sm text-slate-500 hover:text-slate-900"
+                  className="text-sm text-muted hover:text-ink"
                 >
                   Clear all
                 </button>
               </header>
-              <ul className="divide-y divide-slate-100">
+              <ul className="divide-y divide-line">
                 {mergeFiles.map((file, index) => (
                   <li
                     key={`${file.name}-${index}`}
                     className="flex items-center gap-3 px-5 py-2 text-sm"
                   >
-                    <span className="w-5 shrink-0 text-slate-400">
+                    <span className="w-5 shrink-0 text-faint">
                       {index + 1}.
                     </span>
                     <FilePreview name={file.name} blob={file} />
                     <span className="min-w-0 flex-1 truncate">{file.name}</span>
-                    <span className="shrink-0 text-slate-400">
+                    <span className="shrink-0 text-faint">
                       {formatSize(file.size)}
                     </span>
                     <button
@@ -214,7 +233,7 @@ export function PdfTool() {
                       onClick={() => moveMergeFile(index, -1)}
                       disabled={index === 0}
                       aria-label={`Move ${file.name} up`}
-                      className="shrink-0 rounded px-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-900 disabled:opacity-30"
+                      className="shrink-0 rounded px-1.5 text-faint hover:bg-hover hover:text-ink disabled:opacity-30"
                     >
                       ↑
                     </button>
@@ -223,7 +242,7 @@ export function PdfTool() {
                       onClick={() => moveMergeFile(index, 1)}
                       disabled={index === mergeFiles.length - 1}
                       aria-label={`Move ${file.name} down`}
-                      className="shrink-0 rounded px-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-900 disabled:opacity-30"
+                      className="shrink-0 rounded px-1.5 text-faint hover:bg-hover hover:text-ink disabled:opacity-30"
                     >
                       ↓
                     </button>
@@ -236,15 +255,15 @@ export function PdfTool() {
                         setPreview(null)
                       }}
                       aria-label={`Remove ${file.name}`}
-                      className="shrink-0 rounded px-2 text-slate-400 hover:bg-slate-100 hover:text-slate-900"
+                      className="shrink-0 rounded px-2 text-faint hover:bg-hover hover:text-ink"
                     >
                       ×
                     </button>
                   </li>
                 ))}
               </ul>
-              <div className="flex items-center justify-between border-t border-slate-200 px-5 py-3">
-                <p className="text-sm text-slate-500">
+              <div className="flex items-center justify-between border-t border-line px-5 py-3">
+                <p className="text-sm text-muted">
                   {mergeFiles.length < 2
                     ? 'Add at least two PDFs to merge.'
                     : `${mergeFiles.length} PDFs become one.`}
@@ -254,7 +273,7 @@ export function PdfTool() {
                     type="button"
                     onClick={() => void mergeTo('preview')}
                     disabled={merging || mergeFiles.length < 2}
-                    className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 disabled:opacity-50"
+                    className="rounded-lg border border-edge px-4 py-2 text-sm font-medium text-ink hover:bg-hover disabled:opacity-50"
                   >
                     Preview
                   </button>
@@ -262,7 +281,7 @@ export function PdfTool() {
                     type="button"
                     onClick={() => void mergeTo('download')}
                     disabled={merging || mergeFiles.length < 2}
-                    className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:opacity-50"
+                    className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50"
                   >
                     {merging ? 'Merging…' : 'Merge and download'}
                   </button>
@@ -272,7 +291,7 @@ export function PdfTool() {
           )}
 
           {mergeError && (
-            <p className="rounded-xl border border-red-200 bg-red-50 px-5 py-3 text-sm text-red-800">
+            <p className="rounded-xl border border-bad/30 bg-bad-soft px-5 py-3 text-sm text-bad">
               {mergeError}
             </p>
           )}
@@ -291,20 +310,20 @@ export function PdfTool() {
           />
 
           {splitError && (
-            <p className="rounded-xl border border-red-200 bg-red-50 px-5 py-3 text-sm text-red-800">
+            <p className="rounded-xl border border-bad/30 bg-bad-soft px-5 py-3 text-sm text-bad">
               {splitError}
             </p>
           )}
 
           {splitFile && pageCount !== null && (
             <>
-              <section className="rounded-xl border border-slate-200 bg-white">
-                <header className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 px-5 py-3">
+              <section className="rounded-xl border border-line bg-surface">
+                <header className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-5 py-3">
                   <div>
-                    <h2 className="text-sm font-medium text-slate-700">
+                    <h2 className="text-sm font-medium text-ink">
                       {splitFile.name}
                     </h2>
-                    <p className="text-sm text-slate-500">
+                    <p className="text-sm text-muted">
                       {pageCount} {pageCount === 1 ? 'page' : 'pages'},{' '}
                       {formatSize(splitFile.size)}
                     </p>
@@ -316,7 +335,7 @@ export function PdfTool() {
                       setPageCount(null)
                       setPreview(null)
                     }}
-                    className="text-sm text-slate-500 hover:text-slate-900"
+                    className="text-sm text-muted hover:text-ink"
                   >
                     Close file
                   </button>
@@ -326,11 +345,11 @@ export function PdfTool() {
                 </div>
               </section>
 
-              <section className="rounded-xl border border-slate-200 bg-white p-5">
-                <h2 className="text-sm font-medium text-slate-700">
+              <section className="rounded-xl border border-line bg-surface p-5">
+                <h2 className="text-sm font-medium text-ink">
                   Extract pages
                 </h2>
-                <p className="mt-1 text-sm text-slate-500">
+                <p className="mt-1 text-sm text-muted">
                   Page numbers or ranges, separated by commas. Order is kept, so
                   "3, 1" puts page 3 first.
                 </p>
@@ -345,13 +364,13 @@ export function PdfTool() {
                     placeholder="1-3, 7"
                     aria-label="Pages to extract"
                     aria-invalid={selection?.error !== null}
-                    className="w-48 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
+                    className="w-48 rounded-lg border border-edge px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
                   />
                   <button
                     type="button"
                     onClick={() => void extractTo('preview')}
                     disabled={busy !== null || !selection || selection.error !== null}
-                    className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 disabled:opacity-50"
+                    className="rounded-lg border border-edge px-4 py-2 text-sm font-medium text-ink hover:bg-hover disabled:opacity-50"
                   >
                     Preview pages
                   </button>
@@ -359,7 +378,7 @@ export function PdfTool() {
                     type="button"
                     onClick={() => void extractTo('download')}
                     disabled={busy !== null || !selection || selection.error !== null}
-                    className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:opacity-50"
+                    className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50"
                   >
                     {busy === 'extract' ? 'Extracting…' : 'Extract and download'}
                   </button>
@@ -367,14 +386,14 @@ export function PdfTool() {
                     type="button"
                     onClick={splitAll}
                     disabled={busy !== null}
-                    className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 disabled:opacity-50"
+                    className="rounded-lg border border-edge px-4 py-2 text-sm font-medium text-ink hover:bg-hover disabled:opacity-50"
                   >
                     {busy === 'split' ? 'Splitting…' : 'Split into single pages'}
                   </button>
                 </div>
 
                 {selection?.error && range.trim() !== '' && (
-                  <p className="mt-2 text-sm text-red-700">{selection.error}</p>
+                  <p className="mt-2 text-sm text-bad">{selection.error}</p>
                 )}
               </section>
             </>
@@ -383,13 +402,13 @@ export function PdfTool() {
       )}
 
       {preview && (
-        <section className="rounded-xl border border-slate-200 bg-white">
-          <header className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-5 py-3">
+        <section className="rounded-xl border border-line bg-surface">
+          <header className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-3">
             <div>
-              <h2 className="text-sm font-medium text-slate-700">
+              <h2 className="text-sm font-medium text-ink">
                 {preview.name}
               </h2>
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-muted">
                 {preview.note} · {formatSize(preview.blob.size)}
               </p>
             </div>
@@ -397,14 +416,14 @@ export function PdfTool() {
               <button
                 type="button"
                 onClick={() => downloadBlob(preview.blob, preview.name)}
-                className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700"
+                className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover"
               >
                 Download
               </button>
               <button
                 type="button"
                 onClick={() => setPreview(null)}
-                className="text-sm text-slate-500 hover:text-slate-900"
+                className="text-sm text-muted hover:text-ink"
               >
                 Close preview
               </button>
@@ -412,7 +431,7 @@ export function PdfTool() {
           </header>
           <div className="p-5">
             <PdfPreview blob={preview.blob} title={preview.name} />
-            <p className="mt-2 text-xs text-slate-400">
+            <p className="mt-2 text-xs text-faint">
               If the frame stays blank, your browser will not show PDFs inline.
               Download it to check.
             </p>
