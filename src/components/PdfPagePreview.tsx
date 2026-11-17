@@ -77,7 +77,7 @@ export function PdfPagePreview({ file, maxPages = 60 }: PdfPagePreviewProps) {
 
   if (error) {
     return (
-      <p className="rounded-xl border border-amber-200 bg-amber-50 px-5 py-3 text-sm text-amber-900">
+      <p className="rounded-xl border border-warn/30 bg-warn-soft px-5 py-3 text-sm text-warn">
         Preview failed: {error} You can still split the file.
       </p>
     )
@@ -85,7 +85,7 @@ export function PdfPagePreview({ file, maxPages = 60 }: PdfPagePreviewProps) {
 
   return (
     <div>
-      <p className="text-sm text-slate-500">
+      <p className="text-sm text-muted">
         {loading
           ? `Rendering ${total > 0 ? `${total} ` : ''}pages…`
           : `${total} ${total === 1 ? 'page' : 'pages'}`}
@@ -101,14 +101,14 @@ export function PdfPagePreview({ file, maxPages = 60 }: PdfPagePreviewProps) {
         {thumbs.map((thumb) => (
           <li
             key={thumb.page}
-            className="overflow-hidden rounded-lg border border-slate-200 bg-white"
+            className="overflow-hidden rounded-lg border border-line bg-surface"
           >
             <img
               src={thumb.url}
               alt={`Page ${thumb.page}`}
-              className="w-full bg-white"
+              className="w-full bg-surface"
             />
-            <p className="border-t border-slate-100 px-2 py-1 text-center text-xs text-slate-500">
+            <p className="border-t border-line px-2 py-1 text-center text-xs text-muted">
               {thumb.page}
             </p>
           </li>
@@ -116,7 +116,7 @@ export function PdfPagePreview({ file, maxPages = 60 }: PdfPagePreviewProps) {
       </ul>
 
       {loading && thumbs.length === 0 && (
-        <p className="mt-3 text-sm text-slate-400">
+        <p className="mt-3 text-sm text-faint">
           {formatSize(file.size)} to read.
         </p>
       )}
