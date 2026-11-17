@@ -1,20 +1,7 @@
-export type RenameOptions = {
-  prefix: string
-  suffix: string
-  numbering: boolean
-  start: number
-  pad: number
-  find: string
-  replace: string
-  useRegex: boolean
-  caseSensitive: boolean
-}
-
 export type NameRow = {
   file: File
   original: string
   next: string
-  collided: boolean
 }
 
 /** Split "report.final.pdf" into "report.final" and ".pdf". Dotfiles have no extension. */
@@ -24,99 +11,74 @@ export function splitExtension(name: string): { base: string; ext: string } {
   return { base: name.slice(0, dot), ext: name.slice(dot) }
 }
 
-const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-
 /** Characters that break filenames on at least one common operating system. */
 export function sanitizeName(value: string): string {
   // eslint-disable-next-line no-control-regex
   return value.replace(/[\\/:*?"<>|\u0000-\u001f]/g, '-').trim()
 }
 
-/** Compile the find pattern once so the UI can show a useful error. */
-export function patternError(options: RenameOptions): string | null {
-  if (!options.useRegex || options.find === '') return null
-  try {
-    new RegExp(options.find, options.caseSensitive ? '' : 'i')
-    return null
-  } catch (error) {
-    return error instanceof Error ? error.message : 'Invalid pattern'
-  }
+/** "pdf", ".pdf", and " .PDF. " all mean the same extension. */
+export function normalizeExtension(value: string): string {
+  return value.trim().replace(/^\.+/, '').replace(/\.+$/, '').toLowerCase()
 }
 
-function applyReplace(base: string, options: RenameOptions): string {
-  const { find, replace } = options
-  if (find === '') return base
+/** The same, with characters that break filenames removed. */
+function sanitizeExtension(value: string): string {
+  return sanitizeName(normalizeExtension(value)).replace(/^\.+/, '').replace(/\.+$/, '')
+}
 
-  // A function replacement stops "$&" in the user's text being treated as a pattern.
-  const replaceWith = () => replace
-
-  if (options.useRegex) {
-    try {
-      const flags = options.caseSensitive ? 'g' : 'gi'
-      // Here "$1" should mean a capture group, so the text is passed through raw.
-      return base.replace(new RegExp(find, flags), replace)
-    } catch {
-      // An invalid pattern is reported separately; leave the name untouched.
-      return base
-    }
-  }
-
-  if (options.caseSensitive) return base.split(find).join(replace)
-  return base.replace(new RegExp(escapeRegExp(find), 'gi'), replaceWith)
+/** "photo.png" with "jpg" becomes "photo.jpg". No dot needed in the argument. */
+export function replaceExtension(name: string, extension: string): string {
+  return `${splitExtension(name).base}.${extension.replace(/^\.+/, '')}`
 }
 
 /**
- * The bulk rules only ever rewrite the base name, so the extension survives.
- * Manual edits to a row are allowed to change the extension.
+ * A name that says where a made-up file came from. One source keeps its own
+ * name, two become "a-and-b", more become "a-and-4-more". Each base is capped
+ * so a few long names cannot blow past what a filesystem accepts.
  */
-export function suggestName(
-  original: string,
-  index: number,
-  options: RenameOptions,
-): string {
-  const { base, ext } = splitExtension(original)
+export function joinedBaseName(names: string[]): string {
+  const bases = names
+    .map((name) => sanitizeName(splitExtension(name).base).slice(0, 40))
+    .filter((base) => base !== '')
 
-  let next = applyReplace(base, options)
-  next = `${options.prefix}${next}${options.suffix}`
-
-  if (options.numbering) {
-    const number = options.start + index
-    next = `${next}-${String(number).padStart(options.pad, '0')}`
-  }
-
-  return `${sanitizeName(next) || sanitizeName(base) || 'untitled'}${ext}`
+  if (bases.length === 0) return 'file'
+  if (bases.length === 1) return bases[0]
+  if (bases.length === 2) return `${bases[0]}-and-${bases[1]}`
+  return `${bases[0]}-and-${bases.length - 1}-more`
 }
 
 /**
- * Turn the names the user wants into the names that will actually be saved:
- * illegal characters removed, blanks falling back to the original, and
- * duplicates numbered so no file overwrites another.
+ * One name for the whole batch. A single file keeps that name exactly; several
+ * files get a number so they stay distinct: report-1.pdf, report-2.pdf.
+ *
+ * The extension box is optional. Empty means every file keeps its own; filled
+ * means every file uses that one instead, converting the contents when the
+ * browser can write that format.
  */
-export function finalizeNames(
+export function buildNames(
   files: File[],
-  desired: string[],
-): { rows: NameRow[]; collisions: number } {
-  const used = new Set<string>()
-  let collisions = 0
+  name: string,
+  extension: string,
+): NameRow[] {
+  const base = sanitizeName(name)
+  const wanted = sanitizeExtension(extension)
 
-  const rows = files.map((file, index) => {
-    let next = sanitizeName(desired[index] ?? '') || file.name
-    let collided = false
+  if (base === '' && wanted === '') {
+    return files.map((file) => ({
+      file,
+      original: file.name,
+      next: file.name,
+    }))
+  }
 
-    if (used.has(next.toLowerCase())) {
-      const { base, ext } = splitExtension(next)
-      let counter = 2
-      do {
-        next = `${base} (${counter})${ext}`
-        counter += 1
-      } while (used.has(next.toLowerCase()))
-      collided = true
-      collisions += 1
-    }
+  return files.map((file, index) => {
+    const { base: originalBase, ext: originalExt } = splitExtension(file.name)
 
-    used.add(next.toLowerCase())
-    return { file, original: file.name, next, collided }
+    let stem = base === '' ? originalBase : base
+    if (base !== '' && files.length > 1) stem = `${base}-${index + 1}`
+
+    const finalExt = wanted === '' ? originalExt : `.${wanted}`
+    return { file, original: file.name, next: `${stem}${finalExt}` }
   })
-
-  return { rows, collisions }
 }
