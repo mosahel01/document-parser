@@ -12,6 +12,20 @@ Word documents.
 **The product rule: process in the browser whenever possible.** A server is the
 exception, used only where the browser genuinely cannot do the job.
 
+### File first, then options
+
+The Home tab is the entry point. You drop a file and its extension decides which
+operations appear: an image offers conversion, a lone PDF offers split and PDF to
+Word, several PDFs offer merge, a `.docx` offers reading and Word to PDF, text
+offers find and replace, a zip or `.gz` offers unpacking. Rename, zip, and
+compress always take the whole drop. Nothing is silently ignored: single-file
+operations are offered only when that kind appears once, and a note says so.
+
+`src/tools/fileKind.ts` makes that decision in one table, and each button hands
+its files to an existing tool through `initialFiles` and `initialMode`. The tabs
+stay as direct shortcuts; they are derived from the same tool object, so a tab
+can never point at a tool that is not there.
+
 ### Rename semantics
 
 Renaming means *setting the target name*: `abc.pdf` becomes `xyz.pdf` because the
@@ -46,6 +60,18 @@ slice of the file, and refuses to treat an untyped SVG as a raster image.
 can be checked before anything is saved. Find and replace shows the first match
 in context twice, "now" and "after", instead of only counting matches.
 
+### Look
+
+The theme is a class on `<html>`, flipped by `ThemeToggle` and remembered in
+`localStorage` under `document-toolkit-theme`; the inline script in `index.html`
+sets it before the first paint, so a dark-mode visitor never sees a flash of
+cream. Every colour comes from a token in `index.css` (`paper`, `surface`,
+`sunk`, `hover`, `line`, `edge`, `ink`, `muted`, `faint`, `accent`, `good`,
+`bad`, `warn`). Components therefore carry no `dark:` variants: swapping the
+token values under `.dark` restyles the whole app. No font is bundled, because
+Berkeley Mono is sold; the stack asks the OS for Berkeley Mono, then Ubuntu,
+Iosevka, then whatever mono the machine has.
+
 ## Who it is for
 
 More than a handful of people, but not a large public product. Designed for many
@@ -59,6 +85,7 @@ billing are deliberately deferred.
 | Language | TypeScript everywhere | One language; the owner is most comfortable in TS |
 | Framework | React + Vite | Explicit and inspectable; no hidden conventions |
 | Styling | Tailwind CSS v4 | Fast to write, readable in markup, nothing to architect yet |
+| Colour and fonts | CSS tokens, no bundled font | Berkeley Mono is commercial, so the OS supplies the font; one token set drives both themes |
 | Backend later | Node + Fastify | Small, well documented, TypeScript friendly |
 | Heavy jobs later | CLI tools in a container | Do not reimplement LibreOffice or Tesseract |
 | Database | None for now | Add when there is real data worth keeping |
@@ -86,9 +113,14 @@ billing are deliberately deferred.
   Do not promise it client-side.
 - **Browser work costs the visitor's CPU, not ours.** Long jobs should still
   report progress and be cancellable.
-- **PDF limits are deliberate.** Thumbnails stop at 60 pages and a single-file
-  split stops at 200, because both run synchronously on the main thread. Raise
-  them only with a worker, not by deleting the check.
+- **PDF limits are deliberate.** Thumbnails stop at 60 pages, a single-file
+  split stops at 200, and a file over 100 MB is refused outright, because all of
+  it runs synchronously on the main thread. Raise them only with a worker, not by
+  deleting the check.
+- **A PDF error names the file and the reason.** `npm test` checks that a broken
+  file says so by name; the old catch-all hid which file failed and why. Some
+  files parse and only break while pages are read, so the guard wraps the whole
+  read, not just `PDFDocument.load`.
 - **Find and replace only touches UTF-8 text.** Rewriting a Windows-1252 CSV or
   a binary as UTF-8 would corrupt it, so non-UTF-8 files are refused rather than
   guessed at. The cap is 20 MB per file.
@@ -100,13 +132,15 @@ billing are deliberately deferred.
 ## Roadmap
 
 - **Phase 0** — repository, build, one page that runs. *Done.*
-- **Phase 1** — browser tools: rename *(done, converts images)*, zip/unzip
-  *(done)*, PDF merge/split *(done)*, image conversion *(done)*, find and
-  replace *(done)*, gzip compress/decompress *(done)*, DOCX to HTML, Markdown,
-  and text *(done)*, Word to PDF and PDF to Word as text *(done, basic)*.
+- **Phase 1** — browser tools: file-first Home *(done)*, rename *(done, converts
+  images)*, zip/unzip *(done)*, PDF merge/split *(done)*, image conversion
+  *(done)*, find and replace *(done)*, gzip compress/decompress *(done)*, DOCX to
+  HTML, Markdown, and text *(done)*, Word to PDF and PDF to Word as text *(done,
+  basic)*.
 - **Phase 2** — server and container for faithful DOCX to PDF and OCR.
 - **Phase 3** — accounts, history, limits, expiry and cleanup.
-- **Phase 4** — remaining features, decided later.
+- **Phase 4** — remaining features, decided later. An image editor (crop, resize,
+  rotate) belongs here; it is a project of its own, not a tab.
 
 ## Conventions
 
