@@ -5,6 +5,7 @@ import {
   countPages,
   extractPages,
   mergePdfs,
+  pageImageName,
   pagesToPdf,
   parsePageSelection,
   splitIntoPages,
@@ -146,6 +147,13 @@ describe('pagesToPdf', () => {
     await expect(pagesToPdf([await sized([200])], [])).rejects.toThrow(
       'no pages left to save',
     )
+  })
+})
+
+describe('pageImageName', () => {
+  it('pads the page number to the document width', () => {
+    expect(pageImageName('report', 3, 12, 'jpg')).toBe('report-page-03.jpg')
+    expect(pageImageName('report', 3, 9, 'png')).toBe('report-page-3.png')
   })
 })
 
