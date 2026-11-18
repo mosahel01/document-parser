@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { FileDrop } from './FileDrop'
 import { FilePreview } from './FilePreview'
+import { PdfPageManager } from './PdfPageManager'
 import { PdfPagePreview } from './PdfPagePreview'
 import { PdfPreview } from './PdfPreview'
 import { downloadBlob, downloadEach } from '../tools/download'
@@ -15,7 +16,7 @@ import {
 } from '../tools/pdf'
 import { formatSize } from '../lib/format'
 
-type Mode = 'merge' | 'split'
+type Mode = 'merge' | 'split' | 'pages'
 
 const tabClass = (active: boolean) =>
   `rounded-md px-4 py-1.5 text-sm font-medium ${
@@ -30,6 +31,10 @@ export function PdfTool({
   initialMode?: Mode
 }) {
   const [mode, setMode] = useState<Mode>(initialMode ?? 'merge')
+
+  // The page editor is kept mounted once opened: switching to Merge and back
+  // should not throw away a reordered document.
+  const [pagesOpened, setPagesOpened] = useState(initialMode === 'pages')
 
   const [mergeFiles, setMergeFiles] = useState<File[]>(
     initialMode === 'split' ? [] : (initialFiles ?? []),
@@ -66,6 +71,7 @@ export function PdfTool({
 
   function chooseMode(next: Mode) {
     setMode(next)
+    if (next === 'pages') setPagesOpened(true)
     setPreview(null)
   }
 
@@ -182,9 +188,22 @@ export function PdfTool({
         >
           Split
         </button>
+        <button
+          type="button"
+          onClick={() => chooseMode('pages')}
+          className={tabClass(mode === 'pages')}
+        >
+          Pages
+        </button>
       </div>
 
-      {mode === 'merge' ? (
+      {pagesOpened && (
+        <div hidden={mode !== 'pages'}>
+          <PdfPageManager initialFiles={initialFiles} />
+        </div>
+      )}
+
+      {mode === 'merge' && (
         <>
           <FileDrop
             onFiles={(incoming) => {
@@ -296,7 +315,9 @@ export function PdfTool({
             </p>
           )}
         </>
-      ) : (
+      )}
+
+      {mode === 'split' && (
         <>
           <FileDrop
             onFiles={(incoming) => {
