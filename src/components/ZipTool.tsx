@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { DownloadBar } from './DownloadBar'
 import { FileDrop } from './FileDrop'
 import { FileList } from './FileList'
 import { FilePreview } from './FilePreview'
@@ -146,11 +147,9 @@ export function ZipTool({
           />
 
           {files.length > 0 && (
-            <div className="flex items-center justify-between rounded-xl border border-line bg-surface px-5 py-3">
-              <p className="text-sm text-muted">
-                {files.length} {files.length === 1 ? 'file' : 'files'},{' '}
-                {formatSize(packedSize)}
-              </p>
+            <DownloadBar
+              note={`${files.length} ${files.length === 1 ? 'file' : 'files'}, ${formatSize(packedSize)}`}
+            >
               <button
                 type="button"
                 onClick={createArchive}
@@ -159,7 +158,7 @@ export function ZipTool({
               >
                 {zipping ? 'Packing…' : `Download ${zipName}`}
               </button>
-            </div>
+            </DownloadBar>
           )}
         </>
       ) : (
@@ -197,26 +196,16 @@ export function ZipTool({
                     itself.
                   </p>
                 </div>
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={downloadEverything}
-                    disabled={saving}
-                    className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50"
-                  >
-                    {saving ? 'Saving…' : 'Download all'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setArchive(null)
-                      setEntries(null)
-                    }}
-                    className="text-sm text-muted hover:text-ink"
-                  >
-                    Close archive
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setArchive(null)
+                    setEntries(null)
+                  }}
+                  className="text-sm text-muted hover:text-ink"
+                >
+                  Close archive
+                </button>
               </header>
 
               {entries.length === 0 ? (
@@ -269,6 +258,19 @@ export function ZipTool({
                 </div>
               )}
             </section>
+          )}
+
+          {archive && !error && entries && entries.length > 0 && (
+            <DownloadBar>
+              <button
+                type="button"
+                onClick={downloadEverything}
+                disabled={saving}
+                className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50"
+              >
+                {saving ? 'Saving…' : 'Download all'}
+              </button>
+            </DownloadBar>
           )}
         </>
       )}
