@@ -78,12 +78,10 @@ export function groupLines(items: PdfTextItem[]): string[] {
 }
 
 /**
- * Read a PDF and write its text into a .docx. Layout, images, and fonts are not
- * carried over: this is the words in reading order, not a facsimile.
+ * Read a PDF's words in reading order, one string per paragraph. Layout, images,
+ * and fonts are not carried over.
  */
-export async function pdfToDocx(
-  file: File,
-): Promise<{ blob: Blob; paragraphs: string[] }> {
+export async function readPdfParagraphs(file: File): Promise<string[]> {
   if (file.size > MAX_PDF_BYTES) {
     throw new Error(
       `"${file.name}" is over ${formatSize(MAX_PDF_BYTES)}. Open a smaller PDF.`,
@@ -125,9 +123,20 @@ export async function pdfToDocx(
 
   if (paragraphs.length === 0) {
     throw new Error(
-      `"${file.name}" has no text layer, so there is nothing to put in a Word file. A scanned PDF needs OCR, which runs on a server.`,
+      `"${file.name}" has no text layer, so there is nothing to take out of it. A scanned PDF needs OCR, which runs on a server.`,
     )
   }
 
+  return paragraphs
+}
+
+/**
+ * Write a PDF's text into a .docx. This is a readable copy of the words, not a
+ * facsimile of the page.
+ */
+export async function pdfToDocx(
+  file: File,
+): Promise<{ blob: Blob; paragraphs: string[] }> {
+  const paragraphs = await readPdfParagraphs(file)
   return { blob: docxFromParagraphs(paragraphs), paragraphs }
 }
