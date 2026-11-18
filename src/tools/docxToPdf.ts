@@ -1,4 +1,4 @@
-import { readDocx } from './docx'
+import { readDocx, type DocxBlock } from './docx'
 import { formatSize } from '../lib/format'
 
 /** A4 in points, and the margin PDF viewers expect from a letter-sized print. */
@@ -110,18 +110,11 @@ export function wrapText(
 }
 
 /**
- * Render a .docx as plain paragraphs on A4 pages. This is a readable copy of
- * the words, not a faithful copy of the layout: columns, images, tables, and
- * exact fonts need a real layout engine, which stays server work.
+ * Render paragraphs as plain text on A4 pages. This is a readable copy of the
+ * words, not a faithful copy of the layout: columns, images, tables, and exact
+ * fonts need a real layout engine, which stays server work.
  */
-export async function docxToPdf(file: File): Promise<Blob> {
-  if (file.size > 50 * 1024 * 1024) {
-    throw new Error(
-      `"${file.name}" is over ${formatSize(50 * 1024 * 1024)}. Open a smaller document.`,
-    )
-  }
-
-  const blocks = await readDocx(file)
+export async function blocksToPdf(blocks: DocxBlock[]): Promise<Blob> {
   const { PDFDocument, StandardFonts, rgb } = await import('pdf-lib')
 
   const document = await PDFDocument.create()
@@ -171,4 +164,15 @@ export async function docxToPdf(file: File): Promise<Blob> {
 
   const bytes = await document.save()
   return new Blob([bytes as Uint8Array<ArrayBuffer>], { type: 'application/pdf' })
+}
+
+/** Read a .docx and render its paragraphs as pages. */
+export async function docxToPdf(file: File): Promise<Blob> {
+  if (file.size > 50 * 1024 * 1024) {
+    throw new Error(
+      `"${file.name}" is over ${formatSize(50 * 1024 * 1024)}. Open a smaller document.`,
+    )
+  }
+
+  return blocksToPdf(await readDocx(file))
 }
