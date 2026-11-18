@@ -11,7 +11,7 @@ keeps the product private, cheap to run, and simple to reason about.
 
 Phase 1, browser-only: merge and split PDFs, edit their pages (rotate, delete,
 copy, reorder, pull pages in from another file), zip and unzip, find and
-replace, gzip compression, photo crop/resize/rotate, and renaming (which
+replace, gzip compression, photo crop/resize/straighten, and renaming (which
 converts the contents when the new extension asks for it).
 
 One Convert tab moves a file between formats: photos to PNG, JPG, WebP, or PDF;
