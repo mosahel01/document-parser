@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { DownloadBar } from './DownloadBar'
 import { FileDrop } from './FileDrop'
 import { FilePreview } from './FilePreview'
 import { PdfPageManager } from './PdfPageManager'
@@ -281,30 +282,15 @@ export function PdfTool({
                   </li>
                 ))}
               </ul>
-              <div className="flex items-center justify-between border-t border-line px-5 py-3">
-                <p className="text-sm text-muted">
-                  {mergeFiles.length < 2
-                    ? 'Add at least two PDFs to merge.'
-                    : `${mergeFiles.length} PDFs become one.`}
-                </p>
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => void mergeTo('preview')}
-                    disabled={merging || mergeFiles.length < 2}
-                    className="rounded-lg border border-edge px-4 py-2 text-sm font-medium text-ink hover:bg-hover disabled:opacity-50"
-                  >
-                    Preview
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void mergeTo('download')}
-                    disabled={merging || mergeFiles.length < 2}
-                    className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50"
-                  >
-                    {merging ? 'Merging…' : 'Merge and download'}
-                  </button>
-                </div>
+              <div className="flex items-center justify-end border-t border-line px-5 py-3">
+                <button
+                  type="button"
+                  onClick={() => void mergeTo('preview')}
+                  disabled={merging || mergeFiles.length < 2}
+                  className="rounded-lg border border-edge px-4 py-2 text-sm font-medium text-ink hover:bg-hover disabled:opacity-50"
+                >
+                  Preview
+                </button>
               </div>
             </section>
           )}
@@ -313,6 +299,25 @@ export function PdfTool({
             <p className="rounded-xl border border-bad/30 bg-bad-soft px-5 py-3 text-sm text-bad">
               {mergeError}
             </p>
+          )}
+
+          {mergeFiles.length > 0 && !preview && (
+            <DownloadBar
+              note={
+                mergeFiles.length < 2
+                  ? 'Add at least two PDFs to merge.'
+                  : `${mergeFiles.length} PDFs become one.`
+              }
+            >
+              <button
+                type="button"
+                onClick={() => void mergeTo('download')}
+                disabled={merging || mergeFiles.length < 2}
+                className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50"
+              >
+                {merging ? 'Merging…' : 'Merge and download'}
+              </button>
+            </DownloadBar>
           )}
         </>
       )}
@@ -395,14 +400,15 @@ export function PdfTool({
                   >
                     Preview pages
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => void extractTo('download')}
-                    disabled={busy !== null || !selection || selection.error !== null}
-                    className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50"
-                  >
-                    {busy === 'extract' ? 'Extracting…' : 'Extract and download'}
-                  </button>
+                </div>
+
+                {selection?.error && range.trim() !== '' && (
+                  <p className="mt-2 text-sm text-bad">{selection.error}</p>
+                )}
+              </section>
+
+              {!preview && (
+                <DownloadBar>
                   <button
                     type="button"
                     onClick={splitAll}
@@ -411,12 +417,18 @@ export function PdfTool({
                   >
                     {busy === 'split' ? 'Splitting…' : 'Split into single pages'}
                   </button>
-                </div>
-
-                {selection?.error && range.trim() !== '' && (
-                  <p className="mt-2 text-sm text-bad">{selection.error}</p>
-                )}
-              </section>
+                  <button
+                    type="button"
+                    onClick={() => void extractTo('download')}
+                    disabled={
+                      busy !== null || !selection || selection.error !== null
+                    }
+                    className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50"
+                  >
+                    {busy === 'extract' ? 'Extracting…' : 'Extract and download'}
+                  </button>
+                </DownloadBar>
+              )}
             </>
           )}
         </>
@@ -436,13 +448,6 @@ export function PdfTool({
             <div className="flex items-center gap-3">
               <button
                 type="button"
-                onClick={() => downloadBlob(preview.blob, preview.name)}
-                className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover"
-              >
-                Download
-              </button>
-              <button
-                type="button"
                 onClick={() => setPreview(null)}
                 className="text-sm text-muted hover:text-ink"
               >
@@ -458,6 +463,18 @@ export function PdfTool({
             </p>
           </div>
         </section>
+      )}
+
+      {preview && (
+        <DownloadBar>
+          <button
+            type="button"
+            onClick={() => downloadBlob(preview.blob, preview.name)}
+            className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover"
+          >
+            Download
+          </button>
+        </DownloadBar>
       )}
     </div>
   )
