@@ -6,8 +6,8 @@ project next, human or AI. Keep it current.
 ## What we are building
 
 A website that handles everyday document chores: converting between formats,
-renaming files in bulk, merging and splitting PDFs, compressing, and reading
-Word documents.
+renaming files in bulk, merging, splitting, compressing, cropping, numbering, and
+watermarking PDFs, making PDFs from photos, and reading Word documents.
 
 **The product rule: process in the browser whenever possible.** A server is the
 exception, used only where the browser genuinely cannot do the job.
@@ -15,12 +15,14 @@ exception, used only where the browser genuinely cannot do the job.
 ### File first, then options
 
 The Home tab is the entry point. You drop a file and its extension decides which
-operations appear: an image offers converting and photo editing, a lone PDF
-offers page editing, splitting, and converting, several PDFs offer merge, a
-`.docx` offers converting, text offers find and replace and converting, a zip or
-`.gz` offers unpacking. Rename, zip, and compress always take the whole drop.
-Nothing is silently ignored: operations that work on one file are offered only
-when that kind appears once, and a note says what is missing and why.
+operations appear: an image offers converting, photo editing, and a PDF; several
+images also offer one PDF from the set. A lone PDF offers page editing, splitting,
+compressing, cropping, page numbers, a watermark, page images, and converting;
+several PDFs offer merge. A `.docx` offers converting, text offers find and
+replace and converting, a zip or `.gz` offers unpacking. Rename, zip, and
+compress always take the whole drop. Nothing is silently ignored: operations
+that work on one file are offered only when that kind appears once, and a note
+says what is missing and why.
 
 `src/tools/fileKind.ts` makes that decision in one table, and each button hands
 its files to an existing tool through `initialFiles` and `initialMode`. The tabs
@@ -65,7 +67,9 @@ file. A file already in the chosen format is saved as it is rather than refused.
 Word and PDF conversions move the words only: headings, paragraphs, and lists
 survive, images, tables, and fonts do not. `docxToPdf`, `pdfToDocx`, and the
 DOCX writers are shared with the Word tab, so there is one implementation of
-each direction.
+each direction. Making one PDF from several photos is a separate job with page
+size, orientation, and margin choices, so it lives in the PDF tab's Images mode
+instead of producing one PDF per dropped photo here.
 
 ### Downloads
 
@@ -88,9 +92,10 @@ its base name (`report-01.pdf`, `report.pdf.gz`). See `joinedBaseName`.
 Show what a file is before it is processed: `FilePreview` renders an image
 thumbnail, the first lines of text, or a type badge. It never reads more than a
 slice of the file, and refuses to treat an untyped SVG as a raster image.
-`PdfPreview` shows a finished PDF in a frame, so merge, extract, and Word to PDF
-can be checked before anything is saved. Find and replace shows the first match
-in context twice, "now" and "after", instead of only counting matches.
+`PdfPreview` shows a finished PDF in a frame, so merge, extract, crop, numbering,
+watermarking, compression, images to PDF, and Word to PDF can be checked before
+anything is saved. Find and replace shows the first match in context twice, "now"
+and "after", instead of only counting matches.
 
 ### Editing pages
 
@@ -101,6 +106,44 @@ rewritten and the same page can appear twice with a different rotation. A turn
 is added to the rotation the page already had, so a sideways scan comes out
 upright instead of upside down. Thumbnails come from `renderPageThumbs`, shared
 with the split view; the page editor keeps its state while you switch modes.
+
+### Finishing PDFs
+
+The same tab carries the chores that come after the pages are right. Each one
+takes one PDF, shows a finished preview, and saves a copy under a new name
+(`report-cropped.pdf`, `report-numbered.pdf`), so the original is never touched.
+The two that redraw every page, compression and PDF to images, report progress
+and can be stopped part way.
+
+- **Compress** redraws every page as a JPEG at a chosen resolution and quality,
+  then builds a fresh PDF from those images (`compressPdf`). This is what makes a
+  scanned file smaller. It is also honest about the cost: text stops being
+  selectable and links, forms, and bookmarks are lost. When the rebuilt copy is
+  no smaller than the original, the original is returned and the UI says so
+  instead of shipping a larger file under a new name.
+- **Crop** changes each page's crop box rather than rebuilding it. Margins are
+  percentages of the page as it is *seen*, so 5% off the top of a sideways scan
+  takes the visible top (`cropBoxFor`). The hidden area stays in the file; every
+  PDF viewer honours the smaller box.
+- **Page numbers** draw Helvetica digits in a chosen corner or centre, in one of
+  three formats, with a starting number and an option to skip the first page.
+  Positions are measured on the visible page, and the text is turned against the
+  page's own rotation, so a number on a sideways page still reads upright.
+- **Watermark** draws one line of text across the middle. Long text is shrunk to
+  fit the short side. It compensates for page rotation the same way, and refuses
+  characters the built-in font cannot encode rather than writing a broken glyph.
+- **PDF to images** renders each page with pdf.js at 150, 200, or 300 dpi as JPG
+  or PNG (`renderPdfPages`). Rotated and cropped pages look as they do in a
+  viewer. This is not in the Convert table because it makes one file per page,
+  not one output per input.
+- **Images to PDF** puts several photos into one document, one page each, with a
+  choice of A4, Letter, or a page that follows the photo's shape, plus a margin
+  (`imagesToPdf`). It sits in the same Images mode as PDF to images.
+
+`src/tools/pdfEnhance.ts` holds crop, numbering, and watermark work; it uses the
+same `openPdf` and `savePdf` as the rest of the PDF tools, so every failure still
+names the file. `src/lib/pdfRaster.ts` holds the canvas work, because rendering
+needs pdf.js and a DOM.
 
 ### Editing photos
 
@@ -160,8 +203,9 @@ billing are deliberately deferred.
 | File handling | Process, return, delete | No accounts and no storage means no privacy liability |
 | Zip creation | `fflate` | Tiny, zero-dependency, browser-friendly. Needed for "download all" and reused by the zip tool |
 | Tests | `vitest` | Reuses `vite.config.ts`, so imports and TypeScript resolve the same way as the app |
-| PDF work | `pdf-lib` | Merge, split, and copy pages in plain JavaScript, no server |
-| PDF preview | `pdfjs-dist` | Renders real page thumbnails; loaded only when the PDF tab opens |
+| PDF work | `pdf-lib` | Merge, split, copy, crop, and stamp pages in plain JavaScript, no server |
+| PDF preview | `pdfjs-dist` | Renders real page thumbnails and page images; loaded only when the PDF tab opens |
+| PDF page images and compression | pdf.js render to canvas, `pdf-lib` rebuild | Reuses the two PDF dependencies already present. Compression is rasterisation, which is the only honest way to shrink a scan in the browser |
 | Image conversion | Canvas, no library | `drawImage` plus `toBlob` covers PNG, JPG, and WebP. A library would add weight for nothing |
 | gzip | `CompressionStream`, no library | Built into every current browser; also works in Node, so the round trip is unit tested |
 | DOCX reading | `fflate` plus string matching on `word/document.xml` | No new dependency and no DOM, so the parser is unit tested in Node. Styles beyond headings and lists are not needed for text output |
@@ -182,9 +226,15 @@ billing are deliberately deferred.
 - **Browser work costs the visitor's CPU, not ours.** Long jobs should still
   report progress and be cancellable.
 - **PDF limits are deliberate.** Thumbnails stop at 60 pages, a single-file
-  split stops at 200, the page editor stops at 300 pages, and a file over 100 MB
-  is refused outright, because all of it runs synchronously on the main thread.
-  Raise them only with a worker, not by deleting the check.
+  split stops at 200, the page editor stops at 300 pages, page images stop at 60,
+  compression stops at 200, and a file over 100 MB is refused outright, because
+  all of it runs synchronously on the main thread. A page that would need more
+  than 40 megapixels is drawn smaller rather than left to exhaust memory. Raise
+  the page limits only with a worker, not by deleting the check.
+- **Compression rebuilds the pages as pictures.** It makes scanned files smaller
+  and makes text stop being selectable. It is not a lossless optimiser, and the
+  UI says so before the job starts. If the result is not smaller, the original is
+  returned under the new name.
 - **A PDF error names the file and the reason.** `npm test` checks that a broken
   file says so by name; the old catch-all hid which file failed and why. Some
   files parse and only break while pages are read, so the guard wraps the whole
@@ -209,7 +259,9 @@ billing are deliberately deferred.
   *(done)*, converting between images, PDF, Word, and text in one table
   *(done)*, photo crop/resize/straighten *(done)*, find and replace *(done)*, gzip
   compress/decompress *(done)*, DOCX to HTML, Markdown, and text *(done)*, Word
-  to PDF and PDF to Word as text *(done, basic)*.
+  to PDF and PDF to Word as text *(done, basic)*, PDF compression *(done,
+  rasterised)*, PDF cropping *(done)*, page numbers and watermark *(done)*,
+  PDF to JPG/PNG *(done)*, several photos to one PDF *(done)*.
 - **Phase 2** — server and container for faithful DOCX to PDF and OCR.
 - **Phase 3** — accounts, history, limits, expiry and cleanup.
 - **Phase 4** — remaining features, decided later.
