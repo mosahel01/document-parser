@@ -73,6 +73,12 @@ Every download button saves the real file under its own name and type. There is
 no "download all as zip" wrapper: a batch saves one file at a time, spaced out
 so browsers accept them. Zipping is a separate tool the user chooses on purpose.
 
+The main save control lives in `DownloadBar` at the bottom of the tool, not in a
+header: `sticky bottom-0` keeps it on screen while a long list of results is
+scrolled, and it returns to its place in the flow when the tool ends. Per-file
+download links stay in the rows; the bar holds the single result or "Download
+all".
+
 Outputs made from several sources take a name that says where they came from
 (`january-and-february.pdf`, `a-and-4-more.zip`); outputs from one source keep
 its base name (`report-01.pdf`, `report.pdf.gz`). See `joinedBaseName`.
