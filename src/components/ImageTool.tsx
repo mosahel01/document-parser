@@ -10,7 +10,6 @@ import {
   matchingSide,
   type ImageFormat,
   type Rect,
-  type Turn,
 } from '../tools/image'
 import { formatSize } from '../lib/format'
 
@@ -65,7 +64,11 @@ export function ImageTool({ initialFiles }: { initialFiles?: File[] }) {
   const [source, setSource] = useState<File | null>(
     initialFiles?.[0] ?? null,
   )
-  const [turn, setTurn] = useState<Turn>(0)
+  const [angle, setAngle] = useState(0)
+  /** The angle the canvas actually holds, so a drag can preview on top of it. */
+  const [drawnAngle, setDrawnAngle] = useState<number | null>(null)
+  /** Degrees added by the grip while it is being dragged, before committing. */
+  const [draft, setDraft] = useState(0)
   const [turned, setTurned] = useState<{ width: number; height: number } | null>(
     null,
   )
@@ -84,8 +87,11 @@ export function ImageTool({ initialFiles }: { initialFiles?: File[] }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const stageRef = useRef<HTMLDivElement | null>(null)
   const drag = useRef<Drag | null>(null)
+  /** Where the grip was last seen, and how far it has turned so far. */
+  const spin = useRef<{ last: number } | null>(null)
+  const draftRef = useRef(0)
 
-  // One pass per file and turn: rotate into the visible canvas. Anything that
+  // One pass per file and angle: rotate into the visible canvas. Anything that
   // invalidates a chosen crop is cleared by the event that caused it, below.
   useEffect(() => {
     if (!source) return
@@ -94,9 +100,12 @@ export function ImageTool({ initialFiles }: { initialFiles?: File[] }) {
     const canvas = canvasRef.current
     if (!canvas) return
 
-    void drawTurned(source, turn, canvas)
+    void drawTurned(source, angle, canvas)
       .then((drawn) => {
-        if (!cancelled) setTurned({ width: drawn.width, height: drawn.height })
+        if (!cancelled) {
+          setTurned({ width: drawn.width, height: drawn.height })
+          setDrawnAngle(angle)
+        }
       })
       .catch((problem: unknown) => {
         if (!cancelled) {
@@ -111,7 +120,7 @@ export function ImageTool({ initialFiles }: { initialFiles?: File[] }) {
     return () => {
       cancelled = true
     }
-  }, [source, turn])
+  }, [source, angle])
 
   const bounds = turned ?? { width: 1, height: 1 }
   const activeCrop: Rect = crop ?? {
@@ -127,7 +136,9 @@ export function ImageTool({ initialFiles }: { initialFiles?: File[] }) {
 
   function pick(file: File) {
     setSource(file)
-    setTurn(0)
+    setAngle(0)
+    setDraft(0)
+    draftRef.current = 0
     setCrop(null)
     setSize(null)
     setTurned(null)
@@ -136,12 +147,46 @@ export function ImageTool({ initialFiles }: { initialFiles?: File[] }) {
     setQuality(0.9)
   }
 
-  /** A crop box does not survive being turned, so both resets happen together. */
-  function turnBy(delta: number) {
-    setTurn((current) => ((current + delta + 360) % 360) as Turn)
+  function normalized(degrees: number): number {
+    if (!Number.isFinite(degrees)) return 0
+    return ((degrees % 360) + 360) % 360
+  }
+
+  /**
+   * Every angle change goes through here: turning a picture invalidates both the
+   * crop and the output size, because a rectangle measured before the turn no
+   * longer covers the same pixels.
+   */
+  function rotateTo(next: number) {
+    setAngle(normalized(next))
+    setDraft(0)
+    draftRef.current = 0
     setCrop(null)
     setSize(null)
-    setTurned(null)
+  }
+
+  function turnBy(delta: number) {
+    rotateTo(angle + delta)
+  }
+
+  /** Where the pointer sits around the middle of the picture, in degrees. */
+  function angleAt(event: ReactPointerEvent): number {
+    const stage = stageRef.current
+    if (!stage) return 0
+
+    const rect = stage.getBoundingClientRect()
+    const x = event.clientX - (rect.left + rect.width / 2)
+    const y = event.clientY - (rect.top + rect.height / 2)
+    return (Math.atan2(y, x) * 180) / Math.PI
+  }
+
+  function startSpin(event: ReactPointerEvent) {
+    event.preventDefault()
+    event.stopPropagation()
+    stageRef.current?.setPointerCapture(event.pointerId)
+    spin.current = { last: angleAt(event) }
+    draftRef.current = 0
+    setDraft(0)
   }
 
   /** Pointer position in pixels of the turned picture. */
@@ -214,6 +259,24 @@ export function ImageTool({ initialFiles }: { initialFiles?: File[] }) {
   }
 
   function move(event: ReactPointerEvent) {
+    const turning = spin.current
+    if (turning) {
+      const current = angleAt(event)
+      // A pointer crossing due west flips atan2 by a whole turn; measure the
+      // small step instead of the angle from the start, so the picture does not
+      // snap round.
+      const step = ((current - turning.last + 540) % 360) - 180
+      turning.last = current
+
+      if (step !== 0) {
+        draftRef.current += step
+        setDraft(draftRef.current)
+        setCrop(null)
+        setSize(null)
+      }
+      return
+    }
+
     const plan = drag.current
     if (!plan) return
 
@@ -286,6 +349,17 @@ export function ImageTool({ initialFiles }: { initialFiles?: File[] }) {
   }
 
   function end(event: ReactPointerEvent) {
+    if (spin.current) {
+      spin.current = null
+      stageRef.current?.releasePointerCapture(event.pointerId)
+
+      const delta = draftRef.current
+      draftRef.current = 0
+      setDraft(0)
+      if (delta !== 0) rotateTo(angle + delta)
+      return
+    }
+
     drag.current = null
     stageRef.current?.releasePointerCapture(event.pointerId)
   }
@@ -313,7 +387,7 @@ export function ImageTool({ initialFiles }: { initialFiles?: File[] }) {
     setError(null)
     try {
       const blob = await editImage(source, {
-        turn,
+        angle,
         crop: activeCrop,
         width: output.width,
         height: output.height,
@@ -332,6 +406,10 @@ export function ImageTool({ initialFiles }: { initialFiles?: File[] }) {
   }
 
   const lossy = format === 'jpg' || format === 'webp'
+  // The canvas holds `drawnAngle`. While a tilt is being dragged, or a new angle
+  // is still being drawn, lay the difference on top so the picture follows the
+  // grip without waiting for a full-resolution redraw.
+  const preview = draft + (drawnAngle === null ? 0 : angle - drawnAngle)
   const percent = (value: number, whole: number) =>
     `${(value / Math.max(whole, 1)) * 100}%`
 
@@ -379,21 +457,40 @@ export function ImageTool({ initialFiles }: { initialFiles?: File[] }) {
           </header>
 
           <div className="space-y-5 p-5">
-            <div className="inline-block max-w-full rounded-lg bg-sunk p-2">
+            <div className="relative inline-block max-w-full rounded-lg bg-sunk p-2 pt-4">
+              {turned && (
+                <button
+                  type="button"
+                  aria-label="Tilt the photo"
+                  title="Drag to tilt the photo"
+                  onPointerDown={startSpin}
+                  className="absolute left-1/2 top-1 z-20 flex size-7 -translate-x-1/2 cursor-grab touch-none items-center justify-center rounded-full border border-edge bg-paper text-base text-muted shadow hover:text-ink active:cursor-grabbing"
+                >
+                  ↻
+                </button>
+              )}
+
               <div
                 ref={stageRef}
                 onPointerDown={startNew}
                 onPointerMove={move}
                 onPointerUp={end}
                 onPointerCancel={end}
-                className="relative touch-none select-none overflow-hidden"
+                className={`relative touch-none select-none ${
+                  preview === 0 ? 'overflow-hidden' : 'z-20 overflow-visible'
+                }`}
               >
                 <canvas
                   ref={canvasRef}
+                  style={
+                    preview === 0
+                      ? undefined
+                      : { transform: `rotate(${preview}deg)` }
+                  }
                   className="block max-h-[420px] max-w-full"
                 />
 
-                {turned && (
+                {turned && preview === 0 && (
                   <div
                     role="presentation"
                     onPointerDown={startMove}
@@ -435,6 +532,27 @@ export function ImageTool({ initialFiles }: { initialFiles?: File[] }) {
               >
                 Rotate right
               </button>
+              <label className="text-sm text-muted">
+                Angle
+                <span className="ml-1 inline-flex items-baseline gap-1">
+                  <input
+                    type="number"
+                    step={1}
+                    value={Math.round(normalized(angle + draft) * 10) / 10}
+                    onChange={(event) => rotateTo(Number(event.target.value))}
+                    className="block w-20 rounded-lg border border-edge bg-paper px-2 py-1 text-sm text-ink"
+                  />
+                  <span>°</span>
+                </span>
+              </label>
+              <button
+                type="button"
+                onClick={() => rotateTo(0)}
+                disabled={angle === 0}
+                className={smallButton}
+              >
+                Upright
+              </button>
               <button
                 type="button"
                 onClick={() => setCrop(null)}
@@ -444,7 +562,8 @@ export function ImageTool({ initialFiles }: { initialFiles?: File[] }) {
                 Whole photo
               </button>
               <span className="text-sm text-muted">
-                Drag on the photo to crop; drag inside the box to move it.
+                Drag the round grip above the photo to tilt it. Drag on the photo
+                to crop; drag inside the box to move it.
               </span>
             </div>
 
@@ -568,6 +687,9 @@ export function ImageTool({ initialFiles }: { initialFiles?: File[] }) {
               {crop
                 ? ' The crop is cut from the picture you see.'
                 : ' Drag on the photo to cut out part of it.'}
+              {angle % 90 === 0
+                ? ''
+                : ' A tilt leaves transparent corners in PNG and WebP; JPG fills them white.'}
             </p>
           </div>
         </section>
