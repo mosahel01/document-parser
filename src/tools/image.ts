@@ -5,8 +5,6 @@
 
 export type Rect = { x: number; y: number; width: number; height: number }
 
-export type Turn = 0 | 90 | 180 | 270
-
 export type ImageFormat = 'png' | 'jpg' | 'webp'
 
 /** A canvas larger than this holds hundreds of megabytes and the tab dies. */
@@ -15,14 +13,24 @@ export const MAX_EDIT_PIXELS = 40_000_000
 /** Small enough to see, so a stray click cannot produce a one-pixel crop. */
 export const MIN_CROP_SIDE = 8
 
-export function rotatedSize(
+/**
+ * The canvas a picture needs once it is turned by any angle, because a tilted
+ * picture leans past its old edges. Quarter turns come back exact, and the
+ * result is always at least one pixel so a canvas can be allocated.
+ */
+export function rotatedBounds(
   width: number,
   height: number,
-  turn: Turn,
+  degrees: number,
 ): { width: number; height: number } {
-  return turn === 90 || turn === 270
-    ? { width: height, height: width }
-    : { width, height }
+  const radians = (degrees * Math.PI) / 180
+  const cos = Math.abs(Math.cos(radians))
+  const sin = Math.abs(Math.sin(radians))
+
+  return {
+    width: Math.max(1, Math.round(width * cos + height * sin)),
+    height: Math.max(1, Math.round(width * sin + height * cos)),
+  }
 }
 
 function round(value: number): number {
@@ -79,7 +87,8 @@ export function matchingSide(
 }
 
 export type ImageEdit = {
-  turn: Turn
+  /** Clockwise, and not limited to quarter turns: a scan can be straightened. */
+  angle: number
   /** In pixels of the turned picture, so it matches what is on screen. */
   crop: Rect
   width: number
@@ -126,12 +135,12 @@ async function decode(file: File): Promise<HTMLImageElement> {
 }
 
 /**
- * Draw the picture turned, at full resolution. Crop coordinates are read from
- * this canvas, so what the visitor drags over is what gets cut out.
+ * Draw the picture turned by any angle, at full resolution. Crop coordinates
+ * are read from this canvas, so what the visitor drags over is what is cut out.
  */
 export async function drawTurned(
   file: File,
-  turn: Turn,
+  angle: number,
   canvas = document.createElement('canvas'),
 ): Promise<HTMLCanvasElement> {
   const image = await decode(file)
@@ -147,7 +156,13 @@ export async function drawTurned(
     )
   }
 
-  const size = rotatedSize(naturalWidth, naturalHeight, turn)
+  const size = rotatedBounds(naturalWidth, naturalHeight, angle)
+  if (size.width * size.height > MAX_EDIT_PIXELS) {
+    throw new Error(
+      `"${file.name}" tilted ${Math.round(angle)}° needs a ${size.width}×${size.height} canvas, over the ${MAX_EDIT_PIXELS / 1_000_000} megapixel editing limit. Use a smaller tilt or shrink the photo first.`,
+    )
+  }
+
   canvas.width = size.width
   canvas.height = size.height
 
@@ -155,7 +170,7 @@ export async function drawTurned(
   if (!context) throw new Error('The browser refused a canvas.')
 
   context.translate(size.width / 2, size.height / 2)
-  context.rotate((turn * Math.PI) / 180)
+  context.rotate((angle * Math.PI) / 180)
   context.drawImage(image, -naturalWidth / 2, -naturalHeight / 2)
 
   return canvas
@@ -213,7 +228,7 @@ export async function cropAndResize(
 }
 
 export async function editImage(file: File, edit: ImageEdit): Promise<Blob> {
-  const turned = await drawTurned(file, edit.turn)
+  const turned = await drawTurned(file, edit.angle)
   return cropAndResize(
     turned,
     clampRect(edit.crop, { width: turned.width, height: turned.height }),
