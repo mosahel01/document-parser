@@ -149,7 +149,7 @@ function App() {
   return (
     <div className="min-h-screen bg-paper text-ink">
       <header className="sticky top-0 z-20 border-b border-line bg-surface/95 backdrop-blur">
-        <div className="mx-auto max-w-2xl px-6">
+        <div className="mx-auto max-w-5xl px-6 sm:px-8 lg:px-12">
           <div className="flex items-center justify-between gap-3 pt-4">
             <span className="text-lg font-semibold tracking-tight">
               Document Toolkit
@@ -176,7 +176,7 @@ function App() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-2xl px-6 py-12">
+      <main className="mx-auto max-w-5xl px-6 py-12 sm:px-8 lg:px-12 lg:py-16">
         <h1 className="text-3xl font-semibold tracking-tight">{tool.title}</h1>
         <p className="mt-3 max-w-prose text-muted">{tool.blurb}</p>
         <p className="mt-4 inline-flex items-center gap-2 rounded-full bg-good-soft px-3 py-1 text-xs font-medium text-good">
@@ -191,7 +191,7 @@ function App() {
         </div>
       </main>
 
-      <footer className="mx-auto max-w-2xl px-6 pb-16">
+      <footer className="mx-auto max-w-5xl px-6 pb-16 sm:px-8 lg:px-12">
         <h2 className="text-sm font-medium text-muted">Coming next</h2>
         <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted">
           {upcoming.map((name) => (
