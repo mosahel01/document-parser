@@ -60,6 +60,16 @@ slice of the file, and refuses to treat an untyped SVG as a raster image.
 can be checked before anything is saved. Find and replace shows the first match
 in context twice, "now" and "after", instead of only counting matches.
 
+### Editing pages
+
+The PDF tab's Pages mode lists one card per output page: turn it, delete it,
+copy it, drag it, or drop another PDF in to pull pages from it. Saving rebuilds
+a fresh document from that list (`pagesToPdf`), so the original file is never
+rewritten and the same page can appear twice with a different rotation. A turn
+is added to the rotation the page already had, so a sideways scan comes out
+upright instead of upside down. Thumbnails come from `renderPageThumbs`, shared
+with the split view; the page editor keeps its state while you switch modes.
+
 ### Look
 
 The theme is a class on `<html>`, flipped by `ThemeToggle` and remembered in
@@ -115,9 +125,9 @@ billing are deliberately deferred.
 - **Browser work costs the visitor's CPU, not ours.** Long jobs should still
   report progress and be cancellable.
 - **PDF limits are deliberate.** Thumbnails stop at 60 pages, a single-file
-  split stops at 200, and a file over 100 MB is refused outright, because all of
-  it runs synchronously on the main thread. Raise them only with a worker, not by
-  deleting the check.
+  split stops at 200, the page editor stops at 300 pages, and a file over 100 MB
+  is refused outright, because all of it runs synchronously on the main thread.
+  Raise them only with a worker, not by deleting the check.
 - **A PDF error names the file and the reason.** `npm test` checks that a broken
   file says so by name; the old catch-all hid which file failed and why. Some
   files parse and only break while pages are read, so the guard wraps the whole
@@ -134,10 +144,10 @@ billing are deliberately deferred.
 
 - **Phase 0** — repository, build, one page that runs. *Done.*
 - **Phase 1** — browser tools: file-first Home *(done)*, rename *(done, converts
-  images)*, zip/unzip *(done)*, PDF merge/split *(done)*, image conversion
-  *(done)*, find and replace *(done)*, gzip compress/decompress *(done)*, DOCX to
-  HTML, Markdown, and text *(done)*, Word to PDF and PDF to Word as text *(done,
-  basic)*.
+  images)*, zip/unzip *(done)*, PDF merge/split *(done)*, PDF page editing
+  *(done)*, image conversion *(done)*, find and replace *(done)*, gzip
+  compress/decompress *(done)*, DOCX to HTML, Markdown, and text *(done)*, Word
+  to PDF and PDF to Word as text *(done, basic)*.
 - **Phase 2** — server and container for faithful DOCX to PDF and OCR.
 - **Phase 3** — accounts, history, limits, expiry and cleanup.
 - **Phase 4** — remaining features, decided later. An image editor (crop, resize,
