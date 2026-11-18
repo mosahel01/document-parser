@@ -35,9 +35,9 @@ const tools = {
   },
   pdf: {
     label: "PDF",
-    title: "Merge and split PDFs",
+    title: "Merge, split, and finish PDFs",
     blurb:
-      "Combine several PDFs into one, or pull out single pages and ranges. Every page is previewed first.",
+      "Combine several PDFs, pull out pages, or reorder them. Save pages as images, compress a scan, crop margins, and add page numbers or a watermark, all in the browser.",
   },
   word: {
     label: "Word",
@@ -87,6 +87,8 @@ const TOOL_IDS = Object.keys(tools) as ToolId[];
 
 const upcoming = [
   "OCR for scanned PDFs",
+  "Password-protected PDFs",
+  "Signing and PDF forms",
   "Exact Word layout in PDF",
 ];
 
