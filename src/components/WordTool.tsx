@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { DownloadBar } from './DownloadBar'
 import { FileDrop } from './FileDrop'
 import { FilePreview } from './FilePreview'
 import { PdfPreview } from './PdfPreview'
@@ -146,6 +147,35 @@ export function WordTool({
     return replaceExtension(file.name, 'docx')
   }
 
+  const ready =
+    mode === 'read'
+      ? Boolean(blocks && blocks.length > 0)
+      : mode === 'toPdf'
+        ? pdf !== null
+        : docx !== null
+
+  function save() {
+    if (!source) return
+
+    if (mode === 'read') {
+      const { text, mime } = convertedText(source.name)
+      downloadBlob(
+        new Blob([text], { type: `${mime};charset=utf-8` }),
+        replaceExtension(source.name, format),
+      )
+      return
+    }
+
+    if (mode === 'toPdf' && pdf) {
+      downloadBlob(pdf, replaceExtension(source.name, 'pdf'))
+      return
+    }
+
+    if (mode === 'fromPdf' && docx) {
+      downloadBlob(docx.blob, replaceExtension(source.name, 'docx'))
+    }
+  }
+
   return (
     <div className="space-y-8">
       <div className="flex flex-wrap gap-2">
@@ -202,56 +232,22 @@ export function WordTool({
                 </p>
               </div>
             </div>
-
-            {mode !== 'read' && (
-              <button
-                type="button"
-                onClick={() => {
-                  if (mode === 'toPdf' && pdf) {
-                    downloadBlob(pdf, replaceExtension(source.name, 'pdf'))
-                  }
-                  if (mode === 'fromPdf' && docx) {
-                    downloadBlob(docx.blob, replaceExtension(source.name, 'docx'))
-                  }
-                }}
-                disabled={(mode === 'toPdf' && !pdf) || (mode === 'fromPdf' && !docx)}
-                className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50"
-              >
-                Download
-              </button>
-            )}
           </header>
 
           <div className="p-5">
             {mode === 'read' && blocks && (
               <div className="space-y-3">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div className="inline-flex gap-1 rounded-lg border border-edge p-1">
-                    {FORMATS.map((option) => (
-                      <button
-                        key={option.id}
-                        type="button"
-                        onClick={() => setFormat(option.id)}
-                        className={tabClass(format === option.id)}
-                      >
-                        {option.label}
-                      </button>
-                    ))}
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const { text, mime } = convertedText(source.name)
-                      downloadBlob(
-                        new Blob([text], { type: `${mime};charset=utf-8` }),
-                        replaceExtension(source.name, format),
-                      )
-                    }}
-                    className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover"
-                  >
-                    Download
-                  </button>
+                <div className="inline-flex gap-1 rounded-lg border border-edge p-1">
+                  {FORMATS.map((option) => (
+                    <button
+                      key={option.id}
+                      type="button"
+                      onClick={() => setFormat(option.id)}
+                      className={tabClass(format === option.id)}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
                 </div>
 
                 <TextSample text={convertedText(source.name).text} />
@@ -279,6 +275,18 @@ export function WordTool({
             )}
           </div>
         </section>
+      )}
+
+      {source && ready && (
+        <DownloadBar note={outputName(source, mode)}>
+          <button
+            type="button"
+            onClick={save}
+            className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover"
+          >
+            Download
+          </button>
+        </DownloadBar>
       )}
     </div>
   )
