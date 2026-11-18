@@ -1,4 +1,4 @@
-import { Suspense, lazy, useState, type ReactElement } from "react";
+import { Suspense, lazy, useEffect, useState, type ReactElement } from "react";
 import { HomeTool } from "./components/HomeTool";
 import { ThemeToggle } from "./components/ThemeToggle";
 import { RenameTool } from "./components/RenameTool";
@@ -91,6 +91,17 @@ function App() {
 
   const tool = tools[active];
   const files = pending?.files ?? [];
+
+  // The PDF tab carries pdf-lib and pdf.js, about 1.8 MB of JavaScript. Fetching
+  // it while the page sits idle means the first click on the tab is instant
+  // instead of showing "Loading the tool…" over a slow connection.
+  useEffect(() => {
+    if (typeof window.requestIdleCallback !== "function") return;
+    const id = window.requestIdleCallback(() => {
+      void import("./components/PdfTool");
+    });
+    return () => window.cancelIdleCallback(id);
+  }, []);
 
   function select(id: ToolId) {
     setActive(id);
