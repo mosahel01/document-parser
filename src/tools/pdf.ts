@@ -70,7 +70,7 @@ async function load(file: File): Promise<PDFDocument> {
 }
 
 /** Load a PDF and run `work` on it, naming the file if either step fails. */
-async function openPdf<T>(
+export async function openPdf<T>(
   file: File,
   work: (document: PDFDocument) => T | Promise<T>,
 ): Promise<T> {
@@ -82,7 +82,7 @@ async function openPdf<T>(
   }
 }
 
-async function save(document: PDFDocument): Promise<Blob> {
+export async function savePdf(document: PDFDocument): Promise<Blob> {
   document.setProducer('Document Toolkit')
   const bytes = await document.save()
   // pdf-lib types the buffer loosely; Blob needs a plain ArrayBuffer.
@@ -102,7 +102,7 @@ export async function mergePdfs(files: File[]): Promise<Blob> {
     })
   }
 
-  return save(merged)
+  return savePdf(merged)
 }
 
 export async function countPages(file: File): Promise<number> {
@@ -170,7 +170,7 @@ export async function pagesToPdf(
     output.addPage(page)
   }
 
-  return save(output)
+  return savePdf(output)
 }
 
 /** One PDF per page, numbered to match the page count width. */
@@ -196,7 +196,7 @@ export async function splitIntoPages(
       single.addPage(page)
       results.push({
         name: `${baseName}-${String(index + 1).padStart(width, '0')}.pdf`,
-        blob: await save(single),
+        blob: await savePdf(single),
       })
     }
 
@@ -218,7 +218,7 @@ export async function extractPages(
     return made
   })
 
-  return save(output)
+  return savePdf(output)
 }
 
 export type PageSelection = { pages: number[]; error: string | null }
@@ -276,4 +276,15 @@ export function parsePageSelection(
 /** "report.final.pdf" becomes "report.final". */
 export function pdfBaseName(fileName: string): string {
   return fileName.replace(/\.pdf$/i, '') || 'document'
+}
+
+/** "report-page-03.jpg", with the number padded to the page count's width. */
+export function pageImageName(
+  base: string,
+  page: number,
+  total: number,
+  format: 'png' | 'jpg',
+): string {
+  const width = String(total).length
+  return `${base}-page-${String(page).padStart(width, '0')}.${format}`
 }
