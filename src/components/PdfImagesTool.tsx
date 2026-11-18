@@ -16,54 +16,10 @@ import {
 } from '../lib/pdfRaster'
 import { formatSize } from '../lib/format'
 
-type Direction = 'toImages' | 'toPdf'
-
-const tabClass = (active: boolean) =>
-  `rounded-md px-4 py-1.5 text-sm font-medium ${
-    active ? 'bg-accent text-accent-ink' : 'text-muted hover:text-ink'
-  }`
-
 const field =
   'rounded-lg border border-edge bg-surface px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/25'
 
-export function PdfImagesTool({
-  initialFiles,
-  initialDirection = 'toImages',
-}: {
-  initialFiles?: File[]
-  initialDirection?: Direction
-}) {
-  const [direction, setDirection] = useState<Direction>(initialDirection)
-
-  return (
-    <div className="space-y-8">
-      <div className="inline-flex gap-1 rounded-lg border border-edge bg-surface p-1">
-        <button
-          type="button"
-          onClick={() => setDirection('toImages')}
-          className={tabClass(direction === 'toImages')}
-        >
-          PDF to images
-        </button>
-        <button
-          type="button"
-          onClick={() => setDirection('toPdf')}
-          className={tabClass(direction === 'toPdf')}
-        >
-          Images to PDF
-        </button>
-      </div>
-
-      {direction === 'toImages' ? (
-        <PdfToImages initialFiles={initialFiles} />
-      ) : (
-        <ImagesToPdf initialFiles={initialFiles} />
-      )}
-    </div>
-  )
-}
-
-function PdfToImages({ initialFiles }: { initialFiles?: File[] }) {
+export function PdfToImagesTool({ initialFiles }: { initialFiles?: File[] }) {
   const handedPdf =
     initialFiles?.find((file) => /\.pdf$/i.test(file.name)) ?? null
 
@@ -148,7 +104,7 @@ function PdfToImages({ initialFiles }: { initialFiles?: File[] }) {
   }
 
   return (
-    <>
+    <div className="space-y-8">
       <FileDrop
         onFiles={(incoming) => choose(incoming[0] ?? null)}
         accept=".pdf,application/pdf"
@@ -328,11 +284,11 @@ function PdfToImages({ initialFiles }: { initialFiles?: File[] }) {
           </button>
         </DownloadBar>
       )}
-    </>
+    </div>
   )
 }
 
-function ImagesToPdf({ initialFiles }: { initialFiles?: File[] }) {
+export function ImagesToPdfTool({ initialFiles }: { initialFiles?: File[] }) {
   const [files, setFiles] = useState<File[]>(
     (initialFiles ?? []).filter((file) => isImageName(file.name)),
   )
