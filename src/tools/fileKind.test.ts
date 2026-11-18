@@ -51,13 +51,18 @@ describe('groupFiles', () => {
 })
 
 describe('operationsFor', () => {
-  it('offers page editing, splitting, and converting for a single PDF', () => {
+  it('offers page editing, finishing, images, and converting for one PDF', () => {
     const [group] = groupFiles(named('report.pdf'))
     const operations = operationsFor(group)
 
     expect(operations.map((operation) => operation.label)).toEqual([
       'Edit pages',
       'Split or extract pages',
+      'Compress',
+      'Crop margins',
+      'Page numbers',
+      'Watermark',
+      'Save pages as images',
       'Convert',
     ])
     expect(operations.every((operation) => operation.files.length === 1))
@@ -76,12 +81,13 @@ describe('operationsFor', () => {
     ])
   })
 
-  it('offers converting and editing for one photo', () => {
+  it('offers converting, editing, and a PDF for one photo', () => {
     const [group] = groupFiles(named('holiday.png'))
 
     expect(operationsFor(group).map((operation) => operation.tool)).toEqual([
       'convert',
       'image',
+      'pdf',
     ])
   })
 
@@ -90,6 +96,7 @@ describe('operationsFor', () => {
 
     expect(operationsFor(group).map((operation) => operation.tool)).toEqual([
       'convert',
+      'pdf',
     ])
     expect(missingActionNote(group)).toContain('one photo at a time')
   })
