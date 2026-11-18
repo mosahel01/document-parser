@@ -22,11 +22,19 @@ describe('planRenames', () => {
   })
 
   it('keeps the real extension when a conversion is impossible', () => {
-    const [row] = planRenames([file('report.pdf')], 'final', 'docx')
+    const [row] = planRenames([file('report.pdf')], 'final', 'png')
 
     expect(row.next).toBe('final.pdf')
     expect(row.conversion.kind).toBe('blocked')
-    expect(row.note).toContain('cannot write .docx')
+    expect(row.note).toContain('cannot write .png')
+  })
+
+  it('plans a real conversion for a document target', () => {
+    const [row] = planRenames([file('report.pdf')], 'final', 'docx')
+
+    expect(row.next).toBe('final.docx')
+    expect(row.conversion.kind).toBe('document')
+    expect(row.note).toBeNull()
   })
 
   it('numbers two files that would otherwise land on the same name', () => {
