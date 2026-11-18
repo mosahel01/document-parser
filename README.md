@@ -11,8 +11,13 @@ keeps the product private, cheap to run, and simple to reason about.
 
 Phase 1, browser-only: merge and split PDFs, edit their pages (rotate, delete,
 copy, reorder, pull pages in from another file), zip and unzip, find and
-replace, image and Word conversions, gzip compression, and renaming (which
-converts an image when the extension changes).
+replace, gzip compression, photo crop/resize/rotate, and renaming (which
+converts the contents when the new extension asks for it).
+
+One Convert tab moves a file between formats: photos to PNG, JPG, WebP, or PDF;
+PDFs and Word files to each other; any of them to HTML, Markdown, or text; text
+to PDF or Word. It offers only the formats every dropped file can reach, and
+each result is previewed before you save it.
 
 Word files can be read as HTML, Markdown, or plain text, and the words can move
 between Word and PDF in either direction. That transfer keeps paragraphs,
