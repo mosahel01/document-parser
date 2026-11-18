@@ -5,6 +5,7 @@ import { RenameTool } from "./components/RenameTool";
 import { ZipTool } from "./components/ZipTool";
 import { ReplaceTool } from "./components/ReplaceTool";
 import { ConvertTool } from "./components/ConvertTool";
+import { ImageTool } from "./components/ImageTool";
 import { CompressTool } from "./components/CompressTool";
 import { WordTool } from "./components/WordTool";
 import type { HomeOperation } from "./tools/fileKind";
@@ -55,10 +56,16 @@ const tools = {
     blurb: "Change text inside many files at once. Plain text, or a pattern when you need one.",
   },
   convert: {
-    label: "Images",
-    title: "Convert images",
+    label: "Convert",
+    title: "Convert files",
     blurb:
-      "Turn images into PNG, JPG, WebP, or a one-page PDF, with the result previewed before you save.",
+      "Photos become PNG, JPG, WebP, or PDF; PDFs and Word files trade places; text becomes either. Each result is previewed before you save it.",
+  },
+  image: {
+    label: "Photos",
+    title: "Crop, resize, and rotate photos",
+    blurb:
+      "Drag a box over the part you want, turn the picture, and set the size. The original file is never changed.",
   },
   compress: {
     label: "Compress",
@@ -79,7 +86,6 @@ type ToolId = keyof typeof tools;
 const TOOL_IDS = Object.keys(tools) as ToolId[];
 
 const upcoming = [
-  "Crop, resize, and rotate photos",
   "OCR for scanned PDFs",
   "Exact Word layout in PDF",
 ];
@@ -152,6 +158,8 @@ function App() {
         return <ReplaceTool initialFiles={files} />;
       case "convert":
         return <ConvertTool initialFiles={files} />;
+      case "image":
+        return <ImageTool initialFiles={files} />;
       case "rename":
         return <RenameTool initialFiles={files} />;
     }
