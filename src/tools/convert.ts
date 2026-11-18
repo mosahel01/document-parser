@@ -1,4 +1,15 @@
 import { normalizeExtension, splitExtension } from './rename'
+import { TEXT_EXTENSIONS, readTextFile } from './replace'
+import { docxFromParagraphs } from './docxWriter'
+import {
+  docxToHtml,
+  docxToMarkdown,
+  docxToText,
+  readDocx,
+  type DocxBlock,
+} from './docx'
+import { blocksToPdf, docxToPdf } from './docxToPdf'
+import { pdfToDocx, readPdfParagraphs } from './pdfToDocx'
 
 /** Input formats a browser can normally decode, GIF and SVG included. */
 const IMAGE_INPUTS = new Set([
@@ -13,7 +24,58 @@ const IMAGE_INPUTS = new Set([
   'ico',
 ])
 
-export type ConversionKind = 'none' | 'image' | 'pdf' | 'blocked'
+/**
+ * What one file can be read as. Extension only: sniffing the bytes would delay
+ * every button on the Home screen.
+ */
+export type SourceKind = 'image' | 'pdf' | 'docx' | 'text' | 'other'
+
+/** Every format the browser side can write, in the order the buttons appear. */
+export const TARGET_FORMATS = [
+  'png',
+  'jpg',
+  'webp',
+  'pdf',
+  'docx',
+  'html',
+  'md',
+  'txt',
+] as const
+
+export type TargetFormat = (typeof TARGET_FORMATS)[number]
+
+export const TARGET_LABELS: Record<TargetFormat, string> = {
+  png: 'PNG',
+  jpg: 'JPG',
+  webp: 'WebP',
+  pdf: 'PDF',
+  docx: 'Word',
+  html: 'HTML',
+  md: 'Markdown',
+  txt: 'Text',
+}
+
+/**
+ * Which format each kind of file can become. Deliberately short: a list that
+ * names a format the tool cannot really write would only produce a refusal
+ * after the visitor has picked it.
+ */
+const CONVERSIONS: Record<SourceKind, readonly TargetFormat[]> = {
+  image: ['png', 'jpg', 'webp', 'pdf'],
+  pdf: ['docx', 'html', 'md', 'txt'],
+  docx: ['pdf', 'html', 'md', 'txt'],
+  // Relabelling one text format as another would be a rename, not a conversion,
+  // so plain text only offers the two formats that need real work.
+  text: ['pdf', 'docx'],
+  other: [],
+}
+
+export type ConversionKind =
+  | 'none'
+  | 'image'
+  | 'pdf'
+  | 'document'
+  | 'blocked'
 
 export type Conversion = {
   kind: ConversionKind
@@ -40,9 +102,83 @@ export function sameFormat(a: string, b: string): boolean {
   return formatFamily(a) === formatFamily(b)
 }
 
+export function sourceKindOf(name: string): SourceKind {
+  if (isImageName(name)) return 'image'
+
+  const extension = extensionOf(name)
+  if (extension === 'pdf') return 'pdf'
+  if (extension === 'docx') return 'docx'
+  if ((TEXT_EXTENSIONS as readonly string[]).includes(extension)) return 'text'
+
+  return 'other'
+}
+
+function isTargetFormat(value: string): value is TargetFormat {
+  return (TARGET_FORMATS as readonly string[]).includes(value)
+}
+
+/** The formats one file can be converted to, without its own. */
+export function targetsFor(fileName: string): TargetFormat[] {
+  const source = extensionOf(fileName)
+  return CONVERSIONS[sourceKindOf(fileName)].filter(
+    (target) => !sameFormat(source, target),
+  )
+}
+
+/**
+ * The formats every file in the drop can reach. A mixed drop therefore offers
+ * only what is true for all of it, instead of buttons that fail halfway. A file
+ * that is already in the target format counts, so "everything to PDF" accepts a
+ * PDF and hands it back unchanged.
+ */
+export function commonTargets(files: File[]): TargetFormat[] {
+  if (files.length === 0) return []
+
+  const reaches = (name: string, target: TargetFormat) =>
+    sameFormat(extensionOf(name), target) ||
+    CONVERSIONS[sourceKindOf(name)].includes(target)
+
+  return TARGET_FORMATS.filter(
+    (target) =>
+      files.every((file) => reaches(file.name, target)) &&
+      // A button that would change nothing for every file is not a choice.
+      !files.every((file) => sameFormat(extensionOf(file.name), target)),
+  )
+}
+
+function sourceLabel(source: string): string {
+  return source === '' ? 'a file with no extension' : `a .${source} file`
+}
+
+function listFormats(formats: readonly TargetFormat[]): string {
+  const names = formats.map((format) => TARGET_LABELS[format])
+  if (names.length === 0) return 'nothing'
+  if (names.length === 1) return names[0]
+  if (names.length === 2) return `${names[0]} and ${names[1]}`
+  return `${names.slice(0, -1).join(', ')}, and ${names[names.length - 1]}`
+}
+
+function workFor(target: TargetFormat): ConversionKind {
+  if (target === 'png' || target === 'jpg' || target === 'webp') return 'image'
+  if (target === 'pdf') return 'pdf'
+  return 'document'
+}
+
+function blockedNote(
+  kind: SourceKind,
+  source: string,
+  target: string,
+): string {
+  if (kind === 'other') {
+    return `The browser cannot read ${sourceLabel(source)}, so it cannot write .${target}.`
+  }
+
+  return `The browser cannot write .${target} from ${sourceLabel(source)}. From this kind of file it can write ${listFormats(CONVERSIONS[kind])}.`
+}
+
 /**
  * Decide what typing an extension means for one file. Pure, so the plan can be
- * shown and tested without touching a canvas.
+ * shown and tested without touching a canvas or a PDF.
  */
 export function conversionFor(
   fileName: string,
@@ -54,35 +190,19 @@ export function conversionFor(
   const source = extensionOf(fileName)
   if (sameFormat(source, target)) return { kind: 'none', target, note: null }
 
-  const imageSource = isImageName(fileName)
-  const sourceLabel =
-    source === '' ? 'a file with no extension' : `a .${source} file`
+  const kind = sourceKindOf(fileName)
+  const allowed = CONVERSIONS[kind]
 
-  if (target === 'pdf') {
-    return imageSource
-      ? { kind: 'pdf', target, note: null }
-      : {
-          kind: 'blocked',
-          target,
-          note: `Only images become PDFs in the browser. ${sourceLabel} is not an image.`,
-        }
+  if (isTargetFormat(target) && allowed.includes(target)) {
+    return { kind: workFor(target), target, note: null }
   }
 
-  if (target === 'png' || target === 'jpg' || target === 'webp') {
-    return imageSource
-      ? { kind: 'image', target, note: null }
-      : {
-          kind: 'blocked',
-          target,
-          note: `The browser cannot redraw ${sourceLabel} as an image.`,
-        }
-  }
+  return { kind: 'blocked', target, note: blockedNote(kind, source, target) }
+}
 
-  return {
-    kind: 'blocked',
-    target,
-    note: `The browser cannot write .${target}. Supported: PNG, JPG, WebP, and PDF from images.`,
-  }
+/** Whether a plan replaces the bytes, as opposed to renaming or refusing. */
+export function convertsBytes(kind: ConversionKind): boolean {
+  return kind !== 'none' && kind !== 'blocked'
 }
 
 function imageMime(target: string): string {
@@ -229,6 +349,75 @@ export async function imageToPdf(file: File): Promise<Blob> {
   })
 }
 
+/**
+ * Split plain text into paragraphs. A blank line ends one; single newlines stay
+ * inside it, so a plain-text page keeps its shape in a PDF.
+ */
+export function textBlocks(text: string): DocxBlock[] {
+  return text
+    .split(/\r?\n[ \t]*\r?\n/)
+    .map((paragraph) => paragraph.trim())
+    .filter((paragraph) => paragraph !== '')
+    .map((paragraph) => ({ text: paragraph, level: 0, list: false }))
+}
+
+/** Read a PDF, Word file, or text file as paragraphs with their structure. */
+async function blocksOf(file: File): Promise<DocxBlock[]> {
+  const kind = sourceKindOf(file.name)
+
+  if (kind === 'docx') return readDocx(file)
+
+  if (kind === 'pdf') {
+    const paragraphs = await readPdfParagraphs(file)
+    return paragraphs.map((text) => ({ text, level: 0, list: false }))
+  }
+
+  if (kind === 'text') return textBlocks(await readTextFile(file))
+
+  throw new Error(`The browser cannot read ${file.name} as text.`)
+}
+
+async function pdfFrom(file: File): Promise<Blob> {
+  const kind = sourceKindOf(file.name)
+
+  if (kind === 'image') return imageToPdf(file)
+  if (kind === 'docx') return docxToPdf(file)
+  if (kind === 'text') return blocksToPdf(textBlocks(await readTextFile(file)))
+
+  throw new Error(`The browser cannot make a PDF from ${file.name}.`)
+}
+
+const DOCUMENT_MIME = {
+  html: 'text/html',
+  md: 'text/markdown',
+  txt: 'text/plain',
+} as const
+
+async function documentFrom(file: File, target: string): Promise<Blob> {
+  const kind = sourceKindOf(file.name)
+
+  if (target === 'docx') {
+    if (kind === 'pdf') return (await pdfToDocx(file)).blob
+
+    return docxFromParagraphs((await blocksOf(file)).map((block) => block.text))
+  }
+
+  if (target !== 'html' && target !== 'md' && target !== 'txt') {
+    throw new Error(`The browser cannot write .${target}.`)
+  }
+
+  const blocks = await blocksOf(file)
+
+  const text =
+    target === 'html'
+      ? docxToHtml(blocks, splitExtension(file.name).base)
+      : target === 'md'
+        ? docxToMarkdown(blocks)
+        : docxToText(blocks)
+
+  return new Blob([text], { type: `${DOCUMENT_MIME[target]};charset=utf-8` })
+}
+
 /** Turn one file into the format its new extension promises. */
 export async function convertFile(
   file: File,
@@ -243,7 +432,9 @@ export async function convertFile(
     case 'image':
       return convertImage(file, plan.target, quality)
     case 'pdf':
-      return imageToPdf(file)
+      return pdfFrom(file)
+    case 'document':
+      return documentFrom(file, plan.target)
     case 'blocked':
       throw new Error(plan.note ?? `Cannot convert to ${target}.`)
   }
