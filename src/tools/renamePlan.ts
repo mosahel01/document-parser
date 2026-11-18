@@ -1,5 +1,10 @@
 import { buildNames, splitExtension, type NameRow } from './rename'
-import { conversionFor, convertFile, type Conversion } from './convert'
+import {
+  conversionFor,
+  convertFile,
+  convertsBytes,
+  type Conversion,
+} from './convert'
 
 export type PlannedRow = {
   row: NameRow
@@ -73,8 +78,7 @@ export async function renameOutputs(
   const outputs: OutputFile[] = []
 
   for (const [index, row] of rows.entries()) {
-    const converts = row.conversion.kind === 'image' || row.conversion.kind === 'pdf'
-    const blob = converts
+    const blob = convertsBytes(row.conversion.kind)
       ? await convertFile(row.row.file, row.conversion.target, quality)
       : row.row.file
 
