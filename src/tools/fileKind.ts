@@ -31,7 +31,19 @@ export type HomeOperation = BaseOperation &
   (
     | { tool: 'convert' }
     | { tool: 'image' }
-    | { tool: 'pdf'; mode: 'merge' | 'split' | 'pages' }
+    | {
+        tool: 'pdf'
+        mode:
+          | 'merge'
+          | 'split'
+          | 'pages'
+          | 'images'
+          | 'imagesToPdf'
+          | 'compress'
+          | 'crop'
+          | 'number'
+          | 'watermark'
+      }
     | { tool: 'word'; mode: 'read' | 'toPdf' | 'fromPdf' }
     | { tool: 'zip'; mode: 'create' | 'open' }
     | { tool: 'compress'; mode: 'compress' | 'decompress' }
@@ -154,12 +166,26 @@ export function operationsFor(group: FileGroup): HomeOperation[] {
               hint: 'Cut out part of the photo, turn it, and set its size.',
               files,
             },
+            {
+              tool: 'pdf',
+              mode: 'imagesToPdf',
+              label: 'Make a PDF',
+              hint: 'Choose the page size, orientation, and margin.',
+              files,
+            },
           ]
         : [
             {
               tool: 'convert',
               label: 'Convert them all',
               hint: 'Every photo goes to the same format.',
+              files,
+            },
+            {
+              tool: 'pdf',
+              mode: 'imagesToPdf',
+              label: 'Make one PDF',
+              hint: 'One page per photo, in the order shown.',
               files,
             },
           ]
@@ -179,6 +205,41 @@ export function operationsFor(group: FileGroup): HomeOperation[] {
               mode: 'split',
               label: 'Split or extract pages',
               hint: 'See every page, then keep what you need.',
+              files,
+            },
+            {
+              tool: 'pdf',
+              mode: 'compress',
+              label: 'Compress',
+              hint: 'Rebuild pages as smaller pictures. Text stops being selectable.',
+              files,
+            },
+            {
+              tool: 'pdf',
+              mode: 'crop',
+              label: 'Crop margins',
+              hint: 'Trim a percentage from each side of every page.',
+              files,
+            },
+            {
+              tool: 'pdf',
+              mode: 'number',
+              label: 'Page numbers',
+              hint: 'Add a number to every page, where you choose.',
+              files,
+            },
+            {
+              tool: 'pdf',
+              mode: 'watermark',
+              label: 'Watermark',
+              hint: 'One line of text across each page.',
+              files,
+            },
+            {
+              tool: 'pdf',
+              mode: 'images',
+              label: 'Save pages as images',
+              hint: 'JPG or PNG, one picture per page.',
               files,
             },
             {
