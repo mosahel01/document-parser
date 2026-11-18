@@ -30,7 +30,7 @@ type BaseOperation = {
 export type HomeOperation = BaseOperation &
   (
     | { tool: 'convert' }
-    | { tool: 'pdf'; mode: 'merge' | 'split' }
+    | { tool: 'pdf'; mode: 'merge' | 'split' | 'pages' }
     | { tool: 'word'; mode: 'read' | 'toPdf' | 'fromPdf' }
     | { tool: 'zip'; mode: 'create' | 'open' }
     | { tool: 'compress'; mode: 'compress' | 'decompress' }
@@ -151,6 +151,13 @@ export function operationsFor(group: FileGroup): HomeOperation[] {
     case 'pdf':
       return files.length === 1
         ? [
+            {
+              tool: 'pdf',
+              mode: 'pages',
+              label: 'Edit pages',
+              hint: 'Rotate, delete, copy, or drag pages into a new order.',
+              files,
+            },
             {
               tool: 'pdf',
               mode: 'split',
