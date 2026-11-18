@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { DownloadBar } from './DownloadBar'
 import { FileDrop } from './FileDrop'
 import { FileList } from './FileList'
 import { FilePreview } from './FilePreview'
@@ -202,21 +203,11 @@ export function ConvertTool({ initialFiles }: { initialFiles?: File[] }) {
 
       {results && results.length > 0 && (
         <section className="rounded-xl border border-line bg-surface">
-          <header className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-3">
-            <div>
-              <h2 className="text-sm font-medium text-ink">Converted</h2>
-              <p className="text-sm text-muted">
-                Saved with the same name and the new extension.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={saveAll}
-              disabled={saving}
-              className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50"
-            >
-              {saving ? 'Saving…' : 'Download all'}
-            </button>
+          <header className="border-b border-line px-5 py-3">
+            <h2 className="text-sm font-medium text-ink">Converted</h2>
+            <p className="text-sm text-muted">
+              Saved with the same name and the new extension.
+            </p>
           </header>
 
           <ul className="divide-y divide-line">
@@ -265,6 +256,19 @@ export function ConvertTool({ initialFiles }: { initialFiles?: File[] }) {
             ))}
           </ul>
         </section>
+      )}
+
+      {results && results.length > 0 && (
+        <DownloadBar>
+          <button
+            type="button"
+            onClick={saveAll}
+            disabled={saving}
+            className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50"
+          >
+            {saving ? 'Saving…' : 'Download all'}
+          </button>
+        </DownloadBar>
       )}
     </div>
   )
