@@ -1,48 +1,58 @@
 @import 'tailwindcss';
 
-/* The theme is a class on <html>, not the OS setting, so the button wins. */
+@import '@fontsource/ubuntu/latin-400.css';
+@import '@fontsource/ubuntu/latin-700.css';
+@import '@fontsource/ubuntu/latin-ext-400.css';
+@import '@fontsource/ubuntu/latin-ext-700.css';
+@import '@fontsource/ubuntu-mono/latin-400.css';
+
+/*
+ * The theme is a class on <html>, not the OS setting, so the button wins.
+ * Every colour below is a token: components name the token, and `.dark`
+ * swaps the values underneath, so no component needs a `dark:` variant.
+ */
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --paper: #f7f0e3;
-  --surface: #fffaf0;
-  --sunk: #f1e7d5;
-  --hover: #ece0cc;
-  --line: #e6d9c3;
-  --edge: #d5c3a9;
-  --ink: #2a2118;
-  --muted: #6d5d4b;
-  --faint: #9a8873;
-  --accent: #3d2f22;
-  --accent-hover: #584431;
-  --accent-ink: #fff8ec;
-  --good: #3f6b36;
-  --good-soft: #e6efdb;
-  --bad: #96392a;
-  --bad-soft: #f8e5dc;
-  --warn: #8a5a12;
-  --warn-soft: #f7e9cc;
+  --paper: #ffffff;
+  --surface: #fafafa;
+  --sunk: #f3f3f3;
+  --hover: #ededed;
+  --line: #e6e6e6;
+  --edge: #d3d3d4;
+  --ink: #000000;
+  --muted: #5b5b5e;
+  --faint: #8b8b8f;
+  --accent: #111112;
+  --accent-hover: #2c2c2e;
+  --accent-ink: #ffffff;
+  --good: #1f6b3a;
+  --good-soft: #e9f5ec;
+  --bad: #a02216;
+  --bad-soft: #fdecea;
+  --warn: #7a5200;
+  --warn-soft: #fdf2d6;
 }
 
 .dark {
-  --paper: #14110d;
-  --surface: #1e1913;
-  --sunk: #191510;
-  --hover: #292118;
-  --line: #332a20;
-  --edge: #473a2b;
-  --ink: #f3e9d9;
-  --muted: #b4a390;
-  --faint: #83735f;
-  --accent: #e8d5b6;
-  --accent-hover: #f6e8cf;
-  --accent-ink: #241b12;
-  --good: #a6c78f;
-  --good-soft: #222f1c;
-  --bad: #e7a390;
-  --bad-soft: #35201a;
-  --warn: #dcae62;
-  --warn-soft: #322614;
+  --paper: #212122;
+  --surface: #2a2a2c;
+  --sunk: #1b1b1c;
+  --hover: #343436;
+  --line: #3b3b3e;
+  --edge: #525255;
+  --ink: #f5f5f6;
+  --muted: #b3b3b7;
+  --faint: #85858a;
+  --accent: #f5f5f6;
+  --accent-hover: #ffffff;
+  --accent-ink: #1b1b1c;
+  --good: #8fd3a4;
+  --good-soft: #223026;
+  --bad: #f0a79c;
+  --bad-soft: #33201d;
+  --warn: #e0b96a;
+  --warn-soft: #302816;
 }
 
 :root {
@@ -76,18 +86,15 @@
 
 @theme {
   /*
-   * Berkeley Mono is sold, not downloadable, so nothing is bundled. The stack
-   * asks the OS for the fonts on this machine, in the order they were named,
-   * and falls back to whatever mono the system calls its own.
+   * Ubuntu is bundled from @fontsource, so it renders the same on a machine
+   * that has never installed it. Ubuntu Mono is bundled with it for the few
+   * places that need a fixed pitch.
    */
   --font-sans:
-    'BerkeleyMono Nerd Font', 'Berkeley Mono', 'Iosevka Nerd Font', 'Iosevka',
-    'Ubuntu Mono', 'Ubuntu', ui-monospace, 'SF Mono', Menlo, Consolas,
-    monospace;
+    'Ubuntu', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
   --font-mono:
-    'BerkeleyMono Nerd Font', 'Berkeley Mono', 'Iosevka Nerd Font', 'Iosevka',
-    'Ubuntu Mono', 'Ubuntu', ui-monospace, 'SF Mono', Menlo, Consolas,
-    monospace;
+    'Ubuntu Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 
   /* A notch larger than Tailwind's default scale: 13 / 15 / 17 / 19 / 22 / 26 / 32. */
   --text-xs: 0.8125rem;
@@ -102,9 +109,14 @@
 body {
   background-color: var(--paper);
   color: var(--ink);
+  font-family: var(--font-sans);
   font-size: var(--text-base);
-  /* Mono is wide; a little slack between lines keeps prose readable. */
-  line-height: 1.55;
+  line-height: 1.6;
+}
+
+::selection {
+  background-color: var(--accent);
+  color: var(--accent-ink);
 }
 
 /*
@@ -117,9 +129,4 @@ body {
 
 .nav-scroll::-webkit-scrollbar {
   display: none;
-}
-
-::selection {
-  background-color: var(--accent);
-  color: var(--accent-ink);
 }
