@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { pdfjs } from '../lib/pdfjs'
+import { renderPageThumbs, type PageThumb } from '../lib/pdfThumbs'
 import { formatSize } from '../lib/format'
 
 type Thumbnail = { page: number; url: string }
@@ -21,40 +21,19 @@ export function PdfPagePreview({ file, maxPages = 60 }: PdfPagePreviewProps) {
 
     async function render() {
       try {
-        const data = new Uint8Array(await file.arrayBuffer())
-        const task = pdfjs.getDocument({ data })
-        const pdf = await task.promise
-
-        if (cancelled) {
-          void task.destroy()
-          return
-        }
-
-        setTotal(pdf.numPages)
-        const limit = Math.min(pdf.numPages, maxPages)
-
-        for (let number = 1; number <= limit; number += 1) {
-          const page = await pdf.getPage(number)
-          const natural = page.getViewport({ scale: 1 })
-          const viewport = page.getViewport({ scale: 220 / natural.width })
-
-          const canvas = document.createElement('canvas')
-          canvas.width = Math.floor(viewport.width)
-          canvas.height = Math.floor(viewport.height)
-
-          const canvasContext = canvas.getContext('2d')
-          if (!canvasContext) throw new Error('The browser refused a canvas.')
-
-          await page.render({ canvas, canvasContext, viewport }).promise
-          if (cancelled) return
-
-          setThumbs((current) => [
-            ...current,
-            { page: number, url: canvas.toDataURL('image/png') },
-          ])
-        }
-
-        void task.destroy()
+        setThumbs([])
+        await renderPageThumbs(
+          file,
+          maxPages,
+          (thumb: PageThumb) => {
+            setTotal(thumb.total)
+            setThumbs((current) => [
+              ...current,
+              { page: thumb.page, url: thumb.url },
+            ])
+          },
+          () => cancelled,
+        )
       } catch (problem) {
         if (!cancelled) {
           setError(
