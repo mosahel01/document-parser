@@ -4,6 +4,7 @@ import {
   groupFiles,
   groupLabel,
   kindOf,
+  missingActionNote,
   operationsFor,
 } from './fileKind'
 
@@ -50,17 +51,47 @@ describe('groupFiles', () => {
 })
 
 describe('operationsFor', () => {
-  it('offers page editing, splitting, and PDF to Word for a single PDF', () => {
+  it('offers page editing, splitting, and converting for a single PDF', () => {
     const [group] = groupFiles(named('report.pdf'))
     const operations = operationsFor(group)
 
     expect(operations.map((operation) => operation.label)).toEqual([
       'Edit pages',
       'Split or extract pages',
-      'PDF to Word',
+      'Convert',
     ])
     expect(operations.every((operation) => operation.files.length === 1))
       .toBe(true)
+  })
+
+  it('routes converting to the converter, not to the Word tab', () => {
+    const [pdf] = groupFiles(named('report.pdf'))
+    const [word] = groupFiles(named('letter.docx'))
+
+    expect(
+      operationsFor(pdf).find((operation) => operation.label === 'Convert')?.tool,
+    ).toBe('convert')
+    expect(operationsFor(word).map((operation) => operation.tool)).toEqual([
+      'convert',
+    ])
+  })
+
+  it('offers converting and editing for one photo', () => {
+    const [group] = groupFiles(named('holiday.png'))
+
+    expect(operationsFor(group).map((operation) => operation.tool)).toEqual([
+      'convert',
+      'image',
+    ])
+  })
+
+  it('keeps photo editing to one photo, since it edits one at a time', () => {
+    const [group] = groupFiles(named('a.png', 'b.png'))
+
+    expect(operationsFor(group).map((operation) => operation.tool)).toEqual([
+      'convert',
+    ])
+    expect(missingActionNote(group)).toContain('one photo at a time')
   })
 
   it('offers merging, not splitting, when several PDFs arrive', () => {
