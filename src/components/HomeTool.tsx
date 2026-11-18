@@ -103,7 +103,7 @@ export function HomeTool({ onStart }: HomeToolProps) {
             <h2 className="text-sm font-medium text-ink">{group.label}</h2>
 
             {operations.length > 0 && (
-              <div className="mt-3 space-y-2">
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
                 {operations.map((operation) => (
                   <OperationButton
                     key={`${operation.tool}-${'mode' in operation ? operation.mode : 'only'}`}
@@ -131,7 +131,7 @@ export function HomeTool({ onStart }: HomeToolProps) {
           <h2 className="text-sm font-medium text-ink">
             The whole batch
           </h2>
-          <div className="mt-3 space-y-2">
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
             {batch.map((operation) => (
               <OperationButton
                 key={operation.tool}
