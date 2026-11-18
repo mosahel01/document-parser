@@ -30,6 +30,7 @@ type BaseOperation = {
 export type HomeOperation = BaseOperation &
   (
     | { tool: 'convert' }
+    | { tool: 'image' }
     | { tool: 'pdf'; mode: 'merge' | 'split' | 'pages' }
     | { tool: 'word'; mode: 'read' | 'toPdf' | 'fromPdf' }
     | { tool: 'zip'; mode: 'create' | 'open' }
@@ -139,14 +140,29 @@ export function operationsFor(group: FileGroup): HomeOperation[] {
 
   switch (kind) {
     case 'image':
-      return [
-        {
-          tool: 'convert',
-          label: 'Convert',
-          hint: 'PNG, JPG, WebP, or a one-page PDF.',
-          files,
-        },
-      ]
+      return files.length === 1
+        ? [
+            {
+              tool: 'convert',
+              label: 'Convert',
+              hint: 'PNG, JPG, WebP, or a one-page PDF.',
+              files,
+            },
+            {
+              tool: 'image',
+              label: 'Crop, resize, rotate',
+              hint: 'Cut out part of the photo, turn it, and set its size.',
+              files,
+            },
+          ]
+        : [
+            {
+              tool: 'convert',
+              label: 'Convert them all',
+              hint: 'Every photo goes to the same format.',
+              files,
+            },
+          ]
 
     case 'pdf':
       return files.length === 1
@@ -166,10 +182,9 @@ export function operationsFor(group: FileGroup): HomeOperation[] {
               files,
             },
             {
-              tool: 'word',
-              mode: 'fromPdf',
-              label: 'PDF to Word',
-              hint: 'Moves the words into a .docx. Pictures and layout stay behind.',
+              tool: 'convert',
+              label: 'Convert',
+              hint: 'Word, HTML, Markdown, or text. The words only.',
               files,
             },
           ]
@@ -187,17 +202,9 @@ export function operationsFor(group: FileGroup): HomeOperation[] {
       return files.length === 1
         ? [
             {
-              tool: 'word',
-              mode: 'read',
-              label: 'Read as HTML, Markdown, or text',
-              hint: 'Headings and lists are kept.',
-              files,
-            },
-            {
-              tool: 'word',
-              mode: 'toPdf',
-              label: 'Word to PDF',
-              hint: 'The words only: images and exact layout stay behind.',
+              tool: 'convert',
+              label: 'Convert',
+              hint: 'PDF, HTML, Markdown, or text. Images and layout stay behind.',
               files,
             },
           ]
@@ -209,6 +216,12 @@ export function operationsFor(group: FileGroup): HomeOperation[] {
           tool: 'replace',
           label: 'Find and replace',
           hint: 'UTF-8 text only. See each change before it happens.',
+          files,
+        },
+        {
+          tool: 'convert',
+          label: 'Convert',
+          hint: 'A PDF or a Word file. The words only.',
           files,
         },
       ]
@@ -258,7 +271,10 @@ export function missingActionNote(group: FileGroup): string | null {
   const { kind, files } = group
 
   if (kind === 'docx' && files.length > 1) {
-    return 'Word reading and Word to PDF work one document at a time. Pick one, or use the whole batch below.'
+    return 'Converting a Word file works one document at a time. Pick one, or use the whole batch below.'
+  }
+  if (kind === 'image' && files.length > 1) {
+    return 'Cropping, resizing, and rotating work one photo at a time. Converting takes the whole set.'
   }
   if (kind === 'zip' && files.length > 1) {
     return 'Unzipping works one archive at a time.'
