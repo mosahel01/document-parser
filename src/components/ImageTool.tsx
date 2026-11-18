@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
+import { DownloadBar } from './DownloadBar'
 import { FileDrop } from './FileDrop'
 import { downloadBlob } from '../tools/download'
 import { splitExtension } from '../tools/rename'
@@ -446,14 +447,6 @@ export function ImageTool({ initialFiles }: { initialFiles?: File[] }) {
                 · {formatSize(source.size)}
               </p>
             </div>
-            <button
-              type="button"
-              onClick={() => void save()}
-              disabled={busy || !turned}
-              className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50"
-            >
-              {busy ? 'Saving…' : 'Download'}
-            </button>
           </header>
 
           <div className="space-y-5 p-5">
@@ -693,6 +686,19 @@ export function ImageTool({ initialFiles }: { initialFiles?: File[] }) {
             </p>
           </div>
         </section>
+      )}
+
+      {source && (
+        <DownloadBar note={`${output.width} × ${output.height} px as ${format.toUpperCase()}`}>
+          <button
+            type="button"
+            onClick={() => void save()}
+            disabled={busy || !turned}
+            className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50"
+          >
+            {busy ? 'Saving…' : 'Download'}
+          </button>
+        </DownloadBar>
       )}
     </div>
   )
