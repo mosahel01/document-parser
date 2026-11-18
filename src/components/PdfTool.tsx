@@ -2,9 +2,14 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { DownloadBar } from './DownloadBar'
 import { FileDrop } from './FileDrop'
 import { FilePreview } from './FilePreview'
+import { PdfCompressTool } from './PdfCompressTool'
+import { PdfCropTool } from './PdfCropTool'
+import { PdfImagesTool } from './PdfImagesTool'
+import { PdfNumberTool } from './PdfNumberTool'
 import { PdfPageManager } from './PdfPageManager'
 import { PdfPagePreview } from './PdfPagePreview'
 import { PdfPreview } from './PdfPreview'
+import { PdfWatermarkTool } from './PdfWatermarkTool'
 import { downloadBlob, downloadEach } from '../tools/download'
 import { joinedBaseName } from '../tools/rename'
 import {
@@ -17,7 +22,16 @@ import {
 } from '../tools/pdf'
 import { formatSize } from '../lib/format'
 
-type Mode = 'merge' | 'split' | 'pages'
+type Mode =
+  | 'merge'
+  | 'split'
+  | 'pages'
+  | 'images'
+  | 'imagesToPdf'
+  | 'compress'
+  | 'crop'
+  | 'number'
+  | 'watermark'
 
 const tabClass = (active: boolean) =>
   `rounded-md px-4 py-1.5 text-sm font-medium ${
@@ -38,7 +52,9 @@ export function PdfTool({
   const [pagesOpened, setPagesOpened] = useState(initialMode === 'pages')
 
   const [mergeFiles, setMergeFiles] = useState<File[]>(
-    initialMode === 'split' ? [] : (initialFiles ?? []),
+    initialMode === undefined || initialMode === 'merge'
+      ? (initialFiles ?? [])
+      : [],
   )
   const [merging, setMerging] = useState(false)
   const [mergeError, setMergeError] = useState<string | null>(null)
@@ -174,7 +190,7 @@ export function PdfTool({
 
   return (
     <div className="space-y-8">
-      <div className="inline-flex gap-1 rounded-lg border border-edge bg-surface p-1">
+      <div className="flex flex-wrap gap-1 rounded-lg border border-edge bg-surface p-1">
         <button
           type="button"
           onClick={() => chooseMode('merge')}
@@ -196,6 +212,41 @@ export function PdfTool({
         >
           Pages
         </button>
+        <button
+          type="button"
+          onClick={() => chooseMode('images')}
+          className={tabClass(mode === 'images' || mode === 'imagesToPdf')}
+        >
+          Images
+        </button>
+        <button
+          type="button"
+          onClick={() => chooseMode('compress')}
+          className={tabClass(mode === 'compress')}
+        >
+          Compress
+        </button>
+        <button
+          type="button"
+          onClick={() => chooseMode('crop')}
+          className={tabClass(mode === 'crop')}
+        >
+          Crop
+        </button>
+        <button
+          type="button"
+          onClick={() => chooseMode('number')}
+          className={tabClass(mode === 'number')}
+        >
+          Numbers
+        </button>
+        <button
+          type="button"
+          onClick={() => chooseMode('watermark')}
+          className={tabClass(mode === 'watermark')}
+        >
+          Watermark
+        </button>
       </div>
 
       {pagesOpened && (
@@ -203,6 +254,19 @@ export function PdfTool({
           <PdfPageManager initialFiles={initialFiles} />
         </div>
       )}
+
+      {(mode === 'images' || mode === 'imagesToPdf') && (
+        <PdfImagesTool
+          key={mode}
+          initialFiles={initialFiles}
+          initialDirection={mode === 'imagesToPdf' ? 'toPdf' : 'toImages'}
+        />
+      )}
+
+      {mode === 'compress' && <PdfCompressTool initialFiles={initialFiles} />}
+      {mode === 'crop' && <PdfCropTool initialFiles={initialFiles} />}
+      {mode === 'number' && <PdfNumberTool initialFiles={initialFiles} />}
+      {mode === 'watermark' && <PdfWatermarkTool initialFiles={initialFiles} />}
 
       {mode === 'merge' && (
         <>
