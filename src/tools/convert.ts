@@ -290,9 +290,6 @@ export async function convertImage(
   return blob
 }
 
-const A4 = [595.28, 841.89] as const
-const PDF_MARGIN = 24
-
 /**
  * Embed the bytes the browser already has when they are already PNG or JPEG, so
  * a photo does not get inflated into a lossless copy first. Anything else, or a
@@ -317,36 +314,128 @@ async function embedForPdf(
   )
 }
 
-/** Put one image on its own A4 page, scaled to fit without cropping. */
-export async function imageToPdf(file: File): Promise<Blob> {
+const A4 = [595.28, 841.89] as const
+const LETTER = [612, 792] as const
+
+export type ImagePdfPageSize = 'a4' | 'letter' | 'image'
+export type ImagePdfOrientation = 'auto' | 'portrait' | 'landscape'
+
+export type ImagePdfOptions = {
+  pageSize: ImagePdfPageSize
+  orientation: ImagePdfOrientation
+  /** White border in points on every side. */
+  margin: number
+}
+
+export type ImagePlacement = {
+  pageWidth: number
+  pageHeight: number
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
+/**
+ * Fit one image on one page. Pure arithmetic, so the choice of paper, turn, and
+ * margin can be tested without a canvas. "image" makes the page follow the
+ * photo's shape instead of forcing it onto a fixed sheet.
+ */
+export function imagePageSize(
+  imageWidth: number,
+  imageHeight: number,
+  options: ImagePdfOptions,
+): ImagePlacement {
+  if (imageWidth <= 0 || imageHeight <= 0) {
+    throw new Error('That image has no pixels to place on a page.')
+  }
+
+  const margin = Math.max(0, options.margin)
+  let pageWidth: number
+  let pageHeight: number
+
+  if (options.pageSize === 'image') {
+    const long = A4[1]
+    if (imageWidth >= imageHeight) {
+      pageWidth = long
+      pageHeight = (long * imageHeight) / imageWidth
+    } else {
+      pageHeight = long
+      pageWidth = (long * imageWidth) / imageHeight
+    }
+  } else {
+    const [short, long] =
+      options.pageSize === 'a4' ? A4 : LETTER
+    const landscape =
+      options.orientation === 'landscape' ||
+      (options.orientation === 'auto' && imageWidth > imageHeight)
+    pageWidth = landscape ? long : short
+    pageHeight = landscape ? short : long
+  }
+
+  const roomWidth = pageWidth - margin * 2
+  const roomHeight = pageHeight - margin * 2
+  if (roomWidth <= 0 || roomHeight <= 0) {
+    throw new Error('The margin is larger than the page.')
+  }
+
+  const scale = Math.min(roomWidth / imageWidth, roomHeight / imageHeight)
+  const width = imageWidth * scale
+  const height = imageHeight * scale
+
+  return {
+    pageWidth,
+    pageHeight,
+    x: (pageWidth - width) / 2,
+    y: (pageHeight - height) / 2,
+    width,
+    height,
+  }
+}
+
+/** Put several photos into one PDF, one page each, in the order given. */
+export async function imagesToPdf(
+  files: File[],
+  options: Partial<ImagePdfOptions> = {},
+): Promise<Blob> {
+  if (files.length === 0) {
+    throw new Error('Add at least one image to make a PDF.')
+  }
+
+  const settings: ImagePdfOptions = {
+    pageSize: 'a4',
+    orientation: 'auto',
+    margin: 24,
+    ...options,
+  }
+
   // Imported here so the PDF library is fetched only when someone asks for a PDF.
   const { PDFDocument } = await import('pdf-lib')
   const document = await PDFDocument.create()
-  const image = await embedForPdf(document, file)
+  document.setProducer('Document Toolkit')
 
-  const [short, long] = A4
-  const [width, height] =
-    image.width > image.height ? [long, short] : [short, long]
+  for (const file of files) {
+    const image = await embedForPdf(document, file)
+    const placement = imagePageSize(image.width, image.height, settings)
+    const page = document.addPage([placement.pageWidth, placement.pageHeight])
 
-  const page = document.addPage([width, height])
-  const scale = Math.min(
-    (width - PDF_MARGIN * 2) / image.width,
-    (height - PDF_MARGIN * 2) / image.height,
-  )
-  const drawnWidth = image.width * scale
-  const drawnHeight = image.height * scale
-
-  page.drawImage(image, {
-    x: (width - drawnWidth) / 2,
-    y: (height - drawnHeight) / 2,
-    width: drawnWidth,
-    height: drawnHeight,
-  })
+    page.drawImage(image, {
+      x: placement.x,
+      y: placement.y,
+      width: placement.width,
+      height: placement.height,
+    })
+  }
 
   const bytes = await document.save()
   return new Blob([bytes as Uint8Array<ArrayBuffer>], {
     type: 'application/pdf',
   })
+}
+
+/** Put one image on its own A4 page, scaled to fit without cropping. */
+export async function imageToPdf(file: File): Promise<Blob> {
+  return imagesToPdf([file])
 }
 
 /**
