@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { PDFDocument } from 'pdf-lib'
+import { PDFDocument, degrees } from 'pdf-lib'
 import {
   MAX_PDF_BYTES,
   countPages,
   extractPages,
   mergePdfs,
+  pagesToPdf,
   parsePageSelection,
   splitIntoPages,
 } from './pdf'
@@ -90,6 +91,61 @@ describe('extractPages', () => {
     const blob = await extractPages(await sample(4), [2, 0, 2])
 
     expect(await pageCountOf(blob)).toBe(3)
+  })
+})
+
+describe('pagesToPdf', () => {
+  async function sized(widths: number[], name = 'sized.pdf'): Promise<File> {
+    const document = await PDFDocument.create()
+    for (const width of widths) document.addPage([width, 100])
+    const bytes = await document.save()
+    return new File([new Uint8Array(bytes)], name, { type: 'application/pdf' })
+  }
+
+  async function widthsOf(blob: Blob): Promise<number[]> {
+    const document = await PDFDocument.load(await blob.arrayBuffer())
+    return document.getPages().map((page) => page.getWidth())
+  }
+
+  it('keeps the order and copies a page that is used twice', async () => {
+    const blob = await pagesToPdf([await sized([200, 300, 400])], [
+      { source: 0, page: 2, turn: 0 },
+      { source: 0, page: 0, turn: 0 },
+      { source: 0, page: 2, turn: 0 },
+    ])
+
+    expect(await widthsOf(blob)).toEqual([400, 200, 400])
+  })
+
+  it('takes pages from several files in one order', async () => {
+    const blob = await pagesToPdf(
+      [await sized([200], 'a.pdf'), await sized([300], 'b.pdf')],
+      [
+        { source: 1, page: 0, turn: 0 },
+        { source: 0, page: 0, turn: 0 },
+      ],
+    )
+
+    expect(await widthsOf(blob)).toEqual([300, 200])
+  })
+
+  it('adds the turn to the rotation the page already had', async () => {
+    const document = await PDFDocument.create()
+    document.addPage([200, 100]).setRotation(degrees(90))
+    const source = new File([new Uint8Array(await document.save())], 'sideways.pdf', {
+      type: 'application/pdf',
+    })
+
+    const blob = await pagesToPdf([source], [{ source: 0, page: 0, turn: 90 }])
+    const result = await PDFDocument.load(await blob.arrayBuffer())
+
+    expect(result.getPage(0).getRotation().angle).toBe(180)
+  })
+
+  it('refuses to save a document with no pages', async () => {
+    await expect(pagesToPdf([await sized([200])], [])).rejects.toThrow(
+      'no pages left to save',
+    )
   })
 })
 
