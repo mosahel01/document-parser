@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { DownloadBar } from './DownloadBar'
 import { FileDrop } from './FileDrop'
 import { PdfPreview } from './PdfPreview'
 import { downloadBlob } from '../tools/download'
@@ -302,14 +303,6 @@ export function PdfPageManager({ initialFiles }: { initialFiles?: File[] }) {
               >
                 Preview
               </button>
-              <button
-                type="button"
-                onClick={() => void saveTo('download')}
-                disabled={busy !== null}
-                className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50"
-              >
-                {busy === 'save' ? 'Saving…' : 'Save PDF'}
-              </button>
             </div>
           </header>
 
@@ -513,13 +506,6 @@ export function PdfPageManager({ initialFiles }: { initialFiles?: File[] }) {
             <div className="flex items-center gap-3">
               <button
                 type="button"
-                onClick={() => downloadBlob(preview.blob, preview.name)}
-                className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover"
-              >
-                Download
-              </button>
-              <button
-                type="button"
                 onClick={() => setPreview(null)}
                 className="text-sm text-muted hover:text-ink"
               >
@@ -531,6 +517,31 @@ export function PdfPageManager({ initialFiles }: { initialFiles?: File[] }) {
             <PdfPreview blob={preview.blob} title={preview.name} />
           </div>
         </section>
+      )}
+
+      {preview ? (
+        <DownloadBar>
+          <button
+            type="button"
+            onClick={() => downloadBlob(preview.blob, preview.name)}
+            className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover"
+          >
+            Download
+          </button>
+        </DownloadBar>
+      ) : (
+        pages > 0 && (
+          <DownloadBar>
+            <button
+              type="button"
+              onClick={() => void saveTo('download')}
+              disabled={busy !== null}
+              className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50"
+            >
+              {busy === 'save' ? 'Saving…' : 'Save PDF'}
+            </button>
+          </DownloadBar>
+        )
       )}
     </div>
   )
