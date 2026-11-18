@@ -3,24 +3,32 @@ import { FileDrop } from './FileDrop'
 import { FileList } from './FileList'
 import { FilePreview } from './FilePreview'
 import { downloadBlob, downloadEach } from '../tools/download'
-import { convertFile } from '../tools/convert'
+import {
+  TARGET_LABELS,
+  commonTargets,
+  convertFile,
+  type TargetFormat,
+} from '../tools/convert'
 import { replaceExtension } from '../tools/rename'
 import { formatSize } from '../lib/format'
 
-type Target = 'png' | 'jpg' | 'webp' | 'pdf'
-
-const TARGETS: { id: Target; label: string }[] = [
-  { id: 'png', label: 'PNG' },
-  { id: 'jpg', label: 'JPG' },
-  { id: 'webp', label: 'WebP' },
-  { id: 'pdf', label: 'PDF' },
-]
+/** What each output is, said plainly enough to choose between them. */
+const NOTES: Record<TargetFormat, string> = {
+  png: 'Lossless, and transparent areas stay transparent.',
+  jpg: 'No transparency: transparent areas turn white.',
+  webp: 'Small files, and transparency is kept.',
+  pdf: 'Photos get an A4 page each. Word and text become plain paragraphs.',
+  docx: 'The words go into a Word file. Layout and images stay behind.',
+  html: 'The words as a web page.',
+  md: 'The words as Markdown.',
+  txt: 'The words as plain text, with no formatting.',
+}
 
 type Result = { file: File; blob: Blob; name: string }
 
 export function ConvertTool({ initialFiles }: { initialFiles?: File[] }) {
   const [files, setFiles] = useState<File[]>(initialFiles ?? [])
-  const [target, setTarget] = useState<Target>('png')
+  const [picked, setPicked] = useState<TargetFormat>('png')
   const [quality, setQuality] = useState(0.9)
 
   const [results, setResults] = useState<Result[] | null>(null)
@@ -28,9 +36,16 @@ export function ConvertTool({ initialFiles }: { initialFiles?: File[] }) {
   const [busy, setBusy] = useState(false)
   const [saving, setSaving] = useState(false)
 
+  // The buttons follow the drop: only formats every file can reach are offered,
+  // and a target that is no longer reachable falls back to the first one.
+  const targets = commonTargets(files)
+  const target = targets.includes(picked) ? picked : (targets[0] ?? null)
+
   const lossy = target === 'jpg' || target === 'webp'
 
   async function run() {
+    if (!target) return
+
     setBusy(true)
     setProblems([])
     setResults(null)
@@ -40,7 +55,7 @@ export function ConvertTool({ initialFiles }: { initialFiles?: File[] }) {
 
     try {
       // One at a time: a run of large photos would otherwise hold several full
-      // canvases in memory at once.
+      // canvases in memory at once, and a PDF is read page by page.
       for (const file of files) {
         try {
           done.push({
@@ -89,9 +104,8 @@ export function ConvertTool({ initialFiles }: { initialFiles?: File[] }) {
           setFiles([...files, ...incoming])
           setResults(null)
         }}
-        accept="image/*"
-        label="Drop the images to convert"
-        hint="PNG, JPG, WebP, GIF, BMP, AVIF, or SVG. Nothing is uploaded."
+        label="Drop the files to convert"
+        hint="Photos, PDFs, Word documents, or text. Nothing is uploaded."
       />
 
       <FileList
@@ -102,29 +116,37 @@ export function ConvertTool({ initialFiles }: { initialFiles?: File[] }) {
         onClear={reset}
       />
 
-      {files.length > 0 && (
+      {files.length > 0 && target === null && (
+        <p className="rounded-xl border border-line bg-surface px-5 py-3 text-sm text-muted">
+          These files have no format in common, so there is nothing all of them
+          can become. Convert one kind at a time, for example the photos, then
+          the PDFs.
+        </p>
+      )}
+
+      {files.length > 0 && target !== null && (
         <section className="rounded-xl border border-line bg-surface p-5">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
               <span className="block text-sm font-medium text-ink">
                 Convert to
               </span>
-              <div className="mt-1 inline-flex gap-1 rounded-lg border border-edge p-1">
-                {TARGETS.map((option) => (
+              <div className="mt-1 inline-flex flex-wrap gap-1 rounded-lg border border-edge p-1">
+                {targets.map((option) => (
                   <button
-                    key={option.id}
+                    key={option}
                     type="button"
                     onClick={() => {
-                      setTarget(option.id)
+                      setPicked(option)
                       setResults(null)
                     }}
                     className={`rounded-md px-3 py-1 text-sm font-medium ${
-                      target === option.id
+                      target === option
                         ? 'bg-accent text-accent-ink'
                         : 'text-muted hover:text-ink'
                     }`}
                   >
-                    {option.label}
+                    {TARGET_LABELS[option]}
                   </button>
                 ))}
               </div>
@@ -158,10 +180,9 @@ export function ConvertTool({ initialFiles }: { initialFiles?: File[] }) {
           </div>
 
           <p className="mt-3 text-sm text-muted">
-            {target === 'pdf'
-              ? 'Each image gets its own PDF page, sized to A4.'
-              : 'JPG has no transparency, so transparent areas turn white.'}
-            {lossy ? ' Lower quality makes smaller files.' : ''}
+            {NOTES[target]}
+            {lossy ? ' Lower quality makes smaller files.' : ''}{' '}
+            A file already in {TARGET_LABELS[target]} is saved as it is.
           </p>
         </section>
       )}
@@ -199,8 +220,8 @@ export function ConvertTool({ initialFiles }: { initialFiles?: File[] }) {
           </header>
 
           <ul className="divide-y divide-line">
-            {results.map((result) => (
-              <li key={result.name} className="px-5 py-4">
+            {results.map((result, index) => (
+              <li key={`${result.name}-${index}`} className="px-5 py-4">
                 <div className="flex items-start gap-4">
                   <div className="w-28 shrink-0">
                     <FilePreview
