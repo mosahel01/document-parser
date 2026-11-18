@@ -1,15 +1,29 @@
 import { describe, expect, it } from 'vitest'
-import { MIN_CROP_SIDE, clampRect, matchingSide, rotatedSize } from './image'
+import { MIN_CROP_SIDE, clampRect, matchingSide, rotatedBounds } from './image'
 
-describe('rotatedSize', () => {
+describe('rotatedBounds', () => {
   it('swaps the sides for a quarter turn', () => {
-    expect(rotatedSize(1200, 800, 90)).toEqual({ width: 800, height: 1200 })
-    expect(rotatedSize(1200, 800, 270)).toEqual({ width: 800, height: 1200 })
+    expect(rotatedBounds(1200, 800, 90)).toEqual({ width: 800, height: 1200 })
+    expect(rotatedBounds(1200, 800, 270)).toEqual({ width: 800, height: 1200 })
   })
 
   it('leaves the sides alone for a half turn or none', () => {
-    expect(rotatedSize(1200, 800, 180)).toEqual({ width: 1200, height: 800 })
-    expect(rotatedSize(1200, 800, 0)).toEqual({ width: 1200, height: 800 })
+    expect(rotatedBounds(1200, 800, 180)).toEqual({ width: 1200, height: 800 })
+    expect(rotatedBounds(1200, 800, 0)).toEqual({ width: 1200, height: 800 })
+    expect(rotatedBounds(1200, 800, 360)).toEqual({ width: 1200, height: 800 })
+  })
+
+  it('grows the canvas for a tilt, since the corners lean out', () => {
+    expect(rotatedBounds(400, 300, 30)).toEqual({ width: 496, height: 460 })
+    expect(rotatedBounds(400, 300, 45)).toEqual({ width: 495, height: 495 })
+  })
+
+  it('treats a left tilt and a right tilt alike', () => {
+    expect(rotatedBounds(400, 300, -30)).toEqual(rotatedBounds(400, 300, 30))
+  })
+
+  it('never returns a side below one pixel', () => {
+    expect(rotatedBounds(1, 1, 45)).toEqual({ width: 1, height: 1 })
   })
 })
 
