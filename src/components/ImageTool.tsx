@@ -688,7 +688,7 @@ export function ImageTool({ initialFiles }: { initialFiles?: File[] }) {
         </section>
       )}
 
-      {source && (
+      {source && turned && (
         <DownloadBar note={`${output.width} × ${output.height} px as ${format.toUpperCase()}`}>
           <button
             type="button"
