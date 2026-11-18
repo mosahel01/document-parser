@@ -23,30 +23,26 @@ type BaseOperation = {
 }
 
 /**
- * One action, paired with the tool that carries it out. The tool and mode names
- * are repeated from the components on purpose: passing a mode a tool does not
- * know fails the type check at the `<PdfTool initialMode={...}>` call site.
+ * One action, paired with the tab that carries it out. Tool ids are repeated
+ * from the registry in `App.tsx` on purpose: an id with no tab fails the type
+ * check at the `setActive(operation.tool)` call.
  */
 export type HomeOperation = BaseOperation &
   (
     | { tool: 'convert' }
     | { tool: 'image' }
-    | {
-        tool: 'pdf'
-        mode:
-          | 'merge'
-          | 'split'
-          | 'pages'
-          | 'images'
-          | 'imagesToPdf'
-          | 'compress'
-          | 'crop'
-          | 'number'
-          | 'watermark'
-      }
+    | { tool: 'merge' }
+    | { tool: 'extract' }
+    | { tool: 'organize' }
+    | { tool: 'compressPdf' }
+    | { tool: 'crop' }
+    | { tool: 'number' }
+    | { tool: 'watermark' }
+    | { tool: 'toImages' }
+    | { tool: 'imagesToPdf' }
     | { tool: 'word'; mode: 'read' | 'toPdf' | 'fromPdf' }
     | { tool: 'zip'; mode: 'create' | 'open' }
-    | { tool: 'compress'; mode: 'compress' | 'decompress' }
+    | { tool: 'gzip'; mode: 'compress' | 'decompress' }
     | { tool: 'replace' }
     | { tool: 'rename' }
   )
@@ -135,11 +131,11 @@ const zip = (files: File[]): HomeOperation => ({
   files,
 })
 
-const compress = (files: File[]): HomeOperation => ({
-  tool: 'compress',
+const gzip = (files: File[]): HomeOperation => ({
+  tool: 'gzip',
   mode: 'compress',
-  label: 'Compress',
-  hint: 'Shrink into a .gz file. Helps text most; photos rarely shrink.',
+  label: 'Compress to .gz',
+  hint: 'Helps text most; photos rarely shrink. Not the same as PDF compression.',
   files,
 })
 
@@ -167,8 +163,7 @@ export function operationsFor(group: FileGroup): HomeOperation[] {
               files,
             },
             {
-              tool: 'pdf',
-              mode: 'imagesToPdf',
+              tool: 'imagesToPdf',
               label: 'Make a PDF',
               hint: 'Choose the page size, orientation, and margin.',
               files,
@@ -182,8 +177,7 @@ export function operationsFor(group: FileGroup): HomeOperation[] {
               files,
             },
             {
-              tool: 'pdf',
-              mode: 'imagesToPdf',
+              tool: 'imagesToPdf',
               label: 'Make one PDF',
               hint: 'One page per photo, in the order shown.',
               files,
@@ -194,50 +188,43 @@ export function operationsFor(group: FileGroup): HomeOperation[] {
       return files.length === 1
         ? [
             {
-              tool: 'pdf',
-              mode: 'pages',
-              label: 'Edit pages',
+              tool: 'organize',
+              label: 'Organize pages',
               hint: 'Rotate, delete, copy, or drag pages into a new order.',
               files,
             },
             {
-              tool: 'pdf',
-              mode: 'split',
-              label: 'Split or extract pages',
+              tool: 'extract',
+              label: 'Extract or split pages',
               hint: 'See every page, then keep what you need.',
               files,
             },
             {
-              tool: 'pdf',
-              mode: 'compress',
+              tool: 'compressPdf',
               label: 'Compress',
               hint: 'Rebuild pages as smaller pictures. Text stops being selectable.',
               files,
             },
             {
-              tool: 'pdf',
-              mode: 'crop',
+              tool: 'crop',
               label: 'Crop margins',
               hint: 'Trim a percentage from each side of every page.',
               files,
             },
             {
-              tool: 'pdf',
-              mode: 'number',
+              tool: 'number',
               label: 'Page numbers',
               hint: 'Add a number to every page, where you choose.',
               files,
             },
             {
-              tool: 'pdf',
-              mode: 'watermark',
+              tool: 'watermark',
               label: 'Watermark',
               hint: 'One line of text across each page.',
               files,
             },
             {
-              tool: 'pdf',
-              mode: 'images',
+              tool: 'toImages',
               label: 'Save pages as images',
               hint: 'JPG or PNG, one picture per page.',
               files,
@@ -251,8 +238,7 @@ export function operationsFor(group: FileGroup): HomeOperation[] {
           ]
         : [
             {
-              tool: 'pdf',
-              mode: 'merge',
+              tool: 'merge',
               label: 'Merge into one PDF',
               hint: 'Joined in the order shown.',
               files,
@@ -304,7 +290,7 @@ export function operationsFor(group: FileGroup): HomeOperation[] {
       return files.length === 1
         ? [
             {
-              tool: 'compress',
+              tool: 'gzip',
               mode: 'decompress',
               label: 'Decompress',
               hint: 'The name stored inside the archive is reused.',
@@ -324,7 +310,7 @@ export function operationsFor(group: FileGroup): HomeOperation[] {
  */
 export function batchOperationsFor(files: File[]): HomeOperation[] {
   if (files.length === 0) return []
-  return [rename(files), zip(files), compress(files)]
+  return [rename(files), zip(files), gzip(files)]
 }
 
 /** A reason the group has no action of its own, or null when it has one. */
@@ -341,7 +327,7 @@ export function missingActionNote(group: FileGroup): string | null {
     return 'Unzipping works one archive at a time.'
   }
   if (kind === 'pdf' && files.length > 1) {
-    return 'Splitting works one PDF at a time. Merging takes the whole set.'
+    return 'Extracting pages works one PDF at a time. Merging takes the whole set.'
   }
   if (kind === 'gzip' && files.length > 1) {
     return 'Decompressing works one archive at a time.'
