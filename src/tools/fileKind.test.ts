@@ -56,14 +56,24 @@ describe('operationsFor', () => {
     const operations = operationsFor(group)
 
     expect(operations.map((operation) => operation.label)).toEqual([
-      'Edit pages',
-      'Split or extract pages',
+      'Organize pages',
+      'Extract or split pages',
       'Compress',
       'Crop margins',
       'Page numbers',
       'Watermark',
       'Save pages as images',
       'Convert',
+    ])
+    expect(operations.map((operation) => operation.tool)).toEqual([
+      'organize',
+      'extract',
+      'compressPdf',
+      'crop',
+      'number',
+      'watermark',
+      'toImages',
+      'convert',
     ])
     expect(operations.every((operation) => operation.files.length === 1))
       .toBe(true)
@@ -87,7 +97,7 @@ describe('operationsFor', () => {
     expect(operationsFor(group).map((operation) => operation.tool)).toEqual([
       'convert',
       'image',
-      'pdf',
+      'imagesToPdf',
     ])
   })
 
@@ -96,7 +106,7 @@ describe('operationsFor', () => {
 
     expect(operationsFor(group).map((operation) => operation.tool)).toEqual([
       'convert',
-      'pdf',
+      'imagesToPdf',
     ])
     expect(missingActionNote(group)).toContain('one photo at a time')
   })
@@ -106,11 +116,24 @@ describe('operationsFor', () => {
     const operations = operationsFor(group)
 
     expect(operations).toHaveLength(1)
-    expect(operations[0].tool).toBe('pdf')
+    expect(operations[0].tool).toBe('merge')
     expect(operations[0].files.map((file) => file.name)).toEqual([
       'a.pdf',
       'b.pdf',
     ])
+  })
+
+  it('routes gzip apart from PDF compression', () => {
+    const [pdf] = groupFiles(named('report.pdf'))
+    const [archive] = groupFiles(named('log.gz'))
+
+    expect(operationsFor(pdf).map((operation) => operation.tool)).toContain(
+      'compressPdf',
+    )
+    expect(operationsFor(archive)[0]).toMatchObject({
+      tool: 'gzip',
+      mode: 'decompress',
+    })
   })
 
   it('only offers single-file operations for one file of a kind', () => {
@@ -136,7 +159,7 @@ describe('batchOperationsFor', () => {
     expect(operations.map((operation) => operation.tool)).toEqual([
       'rename',
       'zip',
-      'compress',
+      'gzip',
     ])
     for (const operation of operations) expect(operation.files).toHaveLength(3)
   })
