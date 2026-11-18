@@ -65,12 +65,13 @@ in context twice, "now" and "after", instead of only counting matches.
 The theme is a class on `<html>`, flipped by `ThemeToggle` and remembered in
 `localStorage` under `document-toolkit-theme`; the inline script in `index.html`
 sets it before the first paint, so a dark-mode visitor never sees a flash of
-cream. Every colour comes from a token in `index.css` (`paper`, `surface`,
+white. Every colour comes from a token in `index.css` (`paper`, `surface`,
 `sunk`, `hover`, `line`, `edge`, `ink`, `muted`, `faint`, `accent`, `good`,
 `bad`, `warn`). Components therefore carry no `dark:` variants: swapping the
-token values under `.dark` restyles the whole app. No font is bundled, because
-Berkeley Mono is sold; the stack asks the OS for Berkeley Mono, then Ubuntu,
-Iosevka, then whatever mono the machine has.
+token values under `.dark` restyles the whole app. Ubuntu and Ubuntu Mono are
+bundled through `@fontsource`, so the page looks the same on a machine that has
+never installed them. The column is `max-w-5xl`; the old narrow measure was
+right for mono but wasted a wide screen.
 
 ## Who it is for
 
@@ -85,7 +86,7 @@ billing are deliberately deferred.
 | Language | TypeScript everywhere | One language; the owner is most comfortable in TS |
 | Framework | React + Vite | Explicit and inspectable; no hidden conventions |
 | Styling | Tailwind CSS v4 | Fast to write, readable in markup, nothing to architect yet |
-| Colour and fonts | CSS tokens, no bundled font | Berkeley Mono is commercial, so the OS supplies the font; one token set drives both themes |
+| Colour and fonts | CSS tokens, Ubuntu bundled | One token set drives both themes; a bundled font looks the same everywhere |
 | Backend later | Node + Fastify | Small, well documented, TypeScript friendly |
 | Heavy jobs later | CLI tools in a container | Do not reimplement LibreOffice or Tesseract |
 | Database | None for now | Add when there is real data worth keeping |
