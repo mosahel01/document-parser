@@ -14,9 +14,9 @@ type HomeToolProps = {
 }
 
 const SUPPORTED = [
-  ['PDF', 'Merge several into one, split or extract pages, or convert to Word, HTML, Markdown, or text.'],
+  ['PDF', 'Merge several, split or extract pages, save pages as images, compress, crop, number, or watermark.'],
   ['Word', 'Convert a .docx to PDF, HTML, Markdown, or text.'],
-  ['Images', 'Convert to PNG, JPG, WebP, or PDF, or crop, resize, and rotate one at a time.'],
+  ['Images', 'Convert to PNG, JPG, WebP, or a PDF, or crop, resize, and rotate one at a time.'],
   ['Text', 'Find and replace across a batch, or turn a file into a PDF or Word document.'],
   ['Zip and .gz', 'Unpack what is inside, or pack anything into one archive.'],
 ]
