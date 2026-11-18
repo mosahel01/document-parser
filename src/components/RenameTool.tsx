@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { DownloadBar } from './DownloadBar'
 import { FileDrop } from './FileDrop'
 import { FileList } from './FileList'
 import { FilePreview } from './FilePreview'
@@ -116,23 +117,11 @@ export function RenameTool({ initialFiles }: { initialFiles?: File[] }) {
           </section>
 
           <section className="rounded-xl border border-line bg-surface">
-            <header className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-3">
-              <div>
-                <h2 className="text-sm font-medium text-ink">Preview</h2>
-                <p className="text-sm text-muted">
-                  Downloads are the real files, saved one at a time.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={saveAll}
-                disabled={busy}
-                className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50"
-              >
-                {progress
-                  ? `Preparing ${progress.done} of ${progress.total}…`
-                  : 'Download all'}
-              </button>
+            <header className="border-b border-line px-5 py-3">
+              <h2 className="text-sm font-medium text-ink">Preview</h2>
+              <p className="text-sm text-muted">
+                Downloads are the real files, saved one at a time.
+              </p>
             </header>
 
             <div className="max-h-96 overflow-auto">
@@ -184,6 +173,19 @@ export function RenameTool({ initialFiles }: { initialFiles?: File[] }) {
               </table>
             </div>
           </section>
+
+          <DownloadBar>
+            <button
+              type="button"
+              onClick={saveAll}
+              disabled={busy}
+              className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50"
+            >
+              {progress
+                ? `Preparing ${progress.done} of ${progress.total}…`
+                : 'Download all'}
+            </button>
+          </DownloadBar>
         </>
       )}
     </div>
