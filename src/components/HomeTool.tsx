@@ -14,10 +14,10 @@ type HomeToolProps = {
 }
 
 const SUPPORTED = [
-  ['PDF', 'Merge several into one, split or extract pages, or turn the words into Word.'],
-  ['Word', 'Read .docx as HTML, Markdown, or text, or make a basic one-way PDF.'],
-  ['Images', 'Convert to PNG, JPG, WebP, or a single-page PDF.'],
-  ['Text', 'Find and replace across a batch of UTF-8 files.'],
+  ['PDF', 'Merge several into one, split or extract pages, or convert to Word, HTML, Markdown, or text.'],
+  ['Word', 'Convert a .docx to PDF, HTML, Markdown, or text.'],
+  ['Images', 'Convert to PNG, JPG, WebP, or PDF, or crop, resize, and rotate one at a time.'],
+  ['Text', 'Find and replace across a batch, or turn a file into a PDF or Word document.'],
   ['Zip and .gz', 'Unpack what is inside, or pack anything into one archive.'],
 ]
 
