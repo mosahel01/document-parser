@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { DownloadBar } from './DownloadBar'
 import { FileDrop } from './FileDrop'
 import { FileList } from './FileList'
 import { downloadBlob, downloadEach } from '../tools/download'
@@ -153,8 +154,8 @@ export function CompressTool({
             {busy
               ? 'Working…'
               : mode === 'compress'
-                ? 'Compress and download'
-                : 'Decompress and download'}
+                ? 'Compress'
+                : 'Decompress'}
           </button>
         </div>
       )}
@@ -174,23 +175,13 @@ export function CompressTool({
 
       {rows && rows.length > 0 && (
         <section className="rounded-xl border border-line bg-surface">
-          <header className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-3">
-            <div>
-              <h2 className="text-sm font-medium text-ink">
-                {rows.length} {rows.length === 1 ? 'file' : 'files'} done
-              </h2>
-              <p className="text-sm text-muted">
-                Each one downloads under its own name.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={saveAll}
-              disabled={saving}
-              className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50"
-            >
-              {saving ? 'Saving…' : 'Download all'}
-            </button>
+          <header className="border-b border-line px-5 py-3">
+            <h2 className="text-sm font-medium text-ink">
+              {rows.length} {rows.length === 1 ? 'file' : 'files'} done
+            </h2>
+            <p className="text-sm text-muted">
+              Each one downloads under its own name.
+            </p>
           </header>
 
           <ul className="divide-y divide-line">
@@ -216,6 +207,19 @@ export function CompressTool({
             ))}
           </ul>
         </section>
+      )}
+
+      {rows && rows.length > 0 && (
+        <DownloadBar>
+          <button
+            type="button"
+            onClick={saveAll}
+            disabled={saving}
+            className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50"
+          >
+            {saving ? 'Saving…' : 'Download all'}
+          </button>
+        </DownloadBar>
       )}
     </div>
   )
