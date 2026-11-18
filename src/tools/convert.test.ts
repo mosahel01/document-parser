@@ -3,6 +3,7 @@ import {
   commonTargets,
   conversionFor,
   convertsBytes,
+  imagePageSize,
   isImageName,
   sameFormat,
   targetsFor,
@@ -137,6 +138,69 @@ describe('convertsBytes', () => {
     expect(convertsBytes('image')).toBe(true)
     expect(convertsBytes('pdf')).toBe(true)
     expect(convertsBytes('document')).toBe(true)
+  })
+})
+
+describe('imagePageSize', () => {
+  it('turns a tall photo onto a portrait A4 page with a margin', () => {
+    const page = imagePageSize(1000, 2000, {
+      pageSize: 'a4',
+      orientation: 'auto',
+      margin: 24,
+    })
+
+    expect(page.pageWidth).toBeCloseTo(595.28)
+    expect(page.pageHeight).toBeCloseTo(841.89)
+    expect(page.height).toBeCloseTo(841.89 - 48)
+    expect(page.x + page.width / 2).toBeCloseTo(595.28 / 2)
+  })
+
+  it('turns a wide photo onto a landscape A4 page', () => {
+    const page = imagePageSize(2000, 1000, {
+      pageSize: 'a4',
+      orientation: 'auto',
+      margin: 24,
+    })
+
+    expect(page.pageWidth).toBeCloseTo(841.89)
+    expect(page.pageHeight).toBeCloseTo(595.28)
+    expect(page.width).toBeCloseTo(841.89 - 48)
+  })
+
+  it('follows the photo shape when no sheet is chosen', () => {
+    const page = imagePageSize(1000, 500, {
+      pageSize: 'image',
+      orientation: 'auto',
+      margin: 0,
+    })
+
+    expect(page.pageWidth).toBeCloseTo(841.89)
+    expect(page.pageHeight).toBeCloseTo(420.945)
+    expect(page.x).toBe(0)
+    expect(page.y).toBe(0)
+    expect(page.width).toBeCloseTo(page.pageWidth)
+    expect(page.height).toBeCloseTo(page.pageHeight)
+  })
+
+  it('uses Letter when asked', () => {
+    const page = imagePageSize(100, 100, {
+      pageSize: 'letter',
+      orientation: 'portrait',
+      margin: 0,
+    })
+
+    expect(page.pageWidth).toBeCloseTo(612)
+    expect(page.pageHeight).toBeCloseTo(792)
+  })
+
+  it('refuses a margin larger than the page', () => {
+    expect(() =>
+      imagePageSize(100, 100, {
+        pageSize: 'a4',
+        orientation: 'portrait',
+        margin: 500,
+      }),
+    ).toThrow('larger than the page')
   })
 })
 
