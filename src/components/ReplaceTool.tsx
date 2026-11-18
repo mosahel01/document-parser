@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { DownloadBar } from './DownloadBar'
 import { FileDrop } from './FileDrop'
 import { FileList } from './FileList'
 import { FilePreview } from './FilePreview'
@@ -247,30 +248,18 @@ export function ReplaceTool({ initialFiles }: { initialFiles?: File[] }) {
 
       {rows && (
         <section className="rounded-xl border border-line bg-surface">
-          <header className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-3">
-            <div>
-              <h2 className="text-sm font-medium text-ink">
-                {rows.length} {rows.length === 1 ? 'file' : 'files'} would change
-              </h2>
-              <p className="text-sm text-muted">
-                {rows.length === 0
-                  ? 'Nothing to download.'
-                  : 'Download the copies you want. Your originals stay untouched.'}
-                {untouched > 0
-                  ? ` ${untouched} ${untouched === 1 ? 'file had' : 'files had'} no match and would not change.`
-                  : ''}
-              </p>
-            </div>
-            {rows.length > 0 && (
-              <button
-                type="button"
-                onClick={saveAll}
-                disabled={saving}
-                className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50"
-              >
-                {saving ? 'Saving…' : 'Download all'}
-              </button>
-            )}
+          <header className="border-b border-line px-5 py-3">
+            <h2 className="text-sm font-medium text-ink">
+              {rows.length} {rows.length === 1 ? 'file' : 'files'} would change
+            </h2>
+            <p className="text-sm text-muted">
+              {rows.length === 0
+                ? 'Nothing to download.'
+                : 'Download the copies you want. Your originals stay untouched.'}
+              {untouched > 0
+                ? ` ${untouched} ${untouched === 1 ? 'file had' : 'files had'} no match and would not change.`
+                : ''}
+            </p>
           </header>
 
           <ul className="divide-y divide-line">
@@ -320,6 +309,19 @@ export function ReplaceTool({ initialFiles }: { initialFiles?: File[] }) {
             ))}
           </ul>
         </section>
+      )}
+
+      {rows && rows.length > 0 && (
+        <DownloadBar>
+          <button
+            type="button"
+            onClick={saveAll}
+            disabled={saving}
+            className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50"
+          >
+            {saving ? 'Saving…' : 'Download all'}
+          </button>
+        </DownloadBar>
       )}
     </div>
   )
