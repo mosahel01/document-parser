@@ -1,4 +1,4 @@
-import { PDFDocument } from 'pdf-lib'
+import { PDFDocument, RotationTypes, degrees } from 'pdf-lib'
 import { formatSize } from '../lib/format'
 
 /** Each page becomes a whole PDF, so a huge document would fill memory fast. */
@@ -107,6 +107,70 @@ export async function mergePdfs(files: File[]): Promise<Blob> {
 
 export async function countPages(file: File): Promise<number> {
   return openPdf(file, (document) => document.getPageCount())
+}
+
+/**
+ * One page in the output, and where it comes from. A page can appear twice, and
+ * two copies of one page can be turned differently, which is what makes
+ * "copy and paste a page" and "rotate only this one" possible.
+ */
+export type PageSlot = {
+  /** Index into the files handed to `pagesToPdf`. */
+  source: number
+  /** Zero-based page in that file. */
+  page: number
+  /** Degrees to add to the page's own rotation: 0, 90, 180, or 270. */
+  turn: number
+}
+
+/**
+ * A page manager is a person picking pages by eye, so a few hundred is the most
+ * that stays quick. Each slot copies its page into the new document.
+ */
+export const MAX_ARRANGE_PAGES = 300
+
+function normaliseAngle(angle: number): number {
+  return ((Math.round(angle / 90) * 90) % 360 + 360) % 360
+}
+
+/**
+ * Build one PDF from the chosen pages, in the order given. Turning a page adds
+ * to the rotation it already had, so a sideways scan gets fixed rather than
+ * reset.
+ */
+export async function pagesToPdf(
+  files: File[],
+  slots: PageSlot[],
+): Promise<Blob> {
+  if (slots.length === 0) {
+    throw new Error('There are no pages left to save. Keep at least one.')
+  }
+  if (slots.length > MAX_ARRANGE_PAGES) {
+    throw new Error(
+      `${slots.length} pages is over the ${MAX_ARRANGE_PAGES} page limit for the page editor, so the tab keeps up.`,
+    )
+  }
+
+  const sources: PDFDocument[] = []
+  for (const file of files) sources.push(await load(file))
+
+  const output = await PDFDocument.create()
+
+  for (const slot of slots) {
+    const source = sources[slot.source]
+    if (!source) {
+      throw new Error('One of the pages points at a file that is no longer here.')
+    }
+
+    const [page] = await output.copyPages(source, [slot.page])
+    const own = page.getRotation()
+    const ownAngle =
+      own.type === RotationTypes.Radians ? (own.angle * 180) / Math.PI : own.angle
+    page.setRotation(degrees(normaliseAngle(ownAngle + slot.turn)))
+    output.addPage(page)
+  }
+
+  return save(output)
 }
 
 /** One PDF per page, numbered to match the page count width. */
