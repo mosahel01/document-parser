@@ -15,11 +15,12 @@ exception, used only where the browser genuinely cannot do the job.
 ### File first, then options
 
 The Home tab is the entry point. You drop a file and its extension decides which
-operations appear: an image offers conversion, a lone PDF offers split and PDF to
-Word, several PDFs offer merge, a `.docx` offers reading and Word to PDF, text
-offers find and replace, a zip or `.gz` offers unpacking. Rename, zip, and
-compress always take the whole drop. Nothing is silently ignored: single-file
-operations are offered only when that kind appears once, and a note says so.
+operations appear: an image offers converting and photo editing, a lone PDF
+offers page editing, splitting, and converting, several PDFs offer merge, a
+`.docx` offers converting, text offers find and replace and converting, a zip or
+`.gz` offers unpacking. Rename, zip, and compress always take the whole drop.
+Nothing is silently ignored: operations that work on one file are offered only
+when that kind appears once, and a note says what is missing and why.
 
 `src/tools/fileKind.ts` makes that decision in one table, and each button hands
 its files to an existing tool through `initialFiles` and `initialMode`. The tabs
@@ -36,10 +37,35 @@ and no prefix or suffix options; rewording text inside a file is the find and
 replace tool's job.
 
 **Changing the extension converts the contents when the browser can.** An image
-asked to be `.jpg` is redrawn as a JPEG, not just relabelled. The browser can
-only write images (PNG, JPG, WebP) and a one-page PDF from an image, so any other
-requested extension is refused with a reason and the file keeps its real one.
-Shipping a PNG named `.docx` would be a lie, and worse than a refusal.
+asked to be `.jpg` is redrawn as a JPEG, not just relabelled; a PDF asked to be
+`.docx` gets its words copied into a Word file. The browser can only write what
+the converter table below lists for that kind of file, so anything else is
+refused with a reason and the file keeps its real extension. Shipping a PNG
+named `.docx` would be a lie, and worse than a refusal.
+
+### Converting
+
+One table in `src/tools/convert.ts` decides what a file can become, and both the
+Convert tab and the rename tool read it, so the two can never disagree:
+
+| From | To |
+| --- | --- |
+| Image | PNG, JPG, WebP, PDF (one A4 page) |
+| PDF | Word, HTML, Markdown, text |
+| Word | PDF, HTML, Markdown, text |
+| Text | PDF, Word |
+
+Plain text is deliberately short: relabelling a `.txt` as `.md` or `.html` is a
+rename, not a conversion. A refusal names the formats that kind of file *can*
+become, which is more useful than saying what the one file cannot do.
+
+The Convert tab offers the formats **every** file in the drop can reach
+(`commonTargets`), so a mixed batch cannot start a job that fails on its second
+file. A file already in the chosen format is saved as it is rather than refused.
+Word and PDF conversions move the words only: headings, paragraphs, and lists
+survive, images, tables, and fonts do not. `docxToPdf`, `pdfToDocx`, and the
+DOCX writers are shared with the Word tab, so there is one implementation of
+each direction.
 
 ### Downloads
 
@@ -69,6 +95,22 @@ rewritten and the same page can appear twice with a different rotation. A turn
 is added to the rotation the page already had, so a sideways scan comes out
 upright instead of upside down. Thumbnails come from `renderPageThumbs`, shared
 with the split view; the page editor keeps its state while you switch modes.
+
+### Editing photos
+
+The Photos tab handles one picture at a time, since a crop box is dragged by
+hand. `src/tools/image.ts` holds the work and `ImageTool.tsx` only draws it:
+the picture is rotated onto a canvas at full size, a box is dragged over the
+part to keep, and the result is drawn at the requested width and height in one
+`drawImage` pass. Geometry that can be reasoned about separately lives in pure
+functions (`rotatedSize`, `clampRect`, `matchingSide`) and is unit tested in
+Node; the canvas calls themselves are only checked in a browser.
+
+A rotation clears the crop and the output size, because a rectangle measured on
+a sideways picture means nothing on an upright one. The output is saved as
+`<base>-edited.<format>` so a download cannot overwrite the original. Width and
+height keep the picture's shape unless the lock is turned off. Like the
+converter, the JPEG path fills white first, because JPEG has no transparency.
 
 ### Look
 
@@ -118,7 +160,8 @@ billing are deliberately deferred.
 - **Word to PDF and PDF to Word work in the browser, as text only.** Both
   directions move the words: headings, paragraphs, and lists, rendered in
   Helvetica on A4. Images, tables, columns, and the original fonts are dropped,
-  and the UI says so instead of pretending the result is a facsimile.
+  and the UI says so instead of pretending the result is a facsimile. Plain text
+  takes the same path to a PDF or a Word file.
 - **Faithful page layout still needs a server.** LibreOffice is the only honest
   way to reproduce a Word document's pages, so that remains the Phase 2 job.
   Do not promise it client-side.
@@ -135,6 +178,9 @@ billing are deliberately deferred.
 - **Find and replace only touches UTF-8 text.** Rewriting a Windows-1252 CSV or
   a binary as UTF-8 would corrupt it, so non-UTF-8 files are refused rather than
   guessed at. The cap is 20 MB per file.
+- **A photo over 40 megapixels is refused for editing.** The canvas holds every
+  pixel at once, so a larger picture means hundreds of megabytes and a dead tab.
+  Converting has no such check because it does not keep a second full-size copy.
 - **Decompression is capped at 200 MB of output.** A small `.gz` can expand
   without limit; the reader counts bytes and stops.
 - **OCR, office formats other than DOCX, and faithful DOCX to PDF remain server
@@ -144,14 +190,14 @@ billing are deliberately deferred.
 
 - **Phase 0** — repository, build, one page that runs. *Done.*
 - **Phase 1** — browser tools: file-first Home *(done)*, rename *(done, converts
-  images)*, zip/unzip *(done)*, PDF merge/split *(done)*, PDF page editing
-  *(done)*, image conversion *(done)*, find and replace *(done)*, gzip
+  the contents)*, zip/unzip *(done)*, PDF merge/split *(done)*, PDF page editing
+  *(done)*, converting between images, PDF, Word, and text in one table
+  *(done)*, photo crop/resize/rotate *(done)*, find and replace *(done)*, gzip
   compress/decompress *(done)*, DOCX to HTML, Markdown, and text *(done)*, Word
   to PDF and PDF to Word as text *(done, basic)*.
 - **Phase 2** — server and container for faithful DOCX to PDF and OCR.
 - **Phase 3** — accounts, history, limits, expiry and cleanup.
-- **Phase 4** — remaining features, decided later. An image editor (crop, resize,
-  rotate) belongs here; it is a project of its own, not a tab.
+- **Phase 4** — remaining features, decided later.
 
 ## Conventions
 
