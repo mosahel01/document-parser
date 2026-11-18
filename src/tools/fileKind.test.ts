@@ -50,14 +50,16 @@ describe('groupFiles', () => {
 })
 
 describe('operationsFor', () => {
-  it('offers split and PDF to Word for a single PDF', () => {
+  it('offers page editing, splitting, and PDF to Word for a single PDF', () => {
     const [group] = groupFiles(named('report.pdf'))
+    const operations = operationsFor(group)
 
-    expect(operationsFor(group).map((operation) => operation.tool)).toEqual([
-      'pdf',
-      'word',
+    expect(operations.map((operation) => operation.label)).toEqual([
+      'Edit pages',
+      'Split or extract pages',
+      'PDF to Word',
     ])
-    expect(operationsFor(group).every((operation) => operation.files.length === 1))
+    expect(operations.every((operation) => operation.files.length === 1))
       .toBe(true)
   })
 
