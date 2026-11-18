@@ -98,16 +98,24 @@ with the split view; the page editor keeps its state while you switch modes.
 
 ### Editing photos
 
-The Photos tab handles one picture at a time, since a crop box is dragged by
-hand. `src/tools/image.ts` holds the work and `ImageTool.tsx` only draws it:
-the picture is rotated onto a canvas at full size, a box is dragged over the
-part to keep, and the result is drawn at the requested width and height in one
-`drawImage` pass. Geometry that can be reasoned about separately lives in pure
-functions (`rotatedSize`, `clampRect`, `matchingSide`) and is unit tested in
-Node; the canvas calls themselves are only checked in a browser.
+The Photos tab handles one picture at a time, since a crop box and a tilt grip
+are dragged by hand. `src/tools/image.ts` holds the work and `ImageTool.tsx`
+only draws it: the picture is rotated onto a canvas at full size, a box is
+dragged over the part to keep, and the result is drawn at the requested width
+and height in one `drawImage` pass. Geometry that can be reasoned about
+separately lives in pure functions (`rotatedBounds`, `clampRect`,
+`matchingSide`) and is unit tested in Node; the canvas calls themselves are
+only checked in a browser.
+
+Rotation is free, not just quarter turns: the round grip above the photo follows
+the pointer, so a crooked scan can be straightened, and the Angle box types the
+same value. While the grip moves, the canvas is turned with a CSS transform, and
+the full-resolution redraw happens once on release; that keeps a drag smooth on
+a large photo. The canvas grows to hold the tilted picture (`rotatedBounds`), so
+the corners come out empty and stay transparent in PNG and WebP, white in JPG.
 
 A rotation clears the crop and the output size, because a rectangle measured on
-a sideways picture means nothing on an upright one. The output is saved as
+a tilted picture no longer covers the same pixels. The output is saved as
 `<base>-edited.<format>` so a download cannot overwrite the original. Width and
 height keep the picture's shape unless the lock is turned off. Like the
 converter, the JPEG path fills white first, because JPEG has no transparency.
@@ -178,9 +186,10 @@ billing are deliberately deferred.
 - **Find and replace only touches UTF-8 text.** Rewriting a Windows-1252 CSV or
   a binary as UTF-8 would corrupt it, so non-UTF-8 files are refused rather than
   guessed at. The cap is 20 MB per file.
-- **A photo over 40 megapixels is refused for editing.** The canvas holds every
-  pixel at once, so a larger picture means hundreds of megabytes and a dead tab.
-  Converting has no such check because it does not keep a second full-size copy.
+- **A photo over 40 megapixels is refused for editing, and so is a tilt that
+  needs a bigger canvas than that.** The canvas holds every pixel at once, so a
+  larger picture means hundreds of megabytes and a dead tab. Converting has no
+  such check because it does not keep a second full-size copy.
 - **Decompression is capped at 200 MB of output.** A small `.gz` can expand
   without limit; the reader counts bytes and stops.
 - **OCR, office formats other than DOCX, and faithful DOCX to PDF remain server
@@ -192,7 +201,7 @@ billing are deliberately deferred.
 - **Phase 1** — browser tools: file-first Home *(done)*, rename *(done, converts
   the contents)*, zip/unzip *(done)*, PDF merge/split *(done)*, PDF page editing
   *(done)*, converting between images, PDF, Word, and text in one table
-  *(done)*, photo crop/resize/rotate *(done)*, find and replace *(done)*, gzip
+  *(done)*, photo crop/resize/straighten *(done)*, find and replace *(done)*, gzip
   compress/decompress *(done)*, DOCX to HTML, Markdown, and text *(done)*, Word
   to PDF and PDF to Word as text *(done, basic)*.
 - **Phase 2** — server and container for faithful DOCX to PDF and OCR.
