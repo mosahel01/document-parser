@@ -26,7 +26,7 @@ const newSlotId = () => `slot-${(slotCounter += 1)}`
 const THUMBS_PER_FILE = 60
 
 const smallButton =
-  'rounded border border-edge px-2 py-0.5 text-xs text-muted hover:border-accent hover:text-ink disabled:opacity-40'
+  'rounded-[3px] border border-line bg-sunk px-2.5 py-1 text-xs text-muted hover:border-edge hover:text-ink disabled:opacity-40 cursor-pointer'
 
 /**
  * The page editor: rotate, delete, duplicate, reorder, and pull pages in from
