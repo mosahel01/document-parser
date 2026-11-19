@@ -17,8 +17,8 @@ type Mode = 'compress' | 'decompress'
 type Row = { file: File; blob: Blob; name: string }
 
 const tabClass = (active: boolean) =>
-  `rounded-md px-4 py-1.5 text-sm font-medium ${
-    active ? 'bg-accent text-accent-ink' : 'text-muted hover:text-ink'
+  `rounded-[3px] px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer ${
+    active ? 'bg-hover text-ink shadow-xs' : 'text-muted hover:text-ink'
   }`
 
 export function CompressTool({
@@ -93,21 +93,21 @@ export function CompressTool({
   }
 
   return (
-    <div className="space-y-8">
-      <div className="inline-flex gap-1 rounded-lg border border-edge bg-surface p-1">
+    <div className="space-y-6">
+      <div className="inline-flex rounded-[4px] border border-line bg-sunk p-0.5">
         <button
           type="button"
           onClick={() => switchTo('compress')}
           className={tabClass(mode === 'compress')}
         >
-          Compress
+          GZIP Compressor
         </button>
         <button
           type="button"
           onClick={() => switchTo('decompress')}
           className={tabClass(mode === 'decompress')}
         >
-          Decompress
+          GZIP Decompressor
         </button>
       </div>
 
@@ -119,13 +119,13 @@ export function CompressTool({
         accept={mode === 'decompress' ? '.gz,.gzip,application/gzip' : undefined}
         label={
           mode === 'compress'
-            ? 'Drop the files to compress'
-            : 'Drop the .gz files to expand'
+            ? 'Drop individual files to compress into .gz'
+            : 'Drop .gz archives to decompress'
         }
         hint={
           mode === 'compress'
-            ? 'One file in, one .gz out. Use Zip to pack several files into one.'
-            : 'The name stored inside the archive is reused when there is one.'
+            ? 'GZIP compresses individual files directly using RFC 1952. Use ZIP for multiple files and folders.'
+            : 'Extracts the original file stored inside the .gz stream.'
         }
       />
 
@@ -141,21 +141,21 @@ export function CompressTool({
       />
 
       {files.length > 0 && (
-        <div className="flex items-center justify-between rounded-xl border border-line bg-surface px-5 py-3">
-          <p className="text-sm text-muted">
+        <div className="flex items-center justify-between rounded-[5px] border border-line bg-surface px-4 py-2.5">
+          <p className="text-xs text-muted">
             {files.length} {files.length === 1 ? 'file' : 'files'} ready.
           </p>
           <button
             type="button"
             onClick={run}
             disabled={busy}
-            className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50"
+            className="rounded-[4px] bg-accent px-4 py-2 text-xs font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50 cursor-pointer"
           >
             {busy
               ? 'Working…'
               : mode === 'compress'
-                ? 'Compress'
-                : 'Decompress'}
+                ? 'Compress to .gz'
+                : 'Decompress .gz'}
           </button>
         </div>
       )}
@@ -165,7 +165,7 @@ export function CompressTool({
           {problems.map((problem) => (
             <li
               key={problem}
-              className="rounded-xl border border-bad/30 bg-bad-soft px-5 py-3 text-sm text-bad"
+              className="rounded-[5px] border border-bad/30 bg-bad-soft px-4 py-3 text-xs text-bad"
             >
               {problem}
             </li>
@@ -174,13 +174,13 @@ export function CompressTool({
       )}
 
       {rows && rows.length > 0 && (
-        <section className="rounded-xl border border-line bg-surface">
-          <header className="border-b border-line px-5 py-3">
-            <h2 className="text-sm font-medium text-ink">
-              {rows.length} {rows.length === 1 ? 'file' : 'files'} done
+        <section className="rounded-[5px] border border-line bg-surface">
+          <header className="border-b border-line px-4 py-2.5">
+            <h2 className="text-xs font-medium text-ink">
+              {rows.length} {rows.length === 1 ? 'file' : 'files'} processed
             </h2>
-            <p className="text-sm text-muted">
-              Each one downloads under its own name.
+            <p className="font-mono text-[11px] text-faint">
+              Each file is downloaded independently under its preserved name.
             </p>
           </header>
 
@@ -188,18 +188,18 @@ export function CompressTool({
             {rows.map((row) => (
               <li
                 key={row.name}
-                className="flex items-center gap-3 px-5 py-2 text-sm"
+                className="flex items-center gap-3 px-4 py-2 text-xs"
               >
-                <span className="min-w-0 flex-1 truncate font-medium">
+                <span className="min-w-0 flex-1 truncate font-medium text-ink">
                   {row.name}
                 </span>
-                <span className="shrink-0 text-faint">
+                <span className="shrink-0 font-mono text-[11px] text-faint">
                   {formatSize(row.file.size)} → {formatSize(row.blob.size)}
                 </span>
                 <button
                   type="button"
                   onClick={() => downloadBlob(row.blob, row.name)}
-                  className="shrink-0 text-sm text-muted underline-offset-2 hover:text-ink hover:underline"
+                  className="rounded-[3px] border border-line bg-sunk px-2 py-0.5 text-xs text-muted hover:border-edge hover:text-ink cursor-pointer"
                 >
                   Download
                 </button>
@@ -215,7 +215,7 @@ export function CompressTool({
             type="button"
             onClick={saveAll}
             disabled={saving}
-            className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50"
+            className="rounded-[4px] bg-accent px-4 py-2 text-xs font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50 cursor-pointer"
           >
             {saving ? 'Saving…' : 'Download all'}
           </button>
