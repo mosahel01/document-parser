@@ -35,8 +35,8 @@ const FORMATS: { id: Format; label: string; mime: string }[] = [
 ]
 
 const tabClass = (active: boolean) =>
-  `rounded-md px-3 py-1.5 text-sm font-medium ${
-    active ? 'bg-accent text-accent-ink' : 'text-muted hover:text-ink'
+  `rounded-[3px] px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer ${
+    active ? 'bg-hover text-ink shadow-xs' : 'text-muted hover:text-ink'
   }`
 
 const PREVIEW_CHARACTERS = 3000
@@ -46,11 +46,11 @@ function TextSample({ text }: { text: string }) {
 
   return (
     <div>
-      <pre className="max-h-72 overflow-auto whitespace-pre-wrap rounded-lg bg-sunk p-4 text-xs text-ink">
+      <pre className="max-h-72 overflow-auto whitespace-pre-wrap rounded-[4px] bg-sunk p-3 font-mono text-xs text-ink">
         {shown}
       </pre>
       {text.length > shown.length && (
-        <p className="mt-1 text-xs text-faint">
+        <p className="mt-1 text-[11px] text-faint">
           Showing the first {PREVIEW_CHARACTERS} characters. The download is the
           whole document.
         </p>
@@ -177,8 +177,8 @@ export function WordTool({
   }
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-wrap gap-2">
+    <div className="space-y-6">
+      <div className="inline-flex rounded-[4px] border border-line bg-sunk p-0.5">
         {MODES.map((option) => (
           <button
             key={option.id}
@@ -210,34 +210,34 @@ export function WordTool({
         }
       />
 
-      {busy && <p className="text-sm text-muted">Working…</p>}
+      {busy && <p className="text-xs text-muted">Reading document content...</p>}
 
       {error && (
-        <p className="rounded-xl border border-bad/30 bg-bad-soft px-5 py-3 text-sm text-bad">
+        <p className="rounded-[5px] border border-bad/30 bg-bad-soft px-4 py-3 text-xs text-bad">
           {error}
         </p>
       )}
 
       {source && (
-        <section className="rounded-xl border border-line bg-surface">
-          <header className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-3">
+        <section className="rounded-[5px] border border-line bg-surface">
+          <header className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-4 py-2.5">
             <div className="flex min-w-0 items-center gap-3">
               <FilePreview name={source.name} blob={source} />
               <div className="min-w-0">
-                <h2 className="truncate text-sm font-medium text-ink">
+                <h2 className="truncate text-xs font-medium text-ink">
                   {outputName(source, mode)}
                 </h2>
-                <p className="text-sm text-muted">
-                  {source.name} · {formatSize(source.size)}
+                <p className="font-mono text-[11px] text-faint">
+                  {source.name} &bull; {formatSize(source.size)}
                 </p>
               </div>
             </div>
           </header>
 
-          <div className="p-5">
+          <div className="p-4">
             {mode === 'read' && blocks && (
               <div className="space-y-3">
-                <div className="inline-flex gap-1 rounded-lg border border-edge p-1">
+                <div className="inline-flex rounded-[4px] border border-line bg-sunk p-0.5">
                   {FORMATS.map((option) => (
                     <button
                       key={option.id}
@@ -255,7 +255,7 @@ export function WordTool({
             )}
 
             {mode === 'read' && blocks && blocks.length === 0 && (
-              <p className="text-sm text-muted">
+              <p className="text-xs text-muted">
                 This document has no text, so there is nothing to convert.
               </p>
             )}
@@ -267,7 +267,7 @@ export function WordTool({
             {mode === 'fromPdf' && docx && (
               <div className="space-y-2">
                 <TextSample text={docx.paragraphs.join('\n\n')} />
-                <p className="text-xs text-faint">
+                <p className="text-[11px] font-mono text-faint">
                   {docx.paragraphs.length}{' '}
                   {docx.paragraphs.length === 1 ? 'paragraph' : 'paragraphs'} found.
                 </p>
@@ -282,9 +282,9 @@ export function WordTool({
           <button
             type="button"
             onClick={save}
-            className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover"
+            className="rounded-[4px] bg-accent px-4 py-2 text-xs font-medium text-accent-ink hover:bg-accent-hover cursor-pointer"
           >
-            Download
+            Download {outputName(source, mode)}
           </button>
         </DownloadBar>
       )}
