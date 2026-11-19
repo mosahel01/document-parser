@@ -16,8 +16,8 @@ import { formatSize } from '../lib/format'
 type Mode = 'create' | 'open'
 
 const tabClass = (active: boolean) =>
-  `rounded-md px-4 py-1.5 text-sm font-medium ${
-    active ? 'bg-accent text-accent-ink' : 'text-muted hover:text-ink'
+  `rounded-[3px] px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer ${
+    active ? 'bg-hover text-ink shadow-xs' : 'text-muted hover:text-ink'
   }`
 
 export function ZipTool({
@@ -112,21 +112,21 @@ export function ZipTool({
   }
 
   return (
-    <div className="space-y-8">
-      <div className="inline-flex gap-1 rounded-lg border border-edge bg-surface p-1">
+    <div className="space-y-6">
+      <div className="inline-flex rounded-[4px] border border-line bg-sunk p-0.5">
         <button
           type="button"
           onClick={() => setMode('create')}
           className={tabClass(mode === 'create')}
         >
-          Create a zip
+          ZIP Creator
         </button>
         <button
           type="button"
           onClick={() => setMode('open')}
           className={tabClass(mode === 'open')}
         >
-          Open a zip
+          ZIP Extractor
         </button>
       </div>
 
@@ -134,8 +134,8 @@ export function ZipTool({
         <>
           <FileDrop
             onFiles={(incoming) => setFiles([...files, ...incoming])}
-            label="Drop the files to pack"
-            hint="Any file type. Nothing is uploaded."
+            label="Drop files or folders to create a ZIP"
+            hint="ZIP packages multiple files and directories into one compressed archive."
           />
 
           <FileList
@@ -148,13 +148,13 @@ export function ZipTool({
 
           {files.length > 0 && (
             <DownloadBar
-              note={`${files.length} ${files.length === 1 ? 'file' : 'files'}, ${formatSize(packedSize)}`}
+              note={`${files.length} ${files.length === 1 ? 'file' : 'files'} (${formatSize(packedSize)})`}
             >
               <button
                 type="button"
                 onClick={createArchive}
                 disabled={zipping}
-                className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50"
+                className="rounded-[4px] bg-accent px-4 py-2 text-xs font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50 cursor-pointer"
               >
                 {zipping ? 'Packing…' : `Download ${zipName}`}
               </button>
@@ -170,30 +170,29 @@ export function ZipTool({
             }}
             accept=".zip,application/zip"
             multiple={false}
-            label="Drop a .zip archive"
-            hint="Only zip for now. RAR and 7z are not supported."
+            label="Drop a .zip archive to inspect and extract"
+            hint="Inspects contents table: paths, sizes, and file types with selective extraction."
           />
 
-          {reading && <p className="text-sm text-muted">Reading…</p>}
+          {reading && <p className="text-xs text-muted">Reading archive index...</p>}
 
           {error && (
-            <p className="rounded-xl border border-bad/30 bg-bad-soft px-5 py-3 text-sm text-bad">
+            <p className="rounded-[5px] border border-bad/30 bg-bad-soft px-4 py-3 text-xs text-bad">
               {error}
             </p>
           )}
 
           {archive && !error && entries && (
-            <section className="rounded-xl border border-line bg-surface">
-              <header className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-5 py-3">
+            <section className="rounded-[5px] border border-line bg-surface">
+              <header className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-4 py-2.5">
                 <div>
-                  <h2 className="text-sm font-medium text-ink">
+                  <h2 className="text-xs font-medium text-ink">
                     {archive.name}
                   </h2>
-                  <p className="text-sm text-muted">
+                  <p className="font-mono text-[11px] text-muted">
                     {entries.length}{' '}
-                    {entries.length === 1 ? 'file' : 'files'},{' '}
-                    {formatSize(unpackedSize)} unpacked. Each file downloads as
-                    itself.
+                    {entries.length === 1 ? 'file' : 'files'} &bull;{' '}
+                    Archive: {formatSize(archive.size)} &bull; Extracted: {formatSize(unpackedSize)}
                   </p>
                 </div>
                 <button
@@ -202,42 +201,42 @@ export function ZipTool({
                     setArchive(null)
                     setEntries(null)
                   }}
-                  className="text-sm text-muted hover:text-ink"
+                  className="rounded-[3px] border border-line bg-sunk px-2 py-0.5 text-xs text-muted hover:border-edge hover:text-ink cursor-pointer"
                 >
                   Close archive
                 </button>
               </header>
 
               {entries.length === 0 ? (
-                <p className="px-5 py-4 text-sm text-muted">
+                <p className="px-4 py-4 text-xs text-muted">
                   This archive is empty.
                 </p>
               ) : (
                 <div className="max-h-96 overflow-auto">
-                  <table className="w-full text-left text-sm">
-                    <thead className="sticky top-0 bg-sunk text-muted">
+                  <table className="w-full text-left text-xs">
+                    <thead className="sticky top-0 bg-sunk text-muted border-b border-line">
                       <tr>
-                        <th className="px-5 py-2 font-medium">File</th>
-                        <th className="px-5 py-2 font-medium">Size</th>
-                        <th className="px-5 py-2" />
+                        <th className="px-4 py-2 font-medium">File / Path</th>
+                        <th className="px-4 py-2 font-medium">Unpacked Size</th>
+                        <th className="px-4 py-2 text-right">Action</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-line">
                       {entries.map((entry, index) => (
-                        <tr key={entry.path}>
-                          <td className="px-5 py-2 align-middle">
+                        <tr key={entry.path} className="hover:bg-hover/40 transition-colors">
+                          <td className="px-4 py-2 align-middle">
                             <div className="flex items-center gap-2">
                               <FilePreview
                                 name={entry.path}
                                 blob={entryBlobs.get(entry.path)}
                               />
-                              <span className="break-all">{entry.path}</span>
+                              <span className="break-all font-mono text-[11px] text-ink">{entry.path}</span>
                             </div>
                           </td>
-                          <td className="shrink-0 px-5 py-2 text-muted">
+                          <td className="shrink-0 px-4 py-2 font-mono text-[11px] text-muted">
                             {formatSize(entry.bytes.length)}
                           </td>
-                          <td className="px-5 py-2 text-right">
+                          <td className="px-4 py-2 text-right">
                             <button
                               type="button"
                               onClick={() =>
@@ -246,9 +245,9 @@ export function ZipTool({
                                   names[index],
                                 )
                               }
-                              className="text-sm text-muted underline-offset-2 hover:text-ink hover:underline"
+                              className="rounded-[3px] border border-line bg-sunk px-2 py-0.5 text-xs text-muted hover:border-edge hover:text-ink cursor-pointer"
                             >
-                              Download
+                              Extract
                             </button>
                           </td>
                         </tr>
@@ -261,14 +260,14 @@ export function ZipTool({
           )}
 
           {archive && !error && entries && entries.length > 0 && (
-            <DownloadBar>
+            <DownloadBar note={`Total ${entries.length} files (${formatSize(unpackedSize)})`}>
               <button
                 type="button"
                 onClick={downloadEverything}
                 disabled={saving}
-                className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50"
+                className="rounded-[4px] bg-accent px-4 py-2 text-xs font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50 cursor-pointer"
               >
-                {saving ? 'Saving…' : 'Download all'}
+                {saving ? 'Saving…' : 'Extract All Files'}
               </button>
             </DownloadBar>
           )}
