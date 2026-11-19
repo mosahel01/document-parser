@@ -9,7 +9,7 @@ import { cropPdf, type CropMargins } from '../tools/pdfEnhance'
 import { formatSize } from '../lib/format'
 
 const field =
-  'w-20 rounded-lg border border-edge bg-surface px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/25'
+  'w-20 rounded-[4px] border border-line bg-sunk px-2.5 py-1.5 text-xs text-ink outline-none focus:border-accent focus:ring-1 focus:ring-accent'
 
 const EDGES: { key: keyof CropMargins; label: string }[] = [
   { key: 'top', label: 'Top' },
@@ -76,7 +76,7 @@ export function PdfCropTool({ initialFiles }: { initialFiles?: File[] }) {
   }
 
   return (
-    <>
+    <div className="space-y-6">
       <FileDrop
         onFiles={(incoming) => choose(incoming[0] ?? null)}
         accept=".pdf,application/pdf"
@@ -86,34 +86,34 @@ export function PdfCropTool({ initialFiles }: { initialFiles?: File[] }) {
       />
 
       {file && (
-        <section className="rounded-xl border border-line bg-surface p-5">
-          <div className="flex flex-wrap items-center justify-between gap-3">
+        <section className="rounded-[5px] border border-line bg-surface p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-3">
             <div className="flex min-w-0 items-center gap-3">
               <FilePreview name={file.name} blob={file} />
               <div className="min-w-0">
-                <p className="truncate text-sm font-medium text-ink">
+                <p className="truncate text-xs font-medium text-ink">
                   {file.name}
                 </p>
-                <p className="text-sm text-muted">{formatSize(file.size)}</p>
+                <p className="font-mono text-[11px] text-faint">{formatSize(file.size)}</p>
               </div>
             </div>
             <button
               type="button"
               onClick={() => choose(null)}
-              className="text-sm text-muted hover:text-ink"
+              className="rounded-[3px] border border-line bg-sunk px-2.5 py-1 text-xs text-muted hover:border-edge hover:text-ink cursor-pointer"
             >
               Choose another
             </button>
           </div>
 
-          <p className="mt-4 text-sm text-muted">
+          <p className="mt-3 text-xs text-muted">
             Take a percentage off each side of every page as it is seen, so a
             sideways scan is trimmed on its visible edges.
           </p>
 
           <div className="mt-3 flex flex-wrap items-end gap-3">
             {EDGES.map((edge) => (
-              <label key={edge.key} className="text-sm text-muted">
+              <label key={edge.key} className="text-xs text-muted">
                 {edge.label} %
                 <input
                   type="number"
@@ -135,7 +135,7 @@ export function PdfCropTool({ initialFiles }: { initialFiles?: File[] }) {
                 setMargins({ top: 5, right: 5, bottom: 5, left: 5 })
                 setPreview(null)
               }}
-              className="rounded-lg border border-edge px-3 py-2 text-sm text-ink hover:bg-hover"
+              className="rounded-[4px] border border-line bg-sunk px-3 py-1.5 text-xs text-muted hover:border-edge hover:text-ink cursor-pointer"
             >
               Trim 5% all round
             </button>
@@ -144,20 +144,20 @@ export function PdfCropTool({ initialFiles }: { initialFiles?: File[] }) {
               type="button"
               onClick={() => void run()}
               disabled={busy || !valid}
-              className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50"
+              className="rounded-[4px] bg-accent px-4 py-1.5 text-xs font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50 cursor-pointer"
             >
               {busy ? 'Cropping…' : 'Preview crop'}
             </button>
           </div>
 
           {!valid && (
-            <p className="mt-2 text-sm text-bad">
+            <p className="mt-2 text-xs text-bad">
               Margins must be zero or more, and opposite sides together cannot
               reach 100%.
             </p>
           )}
 
-          <p className="mt-3 text-sm text-muted">
+          <p className="mt-3 text-[11px] text-muted">
             Cropping changes where each page ends; the removed area is hidden
             rather than deleted from the file.
           </p>
@@ -165,29 +165,29 @@ export function PdfCropTool({ initialFiles }: { initialFiles?: File[] }) {
       )}
 
       {error && (
-        <p className="rounded-xl border border-bad/30 bg-bad-soft px-5 py-3 text-sm text-bad">
+        <p className="rounded-[5px] border border-bad/30 bg-bad-soft px-4 py-3 text-xs text-bad">
           {error}
         </p>
       )}
 
       {preview && (
-        <section className="rounded-xl border border-line bg-surface">
-          <header className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-3">
+        <section className="rounded-[5px] border border-line bg-surface">
+          <header className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-4 py-2.5">
             <div>
-              <h2 className="text-sm font-medium text-ink">{preview.name}</h2>
-              <p className="text-sm text-muted">
+              <h2 className="text-xs font-medium text-ink">{preview.name}</h2>
+              <p className="font-mono text-[11px] text-faint">
                 {formatSize(preview.blob.size)}
               </p>
             </div>
             <button
               type="button"
               onClick={() => setPreview(null)}
-              className="text-sm text-muted hover:text-ink"
+              className="rounded-[3px] border border-line bg-sunk px-2 py-0.5 text-xs text-muted hover:text-ink cursor-pointer"
             >
               Close preview
             </button>
           </header>
-          <div className="p-5">
+          <div className="p-4">
             <PdfPreview blob={preview.blob} title={preview.name} />
           </div>
         </section>
@@ -198,12 +198,12 @@ export function PdfCropTool({ initialFiles }: { initialFiles?: File[] }) {
           <button
             type="button"
             onClick={() => downloadBlob(preview.blob, preview.name)}
-            className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover"
+            className="rounded-[4px] bg-accent px-4 py-2 text-xs font-medium text-accent-ink hover:bg-accent-hover cursor-pointer"
           >
-            Download
+            Download {preview.name}
           </button>
         </DownloadBar>
       )}
-    </>
+    </div>
   )
 }
