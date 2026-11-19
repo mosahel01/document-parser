@@ -17,7 +17,7 @@ import {
 import { formatSize } from '../lib/format'
 
 const field =
-  'rounded-lg border border-edge bg-surface px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/25'
+  'rounded-[4px] border border-line bg-sunk px-2.5 py-1.5 text-xs text-ink outline-none focus:border-accent focus:ring-1 focus:ring-accent'
 
 export function PdfToImagesTool({ initialFiles }: { initialFiles?: File[] }) {
   const handedPdf =
@@ -104,7 +104,7 @@ export function PdfToImagesTool({ initialFiles }: { initialFiles?: File[] }) {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <FileDrop
         onFiles={(incoming) => choose(incoming[0] ?? null)}
         accept=".pdf,application/pdf"
@@ -114,28 +114,28 @@ export function PdfToImagesTool({ initialFiles }: { initialFiles?: File[] }) {
       />
 
       {file && (
-        <section className="rounded-xl border border-line bg-surface p-5">
-          <div className="flex flex-wrap items-center justify-between gap-3">
+        <section className="rounded-[5px] border border-line bg-surface p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-3">
             <div className="flex min-w-0 items-center gap-3">
               <FilePreview name={file.name} blob={file} />
               <div className="min-w-0">
-                <p className="truncate text-sm font-medium text-ink">
+                <p className="truncate text-xs font-medium text-ink">
                   {file.name}
                 </p>
-                <p className="text-sm text-muted">{formatSize(file.size)}</p>
+                <p className="font-mono text-[11px] text-faint">{formatSize(file.size)}</p>
               </div>
             </div>
             <button
               type="button"
               onClick={() => choose(null)}
-              className="text-sm text-muted hover:text-ink"
+              className="rounded-[3px] border border-line bg-sunk px-2.5 py-1 text-xs text-muted hover:border-edge hover:text-ink cursor-pointer"
             >
               Choose another
             </button>
           </div>
 
-          <div className="mt-4 flex flex-wrap items-end gap-4">
-            <label className="text-sm text-muted">
+          <div className="mt-4 flex flex-wrap items-end gap-3">
+            <label className="text-xs text-muted">
               Format
               <select
                 value={format}
@@ -145,12 +145,12 @@ export function PdfToImagesTool({ initialFiles }: { initialFiles?: File[] }) {
                 }}
                 className={`mt-1 block ${field}`}
               >
-                <option value="jpg">JPG, smaller</option>
-                <option value="png">PNG, lossless</option>
+                <option value="jpg">JPG (compressed)</option>
+                <option value="png">PNG (lossless)</option>
               </select>
             </label>
 
-            <label className="text-sm text-muted">
+            <label className="text-xs text-muted">
               Resolution
               <select
                 value={dpi}
@@ -160,14 +160,14 @@ export function PdfToImagesTool({ initialFiles }: { initialFiles?: File[] }) {
                 }}
                 className={`mt-1 block ${field}`}
               >
-                <option value={150}>150 dpi, small</option>
+                <option value={150}>150 dpi, compact</option>
                 <option value={200}>200 dpi, balanced</option>
-                <option value={300}>300 dpi, print</option>
+                <option value={300}>300 dpi, high print</option>
               </select>
             </label>
 
             {format === 'jpg' && (
-              <label className="text-sm text-muted">
+              <label className="text-xs text-muted">
                 Quality {Math.round(quality * 100)}%
                 <input
                   type="range"
@@ -179,7 +179,7 @@ export function PdfToImagesTool({ initialFiles }: { initialFiles?: File[] }) {
                     setQuality(Number(event.target.value) / 100)
                     setRows(null)
                   }}
-                  className="mt-2 block w-40"
+                  className="mt-2 block w-32"
                 />
               </label>
             )}
@@ -188,13 +188,13 @@ export function PdfToImagesTool({ initialFiles }: { initialFiles?: File[] }) {
               type="button"
               onClick={() => void run()}
               disabled={busy}
-              className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50"
+              className="rounded-[4px] bg-accent px-4 py-2 text-xs font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50 cursor-pointer"
             >
               {busy
                 ? progress
                   ? `Drawing page ${progress.page} of ${progress.total}…`
                   : 'Drawing…'
-                : 'Make images'}
+                : 'Export Images'}
             </button>
 
             {busy && (
@@ -203,14 +203,14 @@ export function PdfToImagesTool({ initialFiles }: { initialFiles?: File[] }) {
                 onClick={() => {
                   stopped.current = true
                 }}
-                className="rounded-lg border border-edge px-4 py-2 text-sm font-medium text-ink hover:bg-hover"
+                className="rounded-[4px] border border-line bg-sunk px-3 py-2 text-xs font-medium text-ink hover:border-edge cursor-pointer"
               >
                 Stop
               </button>
             )}
           </div>
 
-          <p className="mt-3 text-sm text-muted">
+          <p className="mt-3 text-[11px] text-muted">
             Each page is drawn as it appears in a viewer. Rotated and cropped
             pages keep their look.
           </p>
@@ -218,47 +218,47 @@ export function PdfToImagesTool({ initialFiles }: { initialFiles?: File[] }) {
       )}
 
       {error && (
-        <p className="rounded-xl border border-bad/30 bg-bad-soft px-5 py-3 text-sm text-bad">
+        <p className="rounded-[5px] border border-bad/30 bg-bad-soft px-4 py-3 text-xs text-bad">
           {error}
         </p>
       )}
 
       {rows && rows.length > 0 && (
-        <section className="rounded-xl border border-line bg-surface">
-          <header className="border-b border-line px-5 py-3">
-            <h2 className="text-sm font-medium text-ink">
+        <section className="rounded-[5px] border border-line bg-surface">
+          <header className="border-b border-line px-4 py-2.5">
+            <h2 className="text-xs font-medium text-ink">
               {rows.length} {rows.length === 1 ? 'image' : 'images'}
             </h2>
-            <p className="text-sm text-muted">
+            <p className="font-mono text-[11px] text-faint">
               Each page downloads as its own image.
             </p>
           </header>
 
-          <ul className="grid grid-cols-2 gap-3 p-5 sm:grid-cols-3 lg:grid-cols-4">
+          <ul className="grid grid-cols-2 gap-2.5 p-4 sm:grid-cols-3 lg:grid-cols-4">
             {rows.map((row) => (
               <li
                 key={row.name}
-                className="overflow-hidden rounded-lg border border-line"
+                className="overflow-hidden rounded-[4px] border border-line bg-sunk"
               >
-                <div className="flex aspect-[3/4] items-center justify-center overflow-hidden bg-sunk p-2">
+                <div className="flex aspect-[3/4] items-center justify-center overflow-hidden p-2">
                   <FilePreview
                     name={row.name}
                     blob={row.image.blob}
                     variant="wide"
                   />
                 </div>
-                <div className="border-t border-line px-2 py-1.5">
-                  <p className="truncate text-xs font-medium text-ink">
+                <div className="border-t border-line bg-surface px-2.5 py-1.5">
+                  <p className="truncate font-mono text-[11px] font-medium text-ink">
                     {row.name}
                   </p>
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs text-faint">
+                  <div className="flex items-center justify-between gap-2 mt-0.5">
+                    <span className="font-mono text-[10px] text-faint">
                       {formatSize(row.image.blob.size)}
                     </span>
                     <button
                       type="button"
                       onClick={() => downloadBlob(row.image.blob, row.name)}
-                      className="text-xs text-muted underline-offset-2 hover:text-ink hover:underline"
+                      className="rounded-[2px] border border-line bg-sunk px-1.5 py-0.5 text-[10px] text-muted hover:border-edge hover:text-ink cursor-pointer"
                     >
                       Download
                     </button>
@@ -278,7 +278,7 @@ export function PdfToImagesTool({ initialFiles }: { initialFiles?: File[] }) {
             type="button"
             onClick={() => void saveAll()}
             disabled={saving}
-            className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50"
+            className="rounded-[4px] bg-accent px-4 py-2 text-xs font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50 cursor-pointer"
           >
             {saving ? 'Saving…' : 'Download all'}
           </button>
@@ -331,7 +331,7 @@ export function ImagesToPdfTool({ initialFiles }: { initialFiles?: File[] }) {
   }
 
   return (
-    <>
+    <div className="space-y-6">
       <FileDrop
         onFiles={(incoming) => {
           setFiles([...files, ...incoming])
@@ -359,9 +359,9 @@ export function ImagesToPdfTool({ initialFiles }: { initialFiles?: File[] }) {
       />
 
       {files.length > 0 && (
-        <section className="rounded-xl border border-line bg-surface p-5">
-          <div className="flex flex-wrap items-end gap-4">
-            <label className="text-sm text-muted">
+        <section className="rounded-[5px] border border-line bg-surface p-4">
+          <div className="flex flex-wrap items-end gap-3">
+            <label className="text-xs text-muted">
               Page size
               <select
                 value={pageSize}
@@ -371,13 +371,13 @@ export function ImagesToPdfTool({ initialFiles }: { initialFiles?: File[] }) {
                 }}
                 className={`mt-1 block ${field}`}
               >
-                <option value="a4">A4</option>
+                <option value="a4">A4 (standard)</option>
                 <option value="letter">Letter</option>
-                <option value="image">Match the photo</option>
+                <option value="image">Match the photo shape</option>
               </select>
             </label>
 
-            <label className="text-sm text-muted">
+            <label className="text-xs text-muted">
               Orientation
               <select
                 value={orientation}
@@ -394,7 +394,7 @@ export function ImagesToPdfTool({ initialFiles }: { initialFiles?: File[] }) {
               </select>
             </label>
 
-            <label className="text-sm text-muted">
+            <label className="text-xs text-muted">
               Margin
               <select
                 value={margin}
@@ -405,9 +405,9 @@ export function ImagesToPdfTool({ initialFiles }: { initialFiles?: File[] }) {
                 className={`mt-1 block ${field}`}
               >
                 <option value={0}>None</option>
-                <option value={12}>Narrow</option>
-                <option value={24}>Normal</option>
-                <option value={36}>Wide</option>
+                <option value={12}>Narrow (12pt)</option>
+                <option value={24}>Normal (24pt)</option>
+                <option value={36}>Wide (36pt)</option>
               </select>
             </label>
 
@@ -415,44 +415,44 @@ export function ImagesToPdfTool({ initialFiles }: { initialFiles?: File[] }) {
               type="button"
               onClick={() => void make('preview')}
               disabled={busy}
-              className="rounded-lg border border-edge px-4 py-2 text-sm font-medium text-ink hover:bg-hover disabled:opacity-50"
+              className="rounded-[4px] border border-line bg-sunk px-3 py-1.5 text-xs font-medium text-ink hover:border-edge disabled:opacity-50 cursor-pointer"
             >
               Preview PDF
             </button>
           </div>
 
-          <p className="mt-3 text-sm text-muted">
-            The photos are placed at their own shape inside the margin. Nothing
+          <p className="mt-3 text-[11px] text-muted">
+            The photos are placed at their natural aspect ratio inside the margin. Nothing
             is uploaded.
           </p>
         </section>
       )}
 
       {error && (
-        <p className="rounded-xl border border-bad/30 bg-bad-soft px-5 py-3 text-sm text-bad">
+        <p className="rounded-[5px] border border-bad/30 bg-bad-soft px-4 py-3 text-xs text-bad">
           {error}
         </p>
       )}
 
       {preview && (
-        <section className="rounded-xl border border-line bg-surface">
-          <header className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-3">
+        <section className="rounded-[5px] border border-line bg-surface">
+          <header className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-4 py-2.5">
             <div>
-              <h2 className="text-sm font-medium text-ink">{preview.name}</h2>
-              <p className="text-sm text-muted">
-                {files.length} {files.length === 1 ? 'page' : 'pages'} ·{' '}
+              <h2 className="text-xs font-medium text-ink">{preview.name}</h2>
+              <p className="font-mono text-[11px] text-faint">
+                {files.length} {files.length === 1 ? 'page' : 'pages'} &bull;{' '}
                 {formatSize(preview.blob.size)}
               </p>
             </div>
             <button
               type="button"
               onClick={resetPreview}
-              className="text-sm text-muted hover:text-ink"
+              className="rounded-[3px] border border-line bg-sunk px-2 py-0.5 text-xs text-muted hover:border-edge hover:text-ink cursor-pointer"
             >
               Close preview
             </button>
           </header>
-          <div className="p-5">
+          <div className="p-4">
             <PdfPreview blob={preview.blob} title={preview.name} />
           </div>
         </section>
@@ -464,9 +464,9 @@ export function ImagesToPdfTool({ initialFiles }: { initialFiles?: File[] }) {
             <button
               type="button"
               onClick={() => downloadBlob(preview.blob, preview.name)}
-              className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover"
+              className="rounded-[4px] bg-accent px-4 py-2 text-xs font-medium text-accent-ink hover:bg-accent-hover cursor-pointer"
             >
-              Download
+              Download {preview.name}
             </button>
           </DownloadBar>
         ) : (
@@ -477,12 +477,12 @@ export function ImagesToPdfTool({ initialFiles }: { initialFiles?: File[] }) {
               type="button"
               onClick={() => void make('download')}
               disabled={busy}
-              className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50"
+              className="rounded-[4px] bg-accent px-4 py-2 text-xs font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50 cursor-pointer"
             >
               {busy ? 'Making the PDF…' : `Download ${name}`}
             </button>
           </DownloadBar>
         ))}
-    </>
+    </div>
   )
 }
