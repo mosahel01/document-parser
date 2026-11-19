@@ -13,10 +13,14 @@ export function DownloadBar({
   children: ReactNode
 }) {
   return (
-    <div className="sticky bottom-0 z-10 border-t border-line bg-paper/95 backdrop-blur">
-      <div className="flex flex-wrap items-center justify-end gap-3 py-3">
-        {note && <p className="mr-auto text-sm text-muted">{note}</p>}
-        {children}
+    <div className="sticky bottom-0 z-20 -mx-4 -mb-8 mt-8 border-t border-line bg-paper/95 px-4 py-3 backdrop-blur-xs sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3">
+        <div className="text-xs text-muted">
+          {note}
+        </div>
+        <div className="flex items-center gap-2">
+          {children}
+        </div>
       </div>
     </div>
   )
