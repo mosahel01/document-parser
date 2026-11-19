@@ -32,16 +32,15 @@ describe('first paint', () => {
     ).toBeGreaterThan(100)
 
     // The app crashed once because a tab existed without a tool behind it.
+    // Nav categories are now grouped into dropdowns: check that the category
+    // labels and the brand name appear.
     const page = renderToString(<App />)
     for (const label of [
-      'Home',
+      'Document Toolkit',
       'PDF',
-      'Word',
-      'Zip',
-      'Replace',
       'Images',
-      'Compress',
-      'Rename',
+      'Documents',
+      'Archive',
     ]) {
       expect(page).toContain(label)
     }
