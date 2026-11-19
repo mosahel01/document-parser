@@ -99,7 +99,7 @@ export function ConvertTool({ initialFiles }: { initialFiles?: File[] }) {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <FileDrop
         onFiles={(incoming) => {
           setFiles([...files, ...incoming])
@@ -118,7 +118,7 @@ export function ConvertTool({ initialFiles }: { initialFiles?: File[] }) {
       />
 
       {files.length > 0 && target === null && (
-        <p className="rounded-xl border border-line bg-surface px-5 py-3 text-sm text-muted">
+        <p className="rounded-[5px] border border-line bg-surface px-4 py-3 text-xs text-muted">
           These files have no format in common, so there is nothing all of them
           can become. Convert one kind at a time, for example the photos, then
           the PDFs.
@@ -126,13 +126,13 @@ export function ConvertTool({ initialFiles }: { initialFiles?: File[] }) {
       )}
 
       {files.length > 0 && target !== null && (
-        <section className="rounded-xl border border-line bg-surface p-5">
+        <section className="rounded-[5px] border border-line bg-surface p-4">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
-              <span className="block text-sm font-medium text-ink">
+              <span className="block text-xs font-medium text-ink">
                 Convert to
               </span>
-              <div className="mt-1 inline-flex flex-wrap gap-1 rounded-lg border border-edge p-1">
+              <div className="mt-1 inline-flex flex-wrap gap-1 rounded-[4px] border border-line bg-sunk p-0.5">
                 {targets.map((option) => (
                   <button
                     key={option}
@@ -141,9 +141,9 @@ export function ConvertTool({ initialFiles }: { initialFiles?: File[] }) {
                       setPicked(option)
                       setResults(null)
                     }}
-                    className={`rounded-md px-3 py-1 text-sm font-medium ${
+                    className={`rounded-[3px] px-2.5 py-1 text-xs font-medium transition-colors cursor-pointer ${
                       target === option
-                        ? 'bg-accent text-accent-ink'
+                        ? 'bg-hover text-ink shadow-xs'
                         : 'text-muted hover:text-ink'
                     }`}
                   >
@@ -154,7 +154,7 @@ export function ConvertTool({ initialFiles }: { initialFiles?: File[] }) {
             </div>
 
             {lossy && (
-              <label className="text-sm text-muted">
+              <label className="text-xs text-muted">
                 Quality {Math.round(quality * 100)}%
                 <input
                   type="range"
@@ -165,7 +165,7 @@ export function ConvertTool({ initialFiles }: { initialFiles?: File[] }) {
                   onChange={(event) =>
                     setQuality(Number(event.target.value) / 100)
                   }
-                  className="mt-1 block w-40"
+                  className="mt-1 block w-32"
                 />
               </label>
             )}
@@ -174,13 +174,13 @@ export function ConvertTool({ initialFiles }: { initialFiles?: File[] }) {
               type="button"
               onClick={run}
               disabled={busy}
-              className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50"
+              className="rounded-[4px] bg-accent px-4 py-2 text-xs font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50 cursor-pointer"
             >
               {busy ? 'Converting…' : 'Convert'}
             </button>
           </div>
 
-          <p className="mt-3 text-sm text-muted">
+          <p className="mt-3 text-[11px] text-muted">
             {NOTES[target]}
             {lossy ? ' Lower quality makes smaller files.' : ''}{' '}
             A file already in {TARGET_LABELS[target]} is saved as it is.
@@ -193,7 +193,7 @@ export function ConvertTool({ initialFiles }: { initialFiles?: File[] }) {
           {problems.map((problem) => (
             <li
               key={problem}
-              className="rounded-xl border border-bad/30 bg-bad-soft px-5 py-3 text-sm text-bad"
+              className="rounded-[5px] border border-bad/30 bg-bad-soft px-4 py-3 text-xs text-bad"
             >
               {problem}
             </li>
@@ -202,33 +202,33 @@ export function ConvertTool({ initialFiles }: { initialFiles?: File[] }) {
       )}
 
       {results && results.length > 0 && (
-        <section className="rounded-xl border border-line bg-surface">
-          <header className="border-b border-line px-5 py-3">
-            <h2 className="text-sm font-medium text-ink">Converted</h2>
-            <p className="text-sm text-muted">
-              Saved with the same name and the new extension.
+        <section className="rounded-[5px] border border-line bg-surface">
+          <header className="border-b border-line px-4 py-2.5">
+            <h2 className="text-xs font-medium text-ink">Converted Results</h2>
+            <p className="font-mono text-[11px] text-faint">
+              Saved with original basename and the target format extension.
             </p>
           </header>
 
           <ul className="divide-y divide-line">
             {results.map((result, index) => (
-              <li key={`${result.name}-${index}`} className="px-5 py-4">
-                <div className="flex items-start gap-4">
+              <li key={`${result.name}-${index}`} className="px-4 py-3">
+                <div className="flex items-center gap-4">
                   <div className="w-28 shrink-0">
                     <FilePreview
                       name={result.file.name}
                       blob={result.file}
                       variant="wide"
                     />
-                    <p className="mt-1 truncate text-xs text-muted">
+                    <p className="mt-1 truncate font-mono text-[11px] text-muted">
                       {result.file.name}
                     </p>
-                    <p className="text-xs text-faint">
+                    <p className="font-mono text-[10px] text-faint">
                       {formatSize(result.file.size)}
                     </p>
                   </div>
 
-                  <span className="pt-8 text-faint">→</span>
+                  <span className="text-faint">&rarr;</span>
 
                   <div className="w-28 shrink-0">
                     <FilePreview
@@ -236,10 +236,10 @@ export function ConvertTool({ initialFiles }: { initialFiles?: File[] }) {
                       blob={result.blob}
                       variant="wide"
                     />
-                    <p className="mt-1 truncate text-xs font-medium text-ink">
+                    <p className="mt-1 truncate font-mono text-[11px] font-medium text-ink">
                       {result.name}
                     </p>
-                    <p className="text-xs text-faint">
+                    <p className="font-mono text-[10px] text-faint">
                       {formatSize(result.blob.size)}
                     </p>
                   </div>
@@ -247,7 +247,7 @@ export function ConvertTool({ initialFiles }: { initialFiles?: File[] }) {
                   <button
                     type="button"
                     onClick={() => downloadBlob(result.blob, result.name)}
-                    className="ml-auto shrink-0 text-sm text-muted underline-offset-2 hover:text-ink hover:underline"
+                    className="ml-auto shrink-0 rounded-[3px] border border-line bg-sunk px-2.5 py-1 text-xs text-muted hover:border-edge hover:text-ink cursor-pointer"
                   >
                     Download
                   </button>
@@ -264,7 +264,7 @@ export function ConvertTool({ initialFiles }: { initialFiles?: File[] }) {
             type="button"
             onClick={saveAll}
             disabled={saving}
-            className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50"
+            className="rounded-[4px] bg-accent px-4 py-2 text-xs font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50 cursor-pointer"
           >
             {saving ? 'Saving…' : 'Download all'}
           </button>
