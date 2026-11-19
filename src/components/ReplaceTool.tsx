@@ -27,7 +27,7 @@ type Row = {
 }
 
 const field =
-  'rounded-lg border border-edge bg-surface px-3 py-2 outline-none focus:border-accent focus:ring-2 focus:ring-accent/25'
+  'rounded-[4px] border border-line bg-sunk px-2.5 py-1.5 font-mono text-xs text-ink outline-none focus:border-accent focus:ring-1 focus:ring-accent'
 
 export function ReplaceTool({ initialFiles }: { initialFiles?: File[] }) {
   const [files, setFiles] = useState<File[]>(initialFiles ?? [])
@@ -124,19 +124,18 @@ export function ReplaceTool({ initialFiles }: { initialFiles?: File[] }) {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <FileDrop
         onFiles={addFiles}
         accept={TEXT_ACCEPT}
-        label="Drop the text files to change"
-        hint="Text formats only: txt, md, csv, json, html, css, code, srt, svg. The file picker is filtered to match."
+        label="Drop text or code files to search & replace"
+        hint="Text formats: txt, md, csv, json, html, css, code, srt, svg. Browser-only parsing."
       />
 
       {skipped.length > 0 && (
-        <p className="rounded-xl border border-warn/30 bg-warn-soft px-5 py-3 text-sm text-warn">
+        <p className="rounded-[5px] border border-warn/30 bg-warn-soft px-4 py-3 text-xs text-warn">
           Skipped {skipped.length} {skipped.length === 1 ? 'file' : 'files'}{' '}
-          this tool cannot rewrite: {skipped.join(', ')}. PDFs, Word files, and
-          images hold no plain text to search.
+          this tool cannot rewrite: {skipped.join(', ')}. Use Word or PDF tools for binary formats.
         </p>
       )}
 
@@ -153,65 +152,47 @@ export function ReplaceTool({ initialFiles }: { initialFiles?: File[] }) {
       />
 
       {files.length > 0 && (
-        <section className="rounded-xl border border-line bg-surface p-5">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label className="text-sm font-medium text-ink">
+        <section className="rounded-[5px] border border-line bg-surface p-4">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="text-xs font-medium text-ink">
               Find
               <input
                 value={find}
                 onChange={(event) => setFind(event.target.value)}
-                placeholder={regex ? 'cost:\\s*\\d+' : 'Acme Ltd'}
+                placeholder={regex ? 'cost:\\s*\\d+' : 'Search pattern'}
                 className={`mt-1 w-full ${field}`}
               />
             </label>
-            <label className="text-sm font-medium text-ink">
+            <label className="text-xs font-medium text-ink">
               Replace with
               <input
                 value={replacement}
                 onChange={(event) => setReplacement(event.target.value)}
-                placeholder="leave empty to delete"
+                placeholder="leave empty to delete matches"
                 className={`mt-1 w-full ${field}`}
               />
             </label>
           </div>
 
-          <div className="mt-4 flex flex-wrap items-center gap-4 text-sm text-muted">
-            <label className="inline-flex items-center gap-2">
+          <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-muted">
+            <label className="inline-flex items-center gap-2 cursor-pointer select-none">
               <input
                 type="checkbox"
                 checked={matchCase}
                 onChange={(event) => setMatchCase(event.target.checked)}
+                className="rounded-[2px] border-edge bg-sunk text-accent focus:ring-accent"
               />
               Match case
             </label>
-            <label className="inline-flex items-center gap-2">
+            <label className="inline-flex items-center gap-2 cursor-pointer select-none">
               <input
                 type="checkbox"
                 checked={regex}
                 onChange={(event) => setRegex(event.target.checked)}
+                className="rounded-[2px] border-edge bg-sunk text-accent focus:ring-accent"
               />
               Regular expression
             </label>
-          </div>
-
-          <div className="mt-4 rounded-xl border border-warn/30 bg-warn-soft px-4 py-3 text-sm text-warn">
-            <p className="font-medium">Before you replace</p>
-            <p className="mt-1">
-              This rewrites the text inside the {files.length}{' '}
-              {files.length === 1 ? 'file' : 'files'} above. Your originals stay
-              as they are; each download is a new copy you choose to keep.
-            </p>
-            {find !== '' && replacement === '' && (
-              <p className="mt-1 font-medium">
-                The replacement is empty, so every match will be deleted.
-              </p>
-            )}
-            {regex && (
-              <p className="mt-1">
-                A pattern is applied as typed. Check it on one file first if it
-                is long.
-              </p>
-            )}
           </div>
 
           <div className="mt-4 flex justify-end">
@@ -219,16 +200,16 @@ export function ReplaceTool({ initialFiles }: { initialFiles?: File[] }) {
               type="button"
               onClick={run}
               disabled={busy || find === ''}
-              className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50"
+              className="rounded-[4px] bg-accent px-4 py-2 text-xs font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50 cursor-pointer"
             >
-              {busy ? 'Reading…' : 'Preview changes'}
+              {busy ? 'Reading…' : 'Preview Changes'}
             </button>
           </div>
 
-          <p className="mt-3 text-sm text-muted">
-            Preview checks the text in memory and shows the change; nothing is
-            written until you download a copy. Files keep their own names.
-            {regex ? ' In a pattern, $1 stands for the first bracketed group.' : ''}
+          <p className="mt-3 text-[11px] text-muted">
+            Preview checks the text in memory and displays diff context. Nothing is
+            written until you download.
+            {regex ? ' In regex patterns, $1, $2 reference capture groups.' : ''}
           </p>
         </section>
       )}
@@ -238,7 +219,7 @@ export function ReplaceTool({ initialFiles }: { initialFiles?: File[] }) {
           {problems.map((problem) => (
             <li
               key={problem}
-              className="rounded-xl border border-bad/30 bg-bad-soft px-5 py-3 text-sm text-bad"
+              className="rounded-[5px] border border-bad/30 bg-bad-soft px-4 py-3 text-xs text-bad"
             >
               {problem}
             </li>
@@ -247,17 +228,17 @@ export function ReplaceTool({ initialFiles }: { initialFiles?: File[] }) {
       )}
 
       {rows && (
-        <section className="rounded-xl border border-line bg-surface">
-          <header className="border-b border-line px-5 py-3">
-            <h2 className="text-sm font-medium text-ink">
+        <section className="rounded-[5px] border border-line bg-surface">
+          <header className="border-b border-line px-4 py-2.5">
+            <h2 className="text-xs font-medium text-ink">
               {rows.length} {rows.length === 1 ? 'file' : 'files'} would change
             </h2>
-            <p className="text-sm text-muted">
+            <p className="font-mono text-[11px] text-faint">
               {rows.length === 0
                 ? 'Nothing to download.'
-                : 'Download the copies you want. Your originals stay untouched.'}
+                : 'Download updated copies. Originals stay untouched.'}
               {untouched > 0
-                ? ` ${untouched} ${untouched === 1 ? 'file had' : 'files had'} no match and would not change.`
+                ? ` ${untouched} ${untouched === 1 ? 'file had' : 'files had'} no match.`
                 : ''}
             </p>
           </header>
@@ -266,26 +247,26 @@ export function ReplaceTool({ initialFiles }: { initialFiles?: File[] }) {
             {rows.map((row, index) => (
               <li
                 key={`${row.name}-${index}`}
-                className="flex items-start gap-3 px-5 py-3 text-sm"
+                className="flex items-start gap-3 px-4 py-2.5 text-xs"
               >
                 <FilePreview name={row.name} blob={row.file} />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium text-ink">{row.name}</p>
-                  <p className="text-xs text-muted">
+                  <p className="truncate font-mono text-[11px] font-medium text-ink">{row.name}</p>
+                  <p className="text-[11px] text-faint">
                     {row.count} {row.count === 1 ? 'match' : 'matches'}
                   </p>
                   {row.preview && (
-                    <div className="mt-1 space-y-1 font-mono text-xs">
+                    <div className="mt-1 space-y-1 font-mono text-[11px]">
                       <p className="flex items-baseline gap-2">
-                        <span className="w-9 shrink-0 rounded bg-hover px-1 text-[0.7rem] font-medium uppercase text-muted">
-                          now
+                        <span className="w-10 shrink-0 rounded-[2px] bg-sunk px-1 py-0.2 text-[9px] font-medium uppercase text-muted border border-line">
+                          before
                         </span>
                         <span className="truncate text-muted">
                           {row.preview.before}
                         </span>
                       </p>
                       <p className="flex items-baseline gap-2">
-                        <span className="w-9 shrink-0 rounded bg-good-soft px-1 text-[0.7rem] font-medium uppercase text-good">
+                        <span className="w-10 shrink-0 rounded-[2px] bg-good-soft px-1 py-0.2 text-[9px] font-medium uppercase text-good border border-line">
                           after
                         </span>
                         <span className="truncate text-good">
@@ -295,13 +276,13 @@ export function ReplaceTool({ initialFiles }: { initialFiles?: File[] }) {
                     </div>
                   )}
                 </div>
-                <span className="shrink-0 text-xs text-faint">
+                <span className="shrink-0 font-mono text-[11px] text-faint">
                   {formatSize(row.blob.size)}
                 </span>
                 <button
                   type="button"
                   onClick={() => downloadBlob(row.blob, row.name)}
-                  className="shrink-0 text-sm text-muted underline-offset-2 hover:text-ink hover:underline"
+                  className="rounded-[3px] border border-line bg-sunk px-2 py-0.5 text-xs text-muted hover:border-edge hover:text-ink cursor-pointer"
                 >
                   Download
                 </button>
@@ -317,7 +298,7 @@ export function ReplaceTool({ initialFiles }: { initialFiles?: File[] }) {
             type="button"
             onClick={saveAll}
             disabled={saving}
-            className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50"
+            className="rounded-[4px] bg-accent px-4 py-2 text-xs font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50 cursor-pointer"
           >
             {saving ? 'Saving…' : 'Download all'}
           </button>
