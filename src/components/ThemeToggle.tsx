@@ -86,7 +86,7 @@ export function ThemeToggle() {
       onClick={cycle}
       aria-label={labels[choice]}
       title={labels[choice]}
-      className="relative flex items-center gap-1.5 rounded-md border border-line px-2 py-1.5 text-muted hover:border-edge hover:bg-hover hover:text-ink"
+      className="relative flex items-center gap-1.5 rounded-[4px] border border-line bg-surface px-2.5 py-1.5 text-xs text-muted hover:border-edge hover:bg-hover hover:text-ink cursor-pointer"
     >
       {choice === 'system' ? (
         /* monitor icon */
