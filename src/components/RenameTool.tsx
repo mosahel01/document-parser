@@ -48,7 +48,7 @@ export function RenameTool({ initialFiles }: { initialFiles?: File[] }) {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <FileDrop
         onFiles={(incoming) => setFiles([...files, ...incoming])}
         label="Drop the files you want to rename"
@@ -65,31 +65,31 @@ export function RenameTool({ initialFiles }: { initialFiles?: File[] }) {
 
       {files.length > 0 && (
         <>
-          <section className="rounded-xl border border-line bg-surface p-5">
-            <div className="grid gap-4 sm:grid-cols-[2fr_1fr]">
+          <section className="rounded-[5px] border border-line bg-surface p-4">
+            <div className="grid gap-3 sm:grid-cols-[2fr_1fr]">
               <div>
                 <label
                   htmlFor="new-name"
-                  className="block text-sm font-medium text-ink"
+                  className="block text-xs font-medium text-ink"
                 >
-                  New name
+                  Target base name
                 </label>
                 <input
                   id="new-name"
                   value={name}
                   onChange={(event) => setName(event.target.value)}
-                  placeholder="report"
-                  className="mt-1 w-full rounded-lg border border-edge bg-surface px-3 py-2 outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
+                  placeholder="document"
+                  className="mt-1 w-full rounded-[4px] border border-line bg-sunk px-2.5 py-1.5 font-mono text-xs text-ink outline-none focus:border-accent focus:ring-1 focus:ring-accent"
                 />
               </div>
               <div>
                 <label
                   htmlFor="new-extension"
-                  className="block text-sm font-medium text-ink"
+                  className="block text-xs font-medium text-ink"
                 >
                   Extension
-                  <span className="ml-1 font-normal text-faint">
-                    optional
+                  <span className="ml-1 text-faint">
+                    (optional)
                   </span>
                 </label>
                 <input
@@ -97,72 +97,72 @@ export function RenameTool({ initialFiles }: { initialFiles?: File[] }) {
                   value={extension}
                   onChange={(event) => setExtension(event.target.value)}
                   placeholder="pdf"
-                  className="mt-1 w-full rounded-lg border border-edge bg-surface px-3 py-2 outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
+                  className="mt-1 w-full rounded-[4px] border border-line bg-sunk px-2.5 py-1.5 font-mono text-xs text-ink outline-none focus:border-accent focus:ring-1 focus:ring-accent"
                 />
               </div>
             </div>
 
-            <p className="mt-2 text-sm text-muted">
+            <p className="mt-2.5 text-[11px] text-muted">
               {name.trim() === ''
-                ? 'Leave the name empty to change only the extension.'
+                ? 'Leave empty to preserve existing base names.'
                 : files.length > 1
-                  ? `Every file gets a number: ${sample}-1, ${sample}-2, and so on.`
-                  : 'The file keeps its own extension unless you fill the box.'}
+                  ? `Batches are numbered sequentially: ${sample}-1, ${sample}-2, etc.`
+                  : 'Keeps its current extension unless an override is specified.'}
             </p>
-            <p className="mt-1 text-sm text-muted">
+            <p className="mt-1 text-[11px] text-faint">
               {converting
-                ? 'Changing an image to another image format, or to PDF, rewrites the file itself. PNG, JPG, and WebP work; anything else keeps its own extension and says why.'
-                : 'Typing a different extension converts the file when the browser can write that format.'}
+                ? 'Converting image formats or image to PDF redraws contents via Canvas. Output extensions determine formatting.'
+                : 'Changing extensions will trigger format conversion when supported by client-side tools.'}
             </p>
           </section>
 
-          <section className="rounded-xl border border-line bg-surface">
-            <header className="border-b border-line px-5 py-3">
-              <h2 className="text-sm font-medium text-ink">Preview</h2>
-              <p className="text-sm text-muted">
-                Downloads are the real files, saved one at a time.
+          <section className="rounded-[5px] border border-line bg-surface">
+            <header className="border-b border-line px-4 py-2.5">
+              <h2 className="text-xs font-medium text-ink">Preview Plan</h2>
+              <p className="font-mono text-[11px] text-faint">
+                Files download under their target names.
               </p>
             </header>
 
             <div className="max-h-96 overflow-auto">
-              <table className="w-full text-left text-sm">
-                <thead className="sticky top-0 bg-sunk text-muted">
+              <table className="w-full text-left text-xs">
+                <thead className="sticky top-0 bg-sunk text-muted border-b border-line">
                   <tr>
-                    <th className="px-5 py-2 font-medium">Now</th>
-                    <th className="px-5 py-2 font-medium">After</th>
-                    <th className="px-5 py-2" />
+                    <th className="px-4 py-2 font-medium">Original Name</th>
+                    <th className="px-4 py-2 font-medium">Target Name</th>
+                    <th className="px-4 py-2 text-right">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-line">
                   {rows.map((row, index) => (
-                    <tr key={`${row.row.original}-${index}`}>
-                      <td className="px-5 py-2 align-middle">
+                    <tr key={`${row.row.original}-${index}`} className="hover:bg-hover/40 transition-colors">
+                      <td className="px-4 py-2 align-middle">
                         <div className="flex items-center gap-2 text-muted">
                           <FilePreview
                             name={row.row.original}
                             blob={row.row.file}
                           />
-                          <span className="break-all">{row.row.original}</span>
+                          <span className="break-all font-mono text-[11px]">{row.row.original}</span>
                         </div>
                       </td>
-                      <td className="px-5 py-2 align-middle">
-                        <span className="break-all font-medium">{row.next}</span>
+                      <td className="px-4 py-2 align-middle">
+                        <span className="break-all font-mono text-[11px] font-medium text-ink">{row.next}</span>
                         {(row.conversion.kind === 'image' ||
                           row.conversion.kind === 'pdf') && (
-                          <span className="ml-2 rounded bg-good-soft px-1.5 py-0.5 text-xs font-medium text-good">
-                            converted
+                          <span className="ml-2 rounded-[2px] bg-good-soft px-1.5 py-0.2 font-mono text-[10px] font-medium text-good border border-line">
+                            converts
                           </span>
                         )}
                         {row.note && (
-                          <p className="mt-1 text-xs text-warn">{row.note}</p>
+                          <p className="mt-0.5 text-[11px] text-warn">{row.note}</p>
                         )}
                       </td>
-                      <td className="px-5 py-2 text-right">
+                      <td className="px-4 py-2 text-right">
                         <button
                           type="button"
                           onClick={() => void saveOne(row)}
                           disabled={busy}
-                          className="text-sm text-muted underline-offset-2 hover:text-ink hover:underline disabled:opacity-50"
+                          className="rounded-[3px] border border-line bg-sunk px-2 py-0.5 text-xs text-muted hover:border-edge hover:text-ink cursor-pointer disabled:opacity-50"
                         >
                           Download
                         </button>
@@ -179,7 +179,7 @@ export function RenameTool({ initialFiles }: { initialFiles?: File[] }) {
               type="button"
               onClick={saveAll}
               disabled={busy}
-              className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50"
+              className="rounded-[4px] bg-accent px-4 py-2 text-xs font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50 cursor-pointer"
             >
               {progress
                 ? `Preparing ${progress.done} of ${progress.total}…`
