@@ -2,194 +2,324 @@ import {
   Suspense,
   lazy,
   useEffect,
-  useRef,
   useState,
   type ReactElement,
-} from "react";
-import { HomeTool } from "./components/HomeTool";
-import { ThemeToggle } from "./components/ThemeToggle";
-import { RenameTool } from "./components/RenameTool";
-import { ZipTool } from "./components/ZipTool";
-import { ReplaceTool } from "./components/ReplaceTool";
-import { ConvertTool } from "./components/ConvertTool";
-import { ImageTool } from "./components/ImageTool";
-import { CompressTool } from "./components/CompressTool";
-import { WordTool } from "./components/WordTool";
-import type { HomeOperation } from "./tools/fileKind";
+} from 'react'
+import { HomeTool } from './components/HomeTool'
+import { AppHeader } from './components/AppHeader'
+import { AppFooter } from './components/AppFooter'
+import { GlobalSearch, type SearchableTool } from './components/GlobalSearch'
+import { ToolHeader } from './components/ToolHeader'
+import type { NavCategory } from './components/NavigationMenu'
+import { RenameTool } from './components/RenameTool'
+import { ZipTool } from './components/ZipTool'
+import { ReplaceTool } from './components/ReplaceTool'
+import { ConvertTool } from './components/ConvertTool'
+import { ImageTool } from './components/ImageTool'
+import { CompressTool } from './components/CompressTool'
+import { WordTool } from './components/WordTool'
+import { JsonTool } from './components/JsonTool'
+import { ExtractTextTool } from './components/ExtractTextTool'
+import type { HomeOperation } from './tools/fileKind'
 
-// pdf-lib and pdf.js together are about a megabyte. Each PDF tab is split into
-// its own chunk so the Home screen and the light tools never pay for them.
+// Lazy-loaded PDF tools to keep initial bundle light
 const PdfTool = lazy(() =>
-  import("./components/PdfTool").then((module) => ({ default: module.PdfTool })),
-);
+  import('./components/PdfTool').then((module) => ({ default: module.PdfTool })),
+)
 const PdfPageManager = lazy(() =>
-  import("./components/PdfPageManager").then((module) => ({
+  import('./components/PdfPageManager').then((module) => ({
     default: module.PdfPageManager,
   })),
-);
+)
 const PdfCompressTool = lazy(() =>
-  import("./components/PdfCompressTool").then((module) => ({
+  import('./components/PdfCompressTool').then((module) => ({
     default: module.PdfCompressTool,
   })),
-);
+)
 const PdfCropTool = lazy(() =>
-  import("./components/PdfCropTool").then((module) => ({
+  import('./components/PdfCropTool').then((module) => ({
     default: module.PdfCropTool,
   })),
-);
+)
 const PdfNumberTool = lazy(() =>
-  import("./components/PdfNumberTool").then((module) => ({
+  import('./components/PdfNumberTool').then((module) => ({
     default: module.PdfNumberTool,
   })),
-);
+)
 const PdfWatermarkTool = lazy(() =>
-  import("./components/PdfWatermarkTool").then((module) => ({
+  import('./components/PdfWatermarkTool').then((module) => ({
     default: module.PdfWatermarkTool,
   })),
-);
+)
 const PdfToImagesTool = lazy(() =>
-  import("./components/PdfImagesTool").then((module) => ({
+  import('./components/PdfImagesTool').then((module) => ({
     default: module.PdfToImagesTool,
   })),
-);
+)
 const ImagesToPdfTool = lazy(() =>
-  import("./components/PdfImagesTool").then((module) => ({
+  import('./components/PdfImagesTool').then((module) => ({
     default: module.ImagesToPdfTool,
   })),
-);
+)
 
 type Tool = {
-  label: string;
-  title: string;
-  blurb: string;
-};
+  label: string
+  title: string
+  blurb: string
+  category: string
+  icon: ReactElement
+}
 
 /**
- * The full list of tools in the app. Ids and labels come from one object, so a
- * tab can never point at a tool that is not there.
+ * The master tools registry.
  */
 const tools = {
   home: {
-    label: "Home",
-    title: "Start with a file",
+    label: 'Home',
+    title: 'Everything you need to work with files.',
     blurb:
-      "Drop any file and the options follow from what it is. A PDF can be merged, split, or read as Word; a photo can be converted; a Word file can be read or made into a PDF.",
-  },
-  convert: {
-    label: "Convert",
-    title: "Convert files",
-    blurb:
-      "Photos become PNG, JPG, WebP, or PDF; PDFs and Word files trade places; text becomes either. Each result is previewed before you save it.",
+      'Convert, compress, edit and extract files with powerful tools in one place. Runs locally in your browser.',
+    category: 'Home',
+    icon: (
+      <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.7">
+        <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+      </svg>
+    ),
   },
   merge: {
-    label: "Merge PDFs",
-    title: "Merge PDFs",
+    label: 'Merge PDFs',
+    title: 'Merge PDFs',
     blurb:
-      "Drop several PDFs and put them in one document, in the order you choose. Each file keeps its own pages, text, and links.",
+      'Drop several PDFs and combine them into one document in your chosen order. Each file keeps its pages, text, and vector content.',
+    category: 'PDF',
+    icon: (
+      <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.7">
+        <path d="M8 7v10M12 4v16M16 9v6" />
+      </svg>
+    ),
   },
   extract: {
-    label: "Extract pages",
-    title: "Extract pages or split a PDF",
+    label: 'Extract pages',
+    title: 'Extract pages or split a PDF',
     blurb:
-      "See every page, keep the ones you type, or save each page as its own PDF. The original file is never changed.",
+      'Select specific page numbers or ranges to keep, or burst each page into an individual PDF file. Original files remain untouched.',
+    category: 'PDF',
+    icon: (
+      <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.7">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" />
+        <path d="M14 2v6h6M8 13h8M8 17h5" />
+      </svg>
+    ),
   },
   organize: {
-    label: "Organize pages",
-    title: "Organize PDF pages",
+    label: 'Organize pages',
+    title: 'Organize PDF pages',
     blurb:
-      "Turn, delete, copy, and drag pages into a new order, or pull pages in from another PDF. Saving builds a fresh document.",
+      'Turn, reorder, delete, copy, or drag pages into a new sequence, or pull pages from another PDF. Saving builds a fresh document.',
+    category: 'PDF',
+    icon: (
+      <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.7">
+        <rect x="3" y="3" width="7" height="9" rx="1" />
+        <rect x="14" y="3" width="7" height="5" rx="1" />
+        <rect x="14" y="12" width="7" height="9" rx="1" />
+        <rect x="3" y="16" width="7" height="5" rx="1" />
+      </svg>
+    ),
   },
   compressPdf: {
-    label: "Compress PDF",
-    title: "Compress a PDF",
+    label: 'Compress PDF',
+    title: 'Compress a PDF',
     blurb:
-      "Pages are redrawn as JPEGs at a lower resolution, which shrinks scans. Text stops being selectable, so use it on scans rather than documents you need to search.",
+      'Shrinks scanned PDFs by re-encoding pages as JPEGs at lower resolution. Best for scanned records and oversized printouts.',
+    category: 'PDF',
+    icon: (
+      <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.7">
+        <path d="M4 14h6m-6-4h6m4-6v16m4-10-4-4-4 4" />
+      </svg>
+    ),
   },
   crop: {
-    label: "Crop margins",
-    title: "Crop PDF margins",
+    label: 'Crop margins',
+    title: 'Crop PDF margins',
     blurb:
-      "Trim a percentage from each side of every page. The hidden area stays in the file; every viewer honours the smaller page.",
+      'Trim percentage margins from each side of every page. The hidden area stays in the file; all viewers respect the smaller crop box.',
+    category: 'PDF',
+    icon: (
+      <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.7">
+        <path d="M6 2v14a2 2 0 0 0 2 2h14M18 22V8a2 2 0 0 0-2-2H2" />
+      </svg>
+    ),
   },
   number: {
-    label: "Page numbers",
-    title: "Add page numbers",
+    label: 'Page numbers',
+    title: 'Add page numbers',
     blurb:
-      "Put a number in a corner or the centre, in one of three formats, starting wherever you like. Numbers stay upright on rotated pages.",
+      'Stamp page numbers in any corner or center position. Numbers automatically stay upright on rotated or landscape pages.',
+    category: 'PDF',
+    icon: (
+      <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.7">
+        <path d="M4 4v16h16V4H4Zm6 12V8l-2 2" />
+      </svg>
+    ),
   },
   watermark: {
-    label: "Watermark",
-    title: "Watermark a PDF",
+    label: 'Watermark',
+    title: 'Watermark a PDF',
     blurb:
-      "One line of text across each page. Long text is shrunk to fit, and the mark stays upright on rotated pages.",
+      'Stamp custom diagonal text across every page with adjustable opacity and rotation compensation.',
+    category: 'PDF',
+    icon: (
+      <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.7">
+        <path d="m3 21 18-18M7 3h14v14" />
+      </svg>
+    ),
   },
   toImages: {
-    label: "PDF to images",
-    title: "PDF to JPG or PNG",
+    label: 'PDF to images',
+    title: 'PDF to JPG or PNG',
     blurb:
-      "Draw each page as an image at 150, 200, or 300 dpi. Rotated and cropped pages look as they do in a viewer.",
+      'Render each page as an image at 150, 200, or 300 DPI. Rotated and cropped pages look exactly as they appear in a PDF reader.',
+    category: 'PDF',
+    icon: (
+      <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.7">
+        <rect x="3" y="3" width="18" height="18" rx="2" />
+        <circle cx="8.5" cy="8.5" r="1.5" />
+        <path d="m21 15-5-5L5 21" />
+      </svg>
+    ),
   },
   imagesToPdf: {
-    label: "Images to PDF",
-    title: "Make a PDF from photos",
+    label: 'Images to PDF',
+    title: 'Make a PDF from photos',
     blurb:
-      "One photo per page, on A4, Letter, or a page that follows the photo's shape, with the margin you pick.",
+      'Combine photos into a clean document, one photo per page, on A4, Letter, or natural shape with configurable margins.',
+    category: 'Images',
+    icon: (
+      <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.7">
+        <rect x="3" y="3" width="18" height="18" rx="2" />
+        <path d="m21 15-3-3a2 2 0 0 0-3 0L6 21" />
+      </svg>
+    ),
   },
   image: {
-    label: "Edit photo",
-    title: "Crop, resize, and rotate photos",
+    label: 'Edit photo',
+    title: 'Crop, resize, and rotate photos',
     blurb:
-      "Drag a box over the part you want, turn the picture, and set the size. The original file is never changed.",
+      'Drag a crop box, straighten crooked scans with fine tilt controls, and resize dimensions. The original file is never changed.',
+    category: 'Images',
+    icon: (
+      <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.7">
+        <path d="M6 2v14a2 2 0 0 0 2 2h14M18 22V8a2 2 0 0 0-2-2H2" />
+      </svg>
+    ),
+  },
+  convert: {
+    label: 'Convert',
+    title: 'Convert files',
+    blurb:
+      'Convert between PNG, JPG, WebP, and PDF; convert Word .docx to HTML/Markdown/Text or PDF; and render text files.',
+    category: 'Documents',
+    icon: (
+      <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.7">
+        <path d="M20 7h-9m0 0 3-3m-3 3 3 3M4 17h9m0 0-3-3m3 3-3 3" />
+      </svg>
+    ),
   },
   word: {
-    label: "Word",
-    title: "Word documents and PDFs",
+    label: 'Word',
+    title: 'Word documents and PDFs',
     blurb:
-      "Read a .docx as HTML, Markdown, or text, or move the words between Word and PDF. Layout stays basic; images stay behind.",
+      'Read a .docx as HTML, Markdown, or text, or move text between Word and PDF.',
+    category: 'Documents',
+    icon: (
+      <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.7">
+        <path d="M4 4v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6H6a2 2 0 0 0-2 2Z" />
+        <path d="M14 2v6h6M9 13h6M9 17h3" />
+      </svg>
+    ),
+  },
+  extractText: {
+    label: 'Extract text',
+    title: 'Extract text from document',
+    blurb:
+      'Extract plain text paragraphs from PDF, DOCX, or text files with word and character statistics.',
+    category: 'Extract & OCR',
+    icon: (
+      <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.7">
+        <path d="M4 6h16M4 12h10M4 18h14" />
+      </svg>
+    ),
   },
   zip: {
-    label: "Zip / unzip",
-    title: "Zip and unzip",
-    blurb: "Pack files into one archive, or open a zip and take out what you need.",
+    label: 'Zip / unzip',
+    title: 'Zip and unzip',
+    blurb:
+      'Pack files and directories into one zip archive, or inspect and extract contents from an existing archive.',
+    category: 'Archive',
+    icon: (
+      <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.7">
+        <rect x="3" y="4" width="18" height="16" rx="2" />
+        <path d="M10 4v16M14 4v16M3 10h18M3 14h18" />
+      </svg>
+    ),
   },
   gzip: {
-    label: "Gzip",
-    title: "Compress and decompress files",
+    label: 'Gzip',
+    title: 'Compress and decompress files (.gz)',
     blurb:
-      "Shrink a file into a .gz archive, or expand one back. The name inside the archive is reused. This is the gzip format, not PDF compression.",
+      'Compress single files into RFC 1952 .gz archives, or unpack existing .gz archives directly in your browser.',
+    category: 'Archive',
+    icon: (
+      <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.7">
+        <path d="M12 3v12m0 0-4-4m4 4 4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
+      </svg>
+    ),
   },
   rename: {
-    label: "Rename",
-    title: "Rename files",
+    label: 'Rename',
+    title: 'Rename files',
     blurb:
-      "Type one name for the whole batch, numbered automatically. Change the extension to convert an image on the way out.",
+      'Batch rename files with auto-numbering and change extensions with content conversion where supported.',
+    category: 'Archive',
+    icon: (
+      <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.7">
+        <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+      </svg>
+    ),
   },
   replace: {
-    label: "Find & replace",
-    title: "Find and replace in files",
-    blurb: "Change text inside many files at once. Plain text, or a pattern when you need one.",
+    label: 'Find & replace',
+    title: 'Find and replace in files',
+    blurb:
+      'Search and replace text or regular expression patterns across multiple text files simultaneously.',
+    category: 'Documents',
+    icon: (
+      <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.7">
+        <path d="m21 21-4.3-4.3M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm-2-8h4" />
+      </svg>
+    ),
   },
-} satisfies Record<string, Tool>;
+  jsonFormatter: {
+    label: 'JSON Formatter',
+    title: 'Format & validate JSON',
+    blurb:
+      'Validate JSON syntax, format indentation (2/4/tab), minify, and sort keys with instant error location.',
+    category: 'Developer Tools',
+    icon: (
+      <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.7">
+        <path d="M8 3H7a2 2 0 0 0-2 2v3a2 2 0 0 1-2 2 2 2 0 0 1 2 2v3a2 2 0 0 0 2 2h1M16 3h1a2 2 0 0 1 2 2v3a2 2 0 0 0 2 2 2 2 0 0 0-2 2v3a2 2 0 0 1-2 2h-1" />
+      </svg>
+    ),
+  },
+} satisfies Record<string, Tool>
 
-type ToolId = keyof typeof tools;
+type ToolId = keyof typeof tools
 
-// ---------------------------------------------------------------------------
-// Nav categories — each top-level item is either a single tool or a dropdown
-// whose children are tool ids.
-// ---------------------------------------------------------------------------
-
-type NavCategory = {
-  id: string;
-  label: string;
-  /** SVG icon path(s), drawn in a 24×24 viewBox with stroke. */
-  icon: ReactElement;
-  items: { id: ToolId; label: string; desc: string }[];
-};
-
+// Navigation categories hierarchy
 const navCategories: NavCategory[] = [
   {
-    id: "pdf",
-    label: "PDF",
+    id: 'pdf',
+    label: 'PDF',
     icon: (
       <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" />
@@ -197,20 +327,20 @@ const navCategories: NavCategory[] = [
       </svg>
     ),
     items: [
-      { id: "merge", label: "Merge", desc: "Combine several PDFs into one" },
-      { id: "extract", label: "Extract / split", desc: "Pick pages or split into files" },
-      { id: "organize", label: "Organize pages", desc: "Reorder, rotate, delete, copy" },
-      { id: "compressPdf", label: "Compress", desc: "Shrink scanned PDFs" },
-      { id: "crop", label: "Crop margins", desc: "Trim page edges" },
-      { id: "number", label: "Page numbers", desc: "Add numbers to pages" },
-      { id: "watermark", label: "Watermark", desc: "Stamp text on every page" },
-      { id: "toImages", label: "PDF → images", desc: "Export pages as JPG or PNG" },
-      { id: "imagesToPdf", label: "Images → PDF", desc: "Photos into a PDF document" },
+      { id: 'merge', label: 'Merge', desc: 'Combine several PDFs into one' },
+      { id: 'extract', label: 'Extract / split', desc: 'Pick pages or split into files' },
+      { id: 'organize', label: 'Organize pages', desc: 'Reorder, rotate, delete, copy' },
+      { id: 'compressPdf', label: 'Compress', desc: 'Shrink scanned PDFs' },
+      { id: 'crop', label: 'Crop margins', desc: 'Trim page edges' },
+      { id: 'number', label: 'Page numbers', desc: 'Add numbers to pages' },
+      { id: 'watermark', label: 'Watermark', desc: 'Stamp text on every page' },
+      { id: 'toImages', label: 'PDF → images', desc: 'Export pages as JPG or PNG' },
+      { id: 'imagesToPdf', label: 'Images → PDF', desc: 'Photos into a PDF document' },
     ],
   },
   {
-    id: "images",
-    label: "Images",
+    id: 'images',
+    label: 'Images',
     icon: (
       <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
         <rect x="3" y="3" width="18" height="18" rx="2" />
@@ -219,14 +349,14 @@ const navCategories: NavCategory[] = [
       </svg>
     ),
     items: [
-      { id: "image", label: "Edit photo", desc: "Crop, resize, rotate one image" },
-      { id: "convert", label: "Convert", desc: "PNG, JPG, WebP, or PDF" },
-      { id: "imagesToPdf", label: "Images → PDF", desc: "Several photos into one PDF" },
+      { id: 'image', label: 'Edit photo', desc: 'Crop, resize, rotate one image' },
+      { id: 'convert', label: 'Convert', desc: 'PNG, JPG, WebP, or PDF' },
+      { id: 'imagesToPdf', label: 'Images → PDF', desc: 'Several photos into one PDF' },
     ],
   },
   {
-    id: "documents",
-    label: "Documents",
+    id: 'documents',
+    label: 'Documents',
     icon: (
       <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
         <path d="M4 4v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6H6a2 2 0 0 0-2 2Z" />
@@ -235,372 +365,358 @@ const navCategories: NavCategory[] = [
       </svg>
     ),
     items: [
-      { id: "word", label: "Word", desc: "Read or convert .docx files" },
-      { id: "convert", label: "Convert", desc: "Between PDF, Word, text, HTML" },
-      { id: "replace", label: "Find & replace", desc: "Change text across many files" },
+      { id: 'word', label: 'Word (.docx)', desc: 'Read or convert .docx files' },
+      { id: 'convert', label: 'Convert files', desc: 'Between PDF, Word, text, HTML' },
+      { id: 'extractText', label: 'Extract text', desc: 'Extract words into plain text' },
+      { id: 'replace', label: 'Find & replace', desc: 'Change text across many files' },
     ],
   },
   {
-    id: "archive",
-    label: "Archive",
+    id: 'archive',
+    label: 'Archive',
     icon: (
       <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
         <path d="M21 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v3" />
         <path d="M21 16v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-3" />
-        <path d="M4 8h16a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z" />
+        <rect x="3" y="8" width="18" height="8" rx="1" />
         <path d="M10 12h4" />
       </svg>
     ),
     items: [
-      { id: "zip", label: "Zip / unzip", desc: "Pack or unpack zip archives" },
-      { id: "gzip", label: "Gzip", desc: "Compress or decompress .gz files" },
-      { id: "rename", label: "Rename", desc: "Rename files in batch" },
+      { id: 'zip', label: 'Zip / unzip', desc: 'Pack or unpack zip archives' },
+      { id: 'gzip', label: 'Gzip (.gz)', desc: 'Compress or decompress .gz files' },
+      { id: 'rename', label: 'Batch rename', desc: 'Rename files in sequence' },
     ],
   },
-];
+  {
+    id: 'extract-ocr',
+    label: 'Extract & OCR',
+    icon: (
+      <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M4 6h16M4 12h10M4 18h14" />
+      </svg>
+    ),
+    items: [
+      { id: 'extractText', label: 'Extract text', desc: 'Pull text from PDF, DOCX, TXT' },
+      { id: 'extract', label: 'Extract pages', desc: 'Extract selected pages from PDF' },
+      { id: 'toImages', label: 'PDF to images', desc: 'Render pages as JPG or PNG' },
+      { id: 'zip', label: 'Extract zip', desc: 'Unpack files from archive' },
+      { id: 'replace', label: 'Find & replace', desc: 'Search and replace in text files' },
+    ],
+  },
+  {
+    id: 'developer',
+    label: 'Developer Tools',
+    icon: (
+      <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="16 18 22 12 16 6" />
+        <polyline points="8 6 2 12 8 18" />
+      </svg>
+    ),
+    items: [
+      { id: 'jsonFormatter', label: 'JSON Formatter', desc: 'Format, validate, minify JSON' },
+      { id: 'replace', label: 'Find & replace', desc: 'Batch regex find and replace' },
+      { id: 'gzip', label: 'Gzip compressor', desc: 'RFC 1952 stream compression' },
+      { id: 'rename', label: 'Batch renamer', desc: 'Sequence numbering & extension conversion' },
+    ],
+  },
+]
 
-// ---------------------------------------------------------------------------
-// Dropdown component — appears below each top-level category
-// ---------------------------------------------------------------------------
+// Search index
+const searchableTools: SearchableTool[] = [
+  {
+    id: 'compressPdf',
+    title: 'Compress PDF',
+    category: 'PDF',
+    description: 'Shrink scanned PDFs by re-encoding pages at target resolution and quality.',
+    keywords: ['compress', 'shrink', 'pdf', 'reduce', 'size', 'dpi', 'rasterize'],
+    icon: tools.compressPdf.icon,
+  },
+  {
+    id: 'merge',
+    title: 'Merge PDF',
+    category: 'PDF',
+    description: 'Combine multiple PDF files into one ordered document.',
+    keywords: ['merge', 'combine', 'join', 'pdf', 'concatenate'],
+    icon: tools.merge.icon,
+  },
+  {
+    id: 'extract',
+    title: 'Split & Extract PDF',
+    category: 'PDF',
+    description: 'Pick pages to keep or split each page into an individual PDF file.',
+    keywords: ['split', 'extract', 'pages', 'pdf', 'separate', 'burst'],
+    icon: tools.extract.icon,
+  },
+  {
+    id: 'organize',
+    title: 'Organize PDF Pages',
+    category: 'PDF',
+    description: 'Reorder, rotate, delete, or copy pages in a PDF document.',
+    keywords: ['organize', 'pages', 'rotate', 'reorder', 'turn', 'delete', 'pdf'],
+    icon: tools.organize.icon,
+  },
+  {
+    id: 'crop',
+    title: 'Crop Margins',
+    category: 'PDF',
+    description: 'Trim percentage margins from all sides of a PDF.',
+    keywords: ['crop', 'margin', 'trim', 'pdf', 'cut', 'box'],
+    icon: tools.crop.icon,
+  },
+  {
+    id: 'number',
+    title: 'Add Page Numbers',
+    category: 'PDF',
+    description: 'Stamp page numbers with rotation compensation.',
+    keywords: ['page numbers', 'number', 'stamp', 'footer', 'header', 'pdf'],
+    icon: tools.number.icon,
+  },
+  {
+    id: 'watermark',
+    title: 'Watermark PDF',
+    category: 'PDF',
+    description: 'Stamp diagonal text watermark across every page.',
+    keywords: ['watermark', 'stamp', 'text', 'pdf', 'overlay'],
+    icon: tools.watermark.icon,
+  },
+  {
+    id: 'toImages',
+    title: 'PDF to Images',
+    category: 'PDF',
+    description: 'Export PDF pages as JPG or PNG images.',
+    keywords: ['pdf to images', 'pdf to jpg', 'pdf to png', 'render', 'export'],
+    icon: tools.toImages.icon,
+  },
+  {
+    id: 'imagesToPdf',
+    title: 'Images to PDF',
+    category: 'Images',
+    description: 'Convert multiple photos into a single PDF document.',
+    keywords: ['images to pdf', 'photos to pdf', 'jpg to pdf', 'png to pdf'],
+    icon: tools.imagesToPdf.icon,
+  },
+  {
+    id: 'image',
+    title: 'Crop & Resize Image',
+    category: 'Images',
+    description: 'Crop, resize, straighten, and rotate single photos.',
+    keywords: ['crop image', 'resize image', 'photo', 'straighten', 'rotate', 'dimensions'],
+    icon: tools.image.icon,
+  },
+  {
+    id: 'convert',
+    title: 'Convert Files',
+    category: 'Documents',
+    description: 'Convert between images, PDF, Word, HTML, and text formats.',
+    keywords: ['convert', 'format', 'png', 'jpg', 'webp', 'docx', 'pdf', 'html', 'markdown'],
+    icon: tools.convert.icon,
+  },
+  {
+    id: 'word',
+    title: 'Word (.docx) & PDF',
+    category: 'Documents',
+    description: 'Read or convert DOCX files, convert Word to PDF or PDF to Word.',
+    keywords: ['word', 'docx', 'pdf to word', 'word to pdf', 'convert word'],
+    icon: tools.word.icon,
+  },
+  {
+    id: 'extractText',
+    title: 'Extract Text (OCR / Digital)',
+    category: 'Extract & OCR',
+    description: 'Extract raw text paragraphs from PDF, DOCX, and text files. (Scanned OCR server container in Phase 2 roadmap).',
+    keywords: ['extract text', 'ocr', 'text', 'read pdf', 'pdf text', 'docx text'],
+    icon: tools.extractText.icon,
+  },
+  {
+    id: 'zip',
+    title: 'ZIP Files & Unzip',
+    category: 'Archive',
+    description: 'Create zip archives or inspect and extract files from a zip.',
+    keywords: ['zip', 'unzip', 'archive', 'compress', 'unpack', 'extract zip'],
+    icon: tools.zip.icon,
+  },
+  {
+    id: 'gzip',
+    title: 'GZIP Compressor & Decompressor',
+    category: 'Archive',
+    description: 'Compress individual files or decompress .gz archives.',
+    keywords: ['gzip', 'gunzip', 'gz', 'compress', 'decompress', 'rfc1952'],
+    icon: tools.gzip.icon,
+  },
+  {
+    id: 'rename',
+    title: 'Batch Rename Files',
+    category: 'Archive',
+    description: 'Bulk rename files with sequential numbers and extension switching.',
+    keywords: ['rename', 'batch rename', 'numbering', 'bulk rename'],
+    icon: tools.rename.icon,
+  },
+  {
+    id: 'replace',
+    title: 'Find & Replace',
+    category: 'Documents',
+    description: 'Search and replace text or regular expressions across files.',
+    keywords: ['find', 'replace', 'regex', 'text', 'substitute', 'search'],
+    icon: tools.replace.icon,
+  },
+  {
+    id: 'jsonFormatter',
+    title: 'JSON Formatter',
+    category: 'Developer Tools',
+    description: 'Validate, format, indent (2/4/tab), minify, and sort keys in JSON.',
+    keywords: ['json', 'formatter', 'beautify', 'minify', 'validate', 'syntax', 'sort keys'],
+    icon: tools.jsonFormatter.icon,
+  },
+]
 
-function NavDropdown({
-  category,
-  active,
-  onSelect,
-}: {
-  category: NavCategory;
-  active: ToolId;
-  onSelect: (id: ToolId) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+export default function App() {
+  const [active, setActive] = useState<ToolId>('home')
+  const [pending, setPending] = useState<HomeOperation | null>(null)
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
 
-  // Any tool in this category is active.
-  const isActive = category.items.some((item) => item.id === active);
+  const tool = tools[active]
+  const files = pending?.files ?? []
 
-  // Close on outside click.
+  // Pre-fetch PDF dependencies during idle time
   useEffect(() => {
-    if (!open) return;
-    function handleClick(event: MouseEvent) {
-      if (ref.current && !ref.current.contains(event.target as Node)) {
-        setOpen(false);
+    if (typeof window.requestIdleCallback !== 'function') return
+    const id = window.requestIdleCallback(() => {
+      void import('./components/PdfTool')
+    })
+    return () => window.cancelIdleCallback(id)
+  }, [])
+
+  // Global Ctrl+K / Cmd+K shortcut listener
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault()
+        setIsSearchOpen((prev) => !prev)
       }
     }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [open]);
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
 
-  // Close on Escape.
-  useEffect(() => {
-    if (!open) return;
-    function handleKey(event: KeyboardEvent) {
-      if (event.key === "Escape") setOpen(false);
+  function select(id: string) {
+    if (id in tools) {
+      setActive(id as ToolId)
+      setPending(null)
+      window.scrollTo({ top: 0 })
     }
-    document.addEventListener("keydown", handleKey);
-    return () => document.removeEventListener("keydown", handleKey);
-  }, [open]);
-
-  return (
-    <div ref={ref} className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        aria-expanded={open}
-        className={`flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-          isActive
-            ? "bg-hover text-ink"
-            : "text-muted hover:bg-hover/60 hover:text-ink"
-        }`}
-      >
-        {category.icon}
-        {category.label}
-        <svg
-          viewBox="0 0 24 24"
-          className={`size-3 transition-transform ${open ? "rotate-180" : ""}`}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="m6 9 6 6 6-6" />
-        </svg>
-      </button>
-
-      {open && (
-        <div className="absolute left-0 top-full z-30 mt-1 min-w-56 rounded-lg border border-line bg-surface py-1 shadow-lg">
-          {category.items.map((item) => (
-            <button
-              key={`${category.id}-${item.id}`}
-              type="button"
-              onClick={() => {
-                onSelect(item.id);
-                setOpen(false);
-              }}
-              className={`flex w-full flex-col px-3.5 py-2 text-left transition-colors ${
-                item.id === active
-                  ? "bg-hover text-ink"
-                  : "text-muted hover:bg-hover/60 hover:text-ink"
-              }`}
-            >
-              <span className="text-sm font-medium text-ink">{item.label}</span>
-              <span className="text-xs text-faint">{item.desc}</span>
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// App
-// ---------------------------------------------------------------------------
-
-const upcoming = [
-  "OCR for scanned PDFs",
-  "Password-protected PDFs",
-  "Signing and PDF forms",
-  "Exact Word layout in PDF",
-];
-
-function App() {
-  const [active, setActive] = useState<ToolId>("home");
-  /** What the Home screen handed over, read once by the tool it opens. */
-  const [pending, setPending] = useState<HomeOperation | null>(null);
-
-  const tool = tools[active];
-  const files = pending?.files ?? [];
-
-  // Every PDF tab shares pdf-lib and pdf.js. Fetching one of them while the
-  // page sits idle means the first PDF click is instant instead of showing
-  // "Loading the tool…" over a slow connection.
-  useEffect(() => {
-    if (typeof window.requestIdleCallback !== "function") return;
-    const id = window.requestIdleCallback(() => {
-      void import("./components/PdfTool");
-    });
-    return () => window.cancelIdleCallback(id);
-  }, []);
-
-  function select(id: ToolId) {
-    setActive(id);
-    setPending(null);
-    // Otherwise a long page clamps the scroll and the whole layout jumps.
-    window.scrollTo({ top: 0 });
   }
 
   function start(operation: HomeOperation) {
-    setPending(operation);
-    setActive(operation.tool);
-    window.scrollTo({ top: 0 });
+    setPending(operation)
+    if (operation.tool in tools) {
+      setActive(operation.tool as ToolId)
+    }
+    window.scrollTo({ top: 0 })
   }
 
   function renderTool(): ReactElement {
     switch (active) {
-      case "home":
-        return <HomeTool onStart={start} />;
-      case "convert":
-        return <ConvertTool initialFiles={files} />;
-      case "merge":
-        return <PdfTool key="merge" mode="merge" initialFiles={files} />;
-      case "extract":
-        return <PdfTool key="extract" mode="extract" initialFiles={files} />;
-      case "organize":
-        return <PdfPageManager initialFiles={files} />;
-      case "compressPdf":
-        return <PdfCompressTool initialFiles={files} />;
-      case "crop":
-        return <PdfCropTool initialFiles={files} />;
-      case "number":
-        return <PdfNumberTool initialFiles={files} />;
-      case "watermark":
-        return <PdfWatermarkTool initialFiles={files} />;
-      case "toImages":
-        return <PdfToImagesTool initialFiles={files} />;
-      case "imagesToPdf":
-        return <ImagesToPdfTool initialFiles={files} />;
-      case "image":
-        return <ImageTool initialFiles={files} />;
-      case "word":
+      case 'home':
+        return (
+          <HomeTool
+            onStart={start}
+            onSelectTool={select}
+            onOpenSearch={() => setIsSearchOpen(true)}
+          />
+        )
+      case 'convert':
+        return <ConvertTool initialFiles={files} />
+      case 'merge':
+        return <PdfTool key="merge" mode="merge" initialFiles={files} />
+      case 'extract':
+        return <PdfTool key="extract" mode="extract" initialFiles={files} />
+      case 'organize':
+        return <PdfPageManager initialFiles={files} />
+      case 'compressPdf':
+        return <PdfCompressTool initialFiles={files} />
+      case 'crop':
+        return <PdfCropTool initialFiles={files} />
+      case 'number':
+        return <PdfNumberTool initialFiles={files} />
+      case 'watermark':
+        return <PdfWatermarkTool initialFiles={files} />
+      case 'toImages':
+        return <PdfToImagesTool initialFiles={files} />
+      case 'imagesToPdf':
+        return <ImagesToPdfTool initialFiles={files} />
+      case 'image':
+        return <ImageTool initialFiles={files} />
+      case 'word':
         return (
           <WordTool
             initialFiles={files}
-            initialMode={pending?.tool === "word" ? pending.mode : undefined}
+            initialMode={pending?.tool === 'word' ? pending.mode : undefined}
           />
-        );
-      case "zip":
+        )
+      case 'extractText':
+        return <ExtractTextTool initialFiles={files} />
+      case 'zip':
         return (
           <ZipTool
             initialFiles={files}
-            initialMode={pending?.tool === "zip" ? pending.mode : undefined}
+            initialMode={pending?.tool === 'zip' ? pending.mode : undefined}
           />
-        );
-      case "gzip":
+        )
+      case 'gzip':
         return (
           <CompressTool
             initialFiles={files}
-            initialMode={pending?.tool === "gzip" ? pending.mode : undefined}
+            initialMode={pending?.tool === 'gzip' ? pending.mode : undefined}
           />
-        );
-      case "rename":
-        return <RenameTool initialFiles={files} />;
-      case "replace":
-        return <ReplaceTool initialFiles={files} />;
+        )
+      case 'rename':
+        return <RenameTool initialFiles={files} />
+      case 'replace':
+        return <ReplaceTool initialFiles={files} />
+      case 'jsonFormatter':
+        return <JsonTool initialFiles={files} />
     }
   }
 
   return (
-    <div className="min-h-screen bg-paper text-ink">
-      <header className="sticky top-0 z-20 border-b border-line bg-surface/95 backdrop-blur">
-        <div className="mx-auto max-w-5xl px-6 sm:px-8 lg:px-12">
-          <div className="flex items-center justify-between gap-4 py-3">
-            {/* Brand — the icon and name both go home */}
-            <button
-              type="button"
-              onClick={() => select("home")}
-              aria-current={active === "home" ? "page" : undefined}
-              title="Start with a file"
-              className="flex items-center gap-2.5 hover:opacity-80"
-            >
-              <img
-                src="/favicon.svg"
-                alt=""
-                className="size-6"
-              />
-              <span className="text-lg font-semibold tracking-tight">
-                Document Toolkit
-              </span>
-            </button>
+    <div className="flex min-h-screen flex-col bg-paper text-ink">
+      {/* App Header with Dropdowns, Brand, and Controls */}
+      <AppHeader
+        categories={navCategories}
+        activeToolId={active}
+        onSelectTool={select}
+        onOpenSearch={() => setIsSearchOpen(true)}
+        onGoHome={() => select('home')}
+      />
 
-            {/* Right side: nav categories + theme toggle */}
-            <div className="flex items-center gap-1">
-              <nav
-                aria-label="Tools"
-                className="nav-scroll hidden items-center gap-0.5 sm:flex"
-              >
-                {navCategories.map((cat) => (
-                  <NavDropdown
-                    key={cat.id}
-                    category={cat}
-                    active={active}
-                    onSelect={select}
-                  />
-                ))}
-              </nav>
+      {/* Global Command Palette / Search Dialog */}
+      <GlobalSearch
+        isOpen={isSearchOpen}
+        onClose={() => setIsSearchOpen(false)}
+        onSelectTool={select}
+        tools={searchableTools}
+      />
 
-              {/* Divider */}
-              <span className="mx-1.5 hidden h-5 w-px bg-line sm:block" aria-hidden="true" />
+      {/* Main Workspace */}
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
+        {active !== 'home' && (
+          <ToolHeader
+            title={tool.title}
+            description={tool.blurb}
+            category={tool.category}
+            icon={tool.icon}
+            onGoHome={() => select('home')}
+          />
+        )}
 
-              <ThemeToggle />
-
-              {/* Mobile menu button */}
-              <MobileMenu active={active} onSelect={select} />
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <main className="mx-auto max-w-5xl px-6 py-12 sm:px-8 lg:px-12 lg:py-16">
-        <h1 className="text-3xl font-semibold tracking-tight">{tool.title}</h1>
-        <p className="mt-3 max-w-prose text-muted">{tool.blurb}</p>
-        <p className="mt-4 inline-flex items-center gap-2 rounded-full bg-good-soft px-3 py-1 text-xs font-medium text-good">
-          <span className="size-1.5 rounded-full bg-good" />
-          Runs in your browser. Nothing is uploaded.
-        </p>
-
-        <div className="mt-8">
-          <Suspense fallback={<p className="text-sm text-muted">Loading the tool…</p>}>
-            {renderTool()}
-          </Suspense>
-        </div>
+        <Suspense fallback={<p className="text-xs text-muted">Loading utility component...</p>}>
+          {renderTool()}
+        </Suspense>
       </main>
 
-      <footer className="mx-auto max-w-5xl px-6 pb-16 sm:px-8 lg:px-12">
-        <h2 className="text-sm font-medium text-muted">Coming next</h2>
-        <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted">
-          {upcoming.map((name) => (
-            <li key={name}>{name}</li>
-          ))}
-        </ul>
-      </footer>
+      {/* App Footer */}
+      <AppFooter />
     </div>
-  );
+  )
 }
-
-// ---------------------------------------------------------------------------
-// Mobile menu — a hamburger that expands a full list on small screens
-// ---------------------------------------------------------------------------
-
-function MobileMenu({
-  active,
-  onSelect,
-}: {
-  active: ToolId;
-  onSelect: (id: ToolId) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    function handleClick(event: MouseEvent) {
-      if (ref.current && !ref.current.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [open]);
-
-  return (
-    <div ref={ref} className="relative sm:hidden">
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        aria-label="Open menu"
-        className="rounded-md border border-line p-1.5 text-muted hover:border-edge hover:bg-hover hover:text-ink"
-      >
-        <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
-          {open ? (
-            <path d="M18 6 6 18M6 6l12 12" />
-          ) : (
-            <path d="M4 6h16M4 12h16M4 18h16" />
-          )}
-        </svg>
-      </button>
-
-      {open && (
-        <div className="absolute right-0 top-full z-30 mt-2 max-h-[70vh] w-64 overflow-y-auto rounded-lg border border-line bg-surface py-2 shadow-lg">
-          {navCategories.map((cat) => (
-            <div key={cat.id}>
-              <div className="flex items-center gap-2 px-3.5 pb-1 pt-3 text-xs font-semibold uppercase tracking-wider text-faint">
-                {cat.icon}
-                {cat.label}
-              </div>
-              {cat.items.map((item) => (
-                <button
-                  key={`mob-${cat.id}-${item.id}`}
-                  type="button"
-                  onClick={() => {
-                    onSelect(item.id);
-                    setOpen(false);
-                  }}
-                  className={`flex w-full flex-col px-5 py-1.5 text-left transition-colors ${
-                    item.id === active
-                      ? "bg-hover text-ink"
-                      : "text-muted hover:bg-hover/60 hover:text-ink"
-                  }`}
-                >
-                  <span className="text-sm font-medium">{item.label}</span>
-                </button>
-              ))}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-export default App;
