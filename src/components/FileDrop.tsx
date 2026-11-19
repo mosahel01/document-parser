@@ -11,10 +11,6 @@ type FileDropProps = {
 /**
  * A drop zone plus a hidden file input. Both routes end in the same callback,
  * so callers never care how the files arrived.
- *
- * The button is a `<label>` tied to the input, not a button that calls
- * `input.click()`. The browser opens the picker itself, so nothing on the page
- * sits between the click and the dialog.
  */
 export function FileDrop({
   onFiles,
@@ -38,25 +34,40 @@ export function FileDrop({
   return (
     <div
       onDragOver={(event) => {
-        // Without preventDefault the browser refuses the drop and opens the file.
         event.preventDefault()
         setIsOver(true)
       }}
       onDragLeave={(event) => {
-        // Moving over a child element also fires dragleave, so ignore those.
         if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
           setIsOver(false)
         }
       }}
       onDrop={handleDrop}
-      className={`rounded-xl border-2 border-dashed p-10 text-center transition-colors ${
+      className={`rounded-[5px] border border-dashed p-8 text-center transition-colors ${
         isOver
-          ? 'border-accent bg-hover'
-          : 'border-edge bg-surface'
+          ? 'border-accent bg-hover/80'
+          : 'border-edge bg-surface/80 hover:border-line hover:bg-hover/30'
       }`}
     >
-      <p className="font-medium text-ink">{label}</p>
-      {hint && <p className="mt-1 text-sm text-muted">{hint}</p>}
+      <div className="mx-auto mb-2 flex size-8 items-center justify-center rounded-[3px] border border-line bg-sunk text-muted">
+        <svg
+          viewBox="0 0 24 24"
+          className="size-4"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="17 8 12 3 7 8" />
+          <line x1="12" y1="3" x2="12" y2="15" />
+        </svg>
+      </div>
+
+      <p className="text-xs font-medium text-ink">{label}</p>
+      {hint && <p className="mt-1 text-[11px] text-muted">{hint}</p>}
 
       <input
         id={id}
@@ -67,15 +78,14 @@ export function FileDrop({
         onChange={(event) => {
           const chosen = Array.from(event.target.files ?? [])
           if (chosen.length > 0) onFiles(chosen)
-          // Reset so choosing the same file again still fires a change event.
           event.target.value = ''
         }}
       />
       <label
         htmlFor={id}
-        className="mt-4 inline-block cursor-pointer rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover peer-focus-visible:ring-2 peer-focus-visible:ring-accent/40 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-surface"
+        className="mt-3.5 inline-block cursor-pointer rounded-[4px] border border-line bg-surface px-3 py-1.5 text-xs font-medium text-ink hover:border-edge hover:bg-hover peer-focus-visible:ring-1 peer-focus-visible:ring-accent"
       >
-        Choose files
+        Browse files
       </label>
     </div>
   )
