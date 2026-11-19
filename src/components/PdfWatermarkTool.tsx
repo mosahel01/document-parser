@@ -9,7 +9,7 @@ import { addWatermark, type WatermarkOptions } from '../tools/pdfEnhance'
 import { formatSize } from '../lib/format'
 
 const field =
-  'rounded-lg border border-edge bg-surface px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/25'
+  'rounded-[4px] border border-line bg-sunk px-2.5 py-1.5 text-xs text-ink outline-none focus:border-accent focus:ring-1 focus:ring-accent'
 
 const PRESETS = ['CONFIDENTIAL', 'DRAFT', 'COPY', 'SAMPLE']
 
@@ -66,7 +66,7 @@ export function PdfWatermarkTool({ initialFiles }: { initialFiles?: File[] }) {
   }
 
   return (
-    <>
+    <div className="space-y-6">
       <FileDrop
         onFiles={(incoming) => choose(incoming[0] ?? null)}
         accept=".pdf,application/pdf"
@@ -76,38 +76,39 @@ export function PdfWatermarkTool({ initialFiles }: { initialFiles?: File[] }) {
       />
 
       {file && (
-        <section className="rounded-xl border border-line bg-surface p-5">
-          <div className="flex flex-wrap items-center justify-between gap-3">
+        <section className="rounded-[5px] border border-line bg-surface p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-3">
             <div className="flex min-w-0 items-center gap-3">
               <FilePreview name={file.name} blob={file} />
               <div className="min-w-0">
-                <p className="truncate text-sm font-medium text-ink">
+                <p className="truncate text-xs font-medium text-ink">
                   {file.name}
                 </p>
-                <p className="text-sm text-muted">{formatSize(file.size)}</p>
+                <p className="font-mono text-[11px] text-faint">{formatSize(file.size)}</p>
               </div>
             </div>
             <button
               type="button"
               onClick={() => choose(null)}
-              className="text-sm text-muted hover:text-ink"
+              className="rounded-[3px] border border-line bg-sunk px-2.5 py-1 text-xs text-muted hover:border-edge hover:text-ink cursor-pointer"
             >
               Choose another
             </button>
           </div>
 
-          <div className="mt-4 flex flex-wrap items-end gap-4">
-            <label className="text-sm text-muted">
-              Text
+          <div className="mt-4 flex flex-wrap items-end gap-3">
+            <label className="text-xs text-muted">
+              Watermark text
               <input
                 value={options.text}
                 onChange={(event) => update({ text: event.target.value })}
                 aria-invalid={empty}
-                className={`mt-1 block w-64 ${field}`}
+                placeholder="CONFIDENTIAL"
+                className={`mt-1 block w-56 ${field}`}
               />
             </label>
 
-            <label className="text-sm text-muted">
+            <label className="text-xs text-muted">
               Size
               <input
                 type="number"
@@ -121,7 +122,7 @@ export function PdfWatermarkTool({ initialFiles }: { initialFiles?: File[] }) {
               />
             </label>
 
-            <label className="text-sm text-muted">
+            <label className="text-xs text-muted">
               Opacity {Math.round(options.opacity * 100)}%
               <input
                 type="range"
@@ -132,11 +133,11 @@ export function PdfWatermarkTool({ initialFiles }: { initialFiles?: File[] }) {
                 onChange={(event) =>
                   update({ opacity: Number(event.target.value) / 100 })
                 }
-                className="mt-2 block w-40"
+                className="mt-2 block w-32"
               />
             </label>
 
-            <label className="text-sm text-muted">
+            <label className="text-xs text-muted">
               Angle {options.angle}°
               <input
                 type="range"
@@ -147,7 +148,7 @@ export function PdfWatermarkTool({ initialFiles }: { initialFiles?: File[] }) {
                 onChange={(event) =>
                   update({ angle: Number(event.target.value) })
                 }
-                className="mt-2 block w-40"
+                className="mt-2 block w-32"
               />
             </label>
 
@@ -155,27 +156,27 @@ export function PdfWatermarkTool({ initialFiles }: { initialFiles?: File[] }) {
               type="button"
               onClick={() => void run()}
               disabled={busy || empty}
-              className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50"
+              className="rounded-[4px] bg-accent px-4 py-2 text-xs font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50 cursor-pointer"
             >
               {busy ? 'Marking…' : 'Preview watermark'}
             </button>
           </div>
 
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            <span className="text-sm text-muted">Try</span>
+            <span className="text-xs text-muted">Presets:</span>
             {PRESETS.map((preset) => (
               <button
                 key={preset}
                 type="button"
                 onClick={() => update({ text: preset })}
-                className="rounded border border-edge px-2 py-0.5 text-xs text-muted hover:border-accent hover:text-ink"
+                className="rounded-[3px] border border-line bg-sunk px-2 py-0.5 text-xs text-muted hover:border-edge hover:text-ink cursor-pointer"
               >
                 {preset}
               </button>
             ))}
           </div>
 
-          <p className="mt-3 text-sm text-muted">
+          <p className="mt-3 text-[11px] text-muted">
             Long text is shrunk to stay on the page. The watermark is drawn on
             top, so a small one can sit over the words without hiding them.
           </p>
@@ -183,29 +184,29 @@ export function PdfWatermarkTool({ initialFiles }: { initialFiles?: File[] }) {
       )}
 
       {error && (
-        <p className="rounded-xl border border-bad/30 bg-bad-soft px-5 py-3 text-sm text-bad">
+        <p className="rounded-[5px] border border-bad/30 bg-bad-soft px-4 py-3 text-xs text-bad">
           {error}
         </p>
       )}
 
       {preview && (
-        <section className="rounded-xl border border-line bg-surface">
-          <header className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-3">
+        <section className="rounded-[5px] border border-line bg-surface">
+          <header className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-4 py-2.5">
             <div>
-              <h2 className="text-sm font-medium text-ink">{preview.name}</h2>
-              <p className="text-sm text-muted">
+              <h2 className="text-xs font-medium text-ink">{preview.name}</h2>
+              <p className="font-mono text-[11px] text-faint">
                 {formatSize(preview.blob.size)}
               </p>
             </div>
             <button
               type="button"
               onClick={() => setPreview(null)}
-              className="text-sm text-muted hover:text-ink"
+              className="rounded-[3px] border border-line bg-sunk px-2 py-0.5 text-xs text-muted hover:text-ink cursor-pointer"
             >
               Close preview
             </button>
           </header>
-          <div className="p-5">
+          <div className="p-4">
             <PdfPreview blob={preview.blob} title={preview.name} />
           </div>
         </section>
@@ -216,12 +217,12 @@ export function PdfWatermarkTool({ initialFiles }: { initialFiles?: File[] }) {
           <button
             type="button"
             onClick={() => downloadBlob(preview.blob, preview.name)}
-            className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover"
+            className="rounded-[4px] bg-accent px-4 py-2 text-xs font-medium text-accent-ink hover:bg-accent-hover cursor-pointer"
           >
-            Download
+            Download {preview.name}
           </button>
         </DownloadBar>
       )}
-    </>
+    </div>
   )
 }
