@@ -13,7 +13,7 @@ import {
 import { formatSize } from '../lib/format'
 
 const field =
-  'rounded-lg border border-edge bg-surface px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/25'
+  'rounded-[4px] border border-line bg-sunk px-3 py-1.5 text-xs text-ink outline-none focus:border-accent focus:ring-1 focus:ring-accent'
 
 function saved(result: CompressionResult): string {
   if (result.keptOriginal) return 'no gain'
@@ -82,7 +82,7 @@ export function PdfCompressTool({ initialFiles }: { initialFiles?: File[] }) {
   }
 
   return (
-    <>
+    <div className="space-y-6">
       <FileDrop
         onFiles={(incoming) => choose(incoming[0] ?? null)}
         accept=".pdf,application/pdf"
@@ -92,28 +92,28 @@ export function PdfCompressTool({ initialFiles }: { initialFiles?: File[] }) {
       />
 
       {file && (
-        <section className="rounded-xl border border-line bg-surface p-5">
-          <div className="flex flex-wrap items-center justify-between gap-3">
+        <section className="rounded-[5px] border border-line bg-surface p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-3">
             <div className="flex min-w-0 items-center gap-3">
               <FilePreview name={file.name} blob={file} />
               <div className="min-w-0">
-                <p className="truncate text-sm font-medium text-ink">
+                <p className="truncate text-xs font-medium text-ink">
                   {file.name}
                 </p>
-                <p className="text-sm text-muted">{formatSize(file.size)}</p>
+                <p className="font-mono text-[11px] text-faint">{formatSize(file.size)}</p>
               </div>
             </div>
             <button
               type="button"
               onClick={() => choose(null)}
-              className="text-sm text-muted hover:text-ink"
+              className="rounded-[3px] border border-line bg-sunk px-2.5 py-1 text-xs text-muted hover:border-edge hover:text-ink cursor-pointer"
             >
               Choose another
             </button>
           </div>
 
           <div className="mt-4 flex flex-wrap items-end gap-4">
-            <label className="text-sm text-muted">
+            <label className="text-xs text-muted">
               Resolution
               <select
                 value={dpi}
@@ -130,7 +130,7 @@ export function PdfCompressTool({ initialFiles }: { initialFiles?: File[] }) {
               </select>
             </label>
 
-            <label className="text-sm text-muted">
+            <label className="text-xs text-muted">
               JPEG quality {Math.round(quality * 100)}%
               <input
                 type="range"
@@ -150,13 +150,13 @@ export function PdfCompressTool({ initialFiles }: { initialFiles?: File[] }) {
               type="button"
               onClick={() => void run()}
               disabled={busy}
-              className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50"
+              className="rounded-[4px] bg-accent px-4 py-2 text-xs font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50 cursor-pointer"
             >
               {busy
                 ? progress
                   ? `Page ${progress.page} of ${progress.total}…`
                   : 'Compressing…'
-                : 'Compress'}
+                : 'Compress PDF'}
             </button>
 
             {busy && (
@@ -165,14 +165,14 @@ export function PdfCompressTool({ initialFiles }: { initialFiles?: File[] }) {
                 onClick={() => {
                   stopped.current = true
                 }}
-                className="rounded-lg border border-edge px-4 py-2 text-sm font-medium text-ink hover:bg-hover"
+                className="rounded-[4px] border border-line bg-sunk px-3 py-2 text-xs font-medium text-ink hover:border-edge cursor-pointer"
               >
                 Stop
               </button>
             )}
           </div>
 
-          <p className="mt-3 text-sm text-muted">
+          <p className="mt-3 text-[11px] text-muted">
             This rebuilds every page as a picture, which is what makes the file
             smaller. Text stops being selectable, and links, forms, and
             bookmarks are lost. If the rebuilt copy is not smaller, the original
@@ -182,25 +182,27 @@ export function PdfCompressTool({ initialFiles }: { initialFiles?: File[] }) {
       )}
 
       {error && (
-        <p className="rounded-xl border border-bad/30 bg-bad-soft px-5 py-3 text-sm text-bad">
+        <p className="rounded-[5px] border border-bad/30 bg-bad-soft px-4 py-3 text-xs text-bad">
           {error}
         </p>
       )}
 
       {result && (
-        <section className="rounded-xl border border-line bg-surface">
-          <header className="border-b border-line px-5 py-3">
-            <h2 className="text-sm font-medium text-ink">
-              {result.keptOriginal ? 'The original is already smaller' : 'Compressed'}
-            </h2>
-            <p className="text-sm text-muted">
-              {formatSize(result.originalSize)} → {formatSize(result.blob.size)}{' '}
-              ({saved(result)})
-            </p>
+        <section className="rounded-[5px] border border-line bg-surface">
+          <header className="flex flex-wrap items-center justify-between border-b border-line px-4 py-2.5">
+            <div>
+              <h2 className="text-xs font-medium text-ink">
+                {result.keptOriginal ? 'The original is already smaller' : 'Compressed'}
+              </h2>
+              <p className="font-mono text-[11px] text-muted">
+                {formatSize(result.originalSize)} → {formatSize(result.blob.size)}{' '}
+                <span className="text-good font-sans font-medium">({saved(result)})</span>
+              </p>
+            </div>
           </header>
-          <div className="p-5">
+          <div className="p-4">
             <PdfPreview blob={result.blob} title={result.name} />
-            <p className="mt-2 text-xs text-faint">
+            <p className="mt-2 text-[11px] text-faint">
               {result.keptOriginal
                 ? 'The rebuilt copy was larger, so this preview and download are the original file.'
                 : 'Check the preview before saving. Small text may look softer at a low resolution.'}
@@ -214,12 +216,12 @@ export function PdfCompressTool({ initialFiles }: { initialFiles?: File[] }) {
           <button
             type="button"
             onClick={() => downloadBlob(result.blob, result.name)}
-            className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover"
+            className="rounded-[4px] bg-accent px-4 py-2 text-xs font-medium text-accent-ink hover:bg-accent-hover cursor-pointer"
           >
-            Download
+            Download {result.name}
           </button>
         </DownloadBar>
       )}
-    </>
+    </div>
   )
 }
