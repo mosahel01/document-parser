@@ -391,6 +391,7 @@ const navCategories: NavCategory[] = [
   {
     id: 'extract-ocr',
     label: 'Extract & OCR',
+    shortLabel: 'Extract',
     icon: (
       <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
         <path d="M4 6h16M4 12h10M4 18h14" />
@@ -407,6 +408,7 @@ const navCategories: NavCategory[] = [
   {
     id: 'developer',
     label: 'Developer Tools',
+    shortLabel: 'Developer',
     icon: (
       <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
         <polyline points="16 18 22 12 16 6" />
@@ -574,6 +576,7 @@ export default function App() {
   const [active, setActive] = useState<ToolId>('home')
   const [pending, setPending] = useState<HomeOperation | null>(null)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const [homeFilter, setHomeFilter] = useState<string>('all')
 
   const tool = tools[active]
   const files = pending?.files ?? []
@@ -620,9 +623,11 @@ export default function App() {
       case 'home':
         return (
           <HomeTool
+            key={homeFilter}
             onStart={start}
             onSelectTool={select}
             onOpenSearch={() => setIsSearchOpen(true)}
+            initialFilter={homeFilter}
           />
         )
       case 'convert':
@@ -680,7 +685,7 @@ export default function App() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-paper text-ink">
+    <div className="relative flex min-h-screen flex-col text-ink">
       {/* App Header with Dropdowns, Brand, and Controls */}
       <AppHeader
         categories={navCategories}
@@ -699,24 +704,45 @@ export default function App() {
       />
 
       {/* Main Workspace */}
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
-        {active !== 'home' && (
+      {active === 'home' ? (
+        <main className="flex-1">{renderTool()}</main>
+      ) : (
+        <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-10 pt-8 sm:px-6 lg:px-8 lg:pt-10">
           <ToolHeader
             title={tool.title}
             description={tool.blurb}
             category={tool.category}
             icon={tool.icon}
             onGoHome={() => select('home')}
+            onGoCategory={() => {
+              const categoryFilterMap: Record<string, string> = {
+                'PDF': 'pdf',
+                'Images': 'images',
+                'Documents': 'documents',
+                'Archive': 'archive',
+                'Extract & OCR': 'extract',
+                'Developer Tools': 'developer',
+              }
+              const filterId = categoryFilterMap[tool.category] ?? 'all'
+              setHomeFilter(filterId)
+              select('home')
+            }}
           />
-        )}
 
-        <Suspense fallback={<p className="text-xs text-muted">Loading utility component...</p>}>
-          {renderTool()}
-        </Suspense>
-      </main>
+          <Suspense
+            fallback={
+              <p className="rounded-lg border border-line bg-paper px-4 py-3 text-xs text-muted">
+                Loading tool…
+              </p>
+            }
+          >
+            {renderTool()}
+          </Suspense>
+        </main>
+      )}
 
       {/* App Footer */}
-      <AppFooter />
+      <AppFooter categories={navCategories} onSelectTool={select} />
     </div>
   )
 }

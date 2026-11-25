@@ -281,19 +281,6 @@ export function PdfPageManager({ initialFiles }: { initialFiles?: File[] }) {
     if (newCount > 0 && newCount <= 20) autoPreviewPending.current = true
   }
 
-  function moveSlot(id: string, delta: number) {
-    setBook((current) => {
-      const from = current.slots.findIndex((slot) => slot.id === id)
-      const to = from + delta
-      if (from < 0 || to < 0 || to >= current.slots.length) return current
-
-      const slots = [...current.slots]
-      const [moved] = slots.splice(from, 1)
-      slots.splice(to, 0, moved)
-      return { ...current, slots }
-    })
-  }
-
   function dropOn(targetId: string) {
     const fromId = dragging
     setDragging(null)
@@ -548,21 +535,14 @@ export function PdfPageManager({ initialFiles }: { initialFiles?: File[] }) {
                     <span className="flex items-center gap-0.5">
                       <button
                         type="button"
-                        onClick={() => moveSlot(slot.id, -1)}
-                        disabled={index === 0}
-                        aria-label={`Move ${label} left`}
-                        className="px-1 text-faint hover:bg-hover hover:text-ink disabled:opacity-30"
+                        aria-label={`Drag to reorder ${label}`}
+                        className="px-1 text-faint hover:bg-hover hover:text-ink cursor-grab select-none"
                       >
-                        ←
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => moveSlot(slot.id, 1)}
-                        disabled={index === book.slots.length - 1}
-                        aria-label={`Move ${label} right`}
-                        className="px-1 text-faint hover:bg-hover hover:text-ink disabled:opacity-30"
-                      >
-                        →
+                        <svg viewBox="0 0 10 16" className="size-3" fill="currentColor" aria-hidden="true">
+                          <circle cx="2" cy="2" r="1.2" /><circle cx="8" cy="2" r="1.2" />
+                          <circle cx="2" cy="8" r="1.2" /><circle cx="8" cy="8" r="1.2" />
+                          <circle cx="2" cy="14" r="1.2" /><circle cx="8" cy="14" r="1.2" />
+                        </svg>
                       </button>
                       <button
                         type="button"
@@ -783,6 +763,7 @@ export function PdfPageManager({ initialFiles }: { initialFiles?: File[] }) {
                     next.delete(lightboxId)
                     return next
                   })
+                  setPreview(null)
                   if (newCount > 0 && newCount <= 20) {
                     autoPreviewPending.current = true
                   }

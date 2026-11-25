@@ -16,10 +16,12 @@ export function PdfPreview({ blob, title = 'Preview' }: PdfPreviewProps) {
   useEffect(() => () => URL.revokeObjectURL(url), [url])
 
   return (
-    <iframe
-      src={url}
-      title={title}
-      className="h-96 w-full rounded-lg border border-line bg-surface"
-    />
+    <div className="relative w-full" style={{ aspectRatio: '210 / 297' }}>
+      <iframe
+        src={url}
+        title={title}
+        className="absolute inset-0 h-full w-full border border-line bg-surface"
+      />
+    </div>
   )
 }
