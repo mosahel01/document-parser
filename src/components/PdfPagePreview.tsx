@@ -56,7 +56,7 @@ export function PdfPagePreview({ file, maxPages = 60 }: PdfPagePreviewProps) {
 
   if (error) {
     return (
-      <p className="rounded-xl border border-warn/30 bg-warn-soft px-5 py-3 text-sm text-warn">
+      <p className="border border-warn/30 bg-warn-soft px-5 py-3 text-sm text-warn">
         Preview failed: {error} You can still split the file.
       </p>
     )
@@ -80,7 +80,7 @@ export function PdfPagePreview({ file, maxPages = 60 }: PdfPagePreviewProps) {
         {thumbs.map((thumb) => (
           <li
             key={thumb.page}
-            className="overflow-hidden rounded-lg border border-line bg-surface"
+            className="overflow-hidden border border-line bg-surface"
           >
             <img
               src={thumb.url}
