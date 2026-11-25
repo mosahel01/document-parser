@@ -35,7 +35,7 @@ const FORMATS: { id: Format; label: string; mime: string }[] = [
 ]
 
 const tabClass = (active: boolean) =>
-  `rounded-[3px] px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer ${
+  `px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer ${
     active ? 'bg-hover text-ink shadow-xs' : 'text-muted hover:text-ink'
   }`
 
@@ -46,7 +46,7 @@ function TextSample({ text }: { text: string }) {
 
   return (
     <div>
-      <pre className="max-h-72 overflow-auto whitespace-pre-wrap rounded-[4px] bg-sunk p-3 font-mono text-xs text-ink">
+      <pre className="max-h-72 overflow-auto whitespace-pre-wrap bg-sunk p-3 font-mono text-xs text-ink">
         {shown}
       </pre>
       {text.length > shown.length && (
@@ -178,7 +178,7 @@ export function WordTool({
 
   return (
     <div className="space-y-6">
-      <div className="inline-flex rounded-[4px] border border-line bg-sunk p-0.5">
+      <div className="inline-flex border border-line bg-sunk p-0.5">
         {MODES.map((option) => (
           <button
             key={option.id}
@@ -213,13 +213,13 @@ export function WordTool({
       {busy && <p className="text-xs text-muted">Reading document content...</p>}
 
       {error && (
-        <p className="rounded-[5px] border border-bad/30 bg-bad-soft px-4 py-3 text-xs text-bad">
+        <p className="border border-bad/30 bg-bad-soft px-4 py-3 text-xs text-bad">
           {error}
         </p>
       )}
 
       {source && (
-        <section className="rounded-[5px] border border-line bg-surface">
+        <section className="border border-line bg-surface">
           <header className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-4 py-2.5">
             <div className="flex min-w-0 items-center gap-3">
               <FilePreview name={source.name} blob={source} />
@@ -237,7 +237,7 @@ export function WordTool({
           <div className="p-4">
             {mode === 'read' && blocks && (
               <div className="space-y-3">
-                <div className="inline-flex rounded-[4px] border border-line bg-sunk p-0.5">
+                <div className="inline-flex border border-line bg-sunk p-0.5">
                   {FORMATS.map((option) => (
                     <button
                       key={option.id}
@@ -282,7 +282,7 @@ export function WordTool({
           <button
             type="button"
             onClick={save}
-            className="rounded-[4px] bg-accent px-4 py-2 text-xs font-medium text-accent-ink hover:bg-accent-hover cursor-pointer"
+            className="bg-accent px-4 py-2 text-xs font-medium text-accent-ink hover:bg-accent-hover cursor-pointer"
           >
             Download {outputName(source, mode)}
           </button>
