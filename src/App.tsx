@@ -20,6 +20,7 @@ import { CompressTool } from './components/CompressTool'
 import { WordTool } from './components/WordTool'
 import { JsonTool } from './components/JsonTool'
 import { ExtractTextTool } from './components/ExtractTextTool'
+import { ServerPdfTool } from './components/ServerPdfTool'
 import type { HomeOperation } from './tools/fileKind'
 
 // Lazy-loaded PDF tools to keep initial bundle light
@@ -308,6 +309,86 @@ const tools = {
     icon: (
       <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.7">
         <path d="M8 3H7a2 2 0 0 0-2 2v3a2 2 0 0 1-2 2 2 2 0 0 1 2 2v3a2 2 0 0 0 2 2h1M16 3h1a2 2 0 0 1 2 2v3a2 2 0 0 0 2 2 2 2 0 0 0-2 2v3a2 2 0 0 1-2 2h-1" />
+      </svg>
+    ),
+  },
+  unlockPdf: {
+    label: 'Unlock PDF',
+    title: 'Unlock PDF',
+    blurb: 'Remove password protection from a PDF on the server.',
+    category: 'PDF Tools',
+    icon: (
+      <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.7">
+        <rect x="3" y="11" width="18" height="11" rx="2" />
+        <path d="M7 11V7a5 5 0 0 1 9.9-1" />
+      </svg>
+    ),
+  },
+  protectPdf: {
+    label: 'Protect PDF',
+    title: 'Protect PDF',
+    blurb: 'Encrypt a PDF with a password on the server.',
+    category: 'PDF Tools',
+    icon: (
+      <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.7">
+        <rect x="3" y="11" width="18" height="11" rx="2" />
+        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+      </svg>
+    ),
+  },
+  signPdf: {
+    label: 'Sign PDF',
+    title: 'Sign PDF',
+    blurb: 'Stamp a signature onto a PDF page.',
+    category: 'PDF Tools',
+    icon: (
+      <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.7">
+        <path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+      </svg>
+    ),
+  },
+  repairPdf: {
+    label: 'Repair PDF',
+    title: 'Repair PDF',
+    blurb: 'Rebuild and repair a damaged PDF document.',
+    category: 'PDF Tools',
+    icon: (
+      <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.7">
+        <path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.5-2.5 2.5-2.5Z" />
+      </svg>
+    ),
+  },
+  redactPdf: {
+    label: 'Redact PDF',
+    title: 'Redact PDF',
+    blurb: 'Permanently black out a region on a PDF page.',
+    category: 'PDF Tools',
+    icon: (
+      <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.7">
+        <path d="m3 3 18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M9.9 5.2A10.4 10.4 0 0 1 12 5c7 0 10 7 10 7a17.8 17.8 0 0 1-3.1 4.1M6.6 6.6C3.7 8.4 2 12 2 12s3 7 10 7a10.4 10.4 0 0 0 4.2-.9" />
+      </svg>
+    ),
+  },
+  pdfToPowerPoint: {
+    label: 'PDF to PowerPoint',
+    title: 'PDF to PowerPoint',
+    blurb: 'Convert PDF pages into a PowerPoint (.pptx) presentation.',
+    category: 'Documents',
+    icon: (
+      <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.7">
+        <rect x="2" y="3" width="20" height="14" rx="2" />
+        <path d="M8 21h8M12 17v4" />
+      </svg>
+    ),
+  },
+  pdfToExcel: {
+    label: 'PDF to Excel',
+    title: 'PDF to Excel',
+    blurb: 'Extract PDF text into an Excel (.xlsx) spreadsheet.',
+    category: 'Documents',
+    icon: (
+      <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.7">
+        <path d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z" />
       </svg>
     ),
   },
@@ -677,6 +758,24 @@ export default function App() {
         )
       case 'rename':
         return <RenameTool initialFiles={files} />
+      case 'unlockPdf':
+      case 'protectPdf':
+      case 'signPdf':
+      case 'repairPdf':
+      case 'redactPdf':
+      case 'pdfToPowerPoint':
+      case 'pdfToExcel': {
+        const current = tools[active]
+        return (
+          <ServerPdfTool
+            key={active}
+            toolId={active}
+            title={current.title}
+            description={current.blurb}
+            category={current.category}
+          />
+        )
+      }
       case 'replace':
         return <ReplaceTool initialFiles={files} />
       case 'jsonFormatter':
