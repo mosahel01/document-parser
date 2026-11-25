@@ -1,4 +1,4 @@
-# Document Toolkit
+# MergePDF
 
 A website for working with documents: converting formats, renaming, merging,
 splitting, compressing, cropping, numbering, watermarking, and making PDFs from
@@ -51,7 +51,7 @@ npm test        # run the unit tests
 src/
   main.tsx        entry point, mounts React into index.html
   App.tsx         the page you see: tabs, titles, and which tool is open
-  index.css       global styles (Tailwind)
+  index.css       global styles and design tokens (Tailwind)
   components/     React UI pieces, Home included
   tools/          plain functions that do the actual document work
   lib/            small shared helpers with no domain logic
