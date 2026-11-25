@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 
-const KEY = 'document-toolkit-theme'
+const KEY = 'mergepdf-theme'
 
 type Theme = 'light' | 'dark' | 'system'
 
@@ -86,7 +86,7 @@ export function ThemeToggle() {
       onClick={cycle}
       aria-label={labels[choice]}
       title={labels[choice]}
-      className="relative flex items-center gap-1.5 rounded-[4px] border border-line bg-surface px-2.5 py-1.5 text-xs text-muted hover:border-edge hover:bg-hover hover:text-ink cursor-pointer"
+      className="flex size-9 cursor-pointer items-center justify-center rounded-md border border-line bg-paper text-muted transition-colors hover:border-edge hover:bg-surface hover:text-ink"
     >
       {choice === 'system' ? (
         /* monitor icon */
@@ -100,7 +100,7 @@ export function ThemeToggle() {
           strokeLinecap="round"
           strokeLinejoin="round"
         >
-          <rect x="2" y="3" width="20" height="14" rx="2" />
+          <rect x="2" y="3" width="20" height="14" />
           <path d="M8 21h8M12 17v4" />
         </svg>
       ) : dark ? (
@@ -132,9 +132,6 @@ export function ThemeToggle() {
           <path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5Z" />
         </svg>
       )}
-      <span className="text-xs font-medium">
-        {choice === 'system' ? 'Auto' : choice === 'dark' ? 'Dark' : 'Light'}
-      </span>
     </button>
   )
 }
