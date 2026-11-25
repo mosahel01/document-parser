@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { NavigationMenu, type NavCategory } from './NavigationMenu'
 import { MobileNavigation } from './MobileNavigation'
 import { ThemeToggle } from './ThemeToggle'
@@ -43,26 +42,8 @@ export function AppHeader({
   onOpenSearch,
   onGoHome,
 }: AppHeaderProps) {
-  const [showBanner, setShowBanner] = useState(true)
-
   return (
-    <>
-      {showBanner && (
-        <div className="relative bg-accent px-10 py-2 text-center text-xs font-medium text-white">
-          <span aria-hidden="true">🔒</span> Every tool runs in your browser —
-          your files never leave your device.
-          <button
-            type="button"
-            onClick={() => setShowBanner(false)}
-            aria-label="Dismiss announcement"
-            className="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer text-lg leading-none text-white/80 transition-colors hover:text-white"
-          >
-            ×
-          </button>
-        </div>
-      )}
-
-      <header className="sticky top-0 z-40 border-b border-line bg-paper shadow-sm">
+    <header className="sticky top-0 z-40 border-b border-line bg-paper shadow-sm">
         <div className="mx-auto flex h-16 max-w-[1300px] items-center gap-2 px-4 sm:px-6">
           <div className="flex min-w-0 shrink-0 items-center gap-2">
             <MobileNavigation
@@ -94,23 +75,8 @@ export function AppHeader({
           <div className="ml-auto flex shrink-0 items-center gap-2">
             <div className="hidden sm:block">{searchButton(onOpenSearch)}</div>
             <ThemeToggle />
-            <button
-              type="button"
-              onClick={onGoHome}
-              className="hidden cursor-pointer rounded-md bg-accent px-4 py-2 text-sm font-semibold text-accent-ink transition-colors hover:bg-accent-hover sm:inline-flex"
-            >
-              Start for free
-            </button>
-            <button
-              type="button"
-              onClick={onGoHome}
-              className="hidden cursor-pointer rounded-md border-2 border-accent px-4 py-2 text-sm font-semibold text-accent transition-colors hover:bg-accent-soft md:inline-flex"
-            >
-              Browse all tools
-            </button>
           </div>
         </div>
       </header>
-    </>
   )
 }
