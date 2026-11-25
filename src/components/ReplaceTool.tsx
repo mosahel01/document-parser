@@ -27,7 +27,7 @@ type Row = {
 }
 
 const field =
-  'rounded-[4px] border border-line bg-sunk px-2.5 py-1.5 font-mono text-xs text-ink outline-none focus:border-accent focus:ring-1 focus:ring-accent'
+  'border border-line bg-sunk px-2.5 py-1.5 font-mono text-xs text-ink outline-none focus:border-accent focus:ring-1 focus:ring-accent'
 
 export function ReplaceTool({ initialFiles }: { initialFiles?: File[] }) {
   const [files, setFiles] = useState<File[]>(initialFiles ?? [])
@@ -133,7 +133,7 @@ export function ReplaceTool({ initialFiles }: { initialFiles?: File[] }) {
       />
 
       {skipped.length > 0 && (
-        <p className="rounded-[5px] border border-warn/30 bg-warn-soft px-4 py-3 text-xs text-warn">
+        <p className="border border-warn/30 bg-warn-soft px-4 py-3 text-xs text-warn">
           Skipped {skipped.length} {skipped.length === 1 ? 'file' : 'files'}{' '}
           this tool cannot rewrite: {skipped.join(', ')}. Use Word or PDF tools for binary formats.
         </p>
@@ -152,7 +152,7 @@ export function ReplaceTool({ initialFiles }: { initialFiles?: File[] }) {
       />
 
       {files.length > 0 && (
-        <section className="rounded-[5px] border border-line bg-surface p-4">
+        <section className="border border-line bg-surface p-4">
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="text-xs font-medium text-ink">
               Find
@@ -180,7 +180,7 @@ export function ReplaceTool({ initialFiles }: { initialFiles?: File[] }) {
                 type="checkbox"
                 checked={matchCase}
                 onChange={(event) => setMatchCase(event.target.checked)}
-                className="rounded-[2px] border-edge bg-sunk text-accent focus:ring-accent"
+                className="border-edge bg-sunk text-accent focus:ring-accent"
               />
               Match case
             </label>
@@ -189,7 +189,7 @@ export function ReplaceTool({ initialFiles }: { initialFiles?: File[] }) {
                 type="checkbox"
                 checked={regex}
                 onChange={(event) => setRegex(event.target.checked)}
-                className="rounded-[2px] border-edge bg-sunk text-accent focus:ring-accent"
+                className="border-edge bg-sunk text-accent focus:ring-accent"
               />
               Regular expression
             </label>
@@ -200,7 +200,7 @@ export function ReplaceTool({ initialFiles }: { initialFiles?: File[] }) {
               type="button"
               onClick={run}
               disabled={busy || find === ''}
-              className="rounded-[4px] bg-accent px-4 py-2 text-xs font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50 cursor-pointer"
+              className="bg-accent px-4 py-2 text-xs font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50 cursor-pointer"
             >
               {busy ? 'Reading…' : 'Preview Changes'}
             </button>
@@ -219,7 +219,7 @@ export function ReplaceTool({ initialFiles }: { initialFiles?: File[] }) {
           {problems.map((problem) => (
             <li
               key={problem}
-              className="rounded-[5px] border border-bad/30 bg-bad-soft px-4 py-3 text-xs text-bad"
+              className="border border-bad/30 bg-bad-soft px-4 py-3 text-xs text-bad"
             >
               {problem}
             </li>
@@ -228,7 +228,7 @@ export function ReplaceTool({ initialFiles }: { initialFiles?: File[] }) {
       )}
 
       {rows && (
-        <section className="rounded-[5px] border border-line bg-surface">
+        <section className="border border-line bg-surface">
           <header className="border-b border-line px-4 py-2.5">
             <h2 className="text-xs font-medium text-ink">
               {rows.length} {rows.length === 1 ? 'file' : 'files'} would change
@@ -258,7 +258,7 @@ export function ReplaceTool({ initialFiles }: { initialFiles?: File[] }) {
                   {row.preview && (
                     <div className="mt-1 space-y-1 font-mono text-[11px]">
                       <p className="flex items-baseline gap-2">
-                        <span className="w-10 shrink-0 rounded-[2px] bg-sunk px-1 py-0.2 text-[9px] font-medium uppercase text-muted border border-line">
+                        <span className="w-10 shrink-0 bg-sunk px-1 py-0.2 text-[9px] font-medium uppercase text-muted border border-line">
                           before
                         </span>
                         <span className="truncate text-muted">
@@ -266,7 +266,7 @@ export function ReplaceTool({ initialFiles }: { initialFiles?: File[] }) {
                         </span>
                       </p>
                       <p className="flex items-baseline gap-2">
-                        <span className="w-10 shrink-0 rounded-[2px] bg-good-soft px-1 py-0.2 text-[9px] font-medium uppercase text-good border border-line">
+                        <span className="w-10 shrink-0 bg-good-soft px-1 py-0.2 text-[9px] font-medium uppercase text-good border border-line">
                           after
                         </span>
                         <span className="truncate text-good">
@@ -282,7 +282,7 @@ export function ReplaceTool({ initialFiles }: { initialFiles?: File[] }) {
                 <button
                   type="button"
                   onClick={() => downloadBlob(row.blob, row.name)}
-                  className="rounded-[3px] border border-line bg-sunk px-2 py-0.5 text-xs text-muted hover:border-edge hover:text-ink cursor-pointer"
+                  className="border border-line bg-sunk px-2 py-0.5 text-xs text-muted hover:border-edge hover:text-ink cursor-pointer"
                 >
                   Download
                 </button>
@@ -298,7 +298,7 @@ export function ReplaceTool({ initialFiles }: { initialFiles?: File[] }) {
             type="button"
             onClick={saveAll}
             disabled={saving}
-            className="rounded-[4px] bg-accent px-4 py-2 text-xs font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50 cursor-pointer"
+            className="bg-accent px-4 py-2 text-xs font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50 cursor-pointer"
           >
             {saving ? 'Saving…' : 'Download all'}
           </button>
