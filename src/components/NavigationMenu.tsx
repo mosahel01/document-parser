@@ -10,6 +10,8 @@ export type NavItem = {
 export type NavCategory = {
   id: string
   label: string
+  /** Fits the same bar on wide screens where the full label is too long. */
+  shortLabel?: string
   icon: ReactElement
   items: NavItem[]
 }
@@ -26,7 +28,7 @@ export function NavigationMenu({
   onSelectTool,
 }: NavigationMenuProps) {
   const [openCategoryId, setOpenCategoryId] = useState<string | null>(null)
-  const menuRef = useRef<HTMLDivElement>(null)
+  const menuRef = useRef<HTMLElement>(null)
 
   // Close on outside click
   useEffect(() => {
@@ -57,85 +59,101 @@ export function NavigationMenu({
   }, [openCategoryId])
 
   return (
-    <nav ref={menuRef} aria-label="Main Navigation" className="flex flex-wrap items-center gap-0.5">
+    <nav
+      ref={menuRef}
+      aria-label="Main navigation"
+      className="flex h-16 items-center gap-0.5"
+    >
       {categories.map((cat) => {
         const isOpen = openCategoryId === cat.id
         const isActive = cat.items.some((item) => item.id === activeToolId)
+        const highlighted = isOpen || isActive
 
         return (
-          <div key={cat.id} className="relative">
+          <div
+            key={cat.id}
+            className="relative flex h-full items-center"
+            onMouseEnter={() => setOpenCategoryId(cat.id)}
+            onMouseLeave={() => setOpenCategoryId(null)}
+          >
             <button
               type="button"
               onClick={() => setOpenCategoryId(isOpen ? null : cat.id)}
+              aria-label={cat.label}
               aria-expanded={isOpen}
               aria-haspopup="true"
-              className={`flex items-center gap-1.5 rounded-[4px] px-2.5 py-1.5 text-xs font-medium transition-colors cursor-pointer ${
-                isOpen || isActive
-                  ? 'bg-hover text-ink'
-                  : 'text-muted hover:bg-hover/60 hover:text-ink'
+              className={`flex cursor-pointer items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                highlighted
+                  ? 'bg-sunk text-ink'
+                  : 'text-muted hover:bg-sunk hover:text-ink'
               }`}
             >
-              <span className="size-3.5 text-muted">{cat.icon}</span>
-              <span>{cat.label}</span>
+              <span className="whitespace-nowrap">
+                {cat.shortLabel ?? cat.label}
+              </span>
               <svg
-                viewBox="0 0 24 24"
-                className={`size-3 text-faint transition-transform duration-100 ${
+                viewBox="0 0 20 20"
+                className={`size-3.5 text-faint transition-transform duration-150 ${
                   isOpen ? 'rotate-180' : ''
                 }`}
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
+                fill="currentColor"
                 aria-hidden="true"
               >
-                <path d="m6 9 6 6 6-6" />
+                <path
+                  fillRule="evenodd"
+                  d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.17l3.71-3.94a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06z"
+                  clipRule="evenodd"
+                />
               </svg>
             </button>
 
             {isOpen && (
               <div
                 role="menu"
-                className="absolute left-0 top-full z-40 mt-1 w-64 max-w-[calc(100vw-2rem)] rounded-[5px] border border-line bg-surface p-1 shadow-xl"
+                className="absolute left-0 top-full z-40 w-80 rounded-xl border border-line bg-paper p-2 shadow-[0_8px_32px_rgba(0,0,0,0.14)]"
               >
-                <div className="px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-faint">
-                  {cat.label} Tools
-                </div>
-                <div className="space-y-0.5">
-                  {cat.items.map((item) => {
-                    const isSelected = item.id === activeToolId
-                    return (
+                {cat.items.map((item, index) => {
+                  const isSelected = item.id === activeToolId
+                  const showDivider = index === Math.ceil(cat.items.length / 2)
+
+                  return (
+                    <div key={item.id}>
+                      {showDivider && (
+                        <div className="my-1.5 h-px bg-line" aria-hidden="true" />
+                      )}
                       <button
-                        key={item.id}
                         type="button"
                         role="menuitem"
                         onClick={() => {
                           onSelectTool(item.id)
                           setOpenCategoryId(null)
                         }}
-                        className={`flex w-full flex-col rounded-[3px] px-2.5 py-1.5 text-left transition-colors cursor-pointer ${
-                          isSelected
-                            ? 'bg-hover text-ink'
-                            : 'text-muted hover:bg-hover/60 hover:text-ink'
+                        className={`flex w-full cursor-pointer items-start gap-3 rounded-lg px-3 py-2.5 text-left transition-colors ${
+                          isSelected ? 'bg-accent-soft' : 'hover:bg-sunk'
                         }`}
                       >
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-medium text-ink">
-                            {item.label}
-                          </span>
-                          {item.badge && (
-                            <span className="rounded-[2px] bg-sunk px-1 py-0.2 font-mono text-[9px] text-faint border border-line">
-                              {item.badge}
+                        <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent [&>svg]:size-4">
+                          {cat.icon}
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="flex items-center justify-between gap-2">
+                            <span className="text-sm font-semibold text-ink">
+                              {item.label}
                             </span>
-                          )}
-                        </div>
-                        <span className="text-[11px] text-faint">
-                          {item.desc}
+                            {item.badge && (
+                              <span className="rounded-full bg-warn-soft px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-warn">
+                                {item.badge}
+                              </span>
+                            )}
+                          </span>
+                          <span className="mt-0.5 block text-[11px] leading-snug text-muted">
+                            {item.desc}
+                          </span>
                         </span>
                       </button>
-                    )
-                  })}
-                </div>
+                    </div>
+                  )
+                })}
               </div>
             )}
           </div>
@@ -144,4 +162,3 @@ export function NavigationMenu({
     </nav>
   )
 }
-
