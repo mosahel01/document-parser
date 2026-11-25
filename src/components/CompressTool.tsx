@@ -17,7 +17,7 @@ type Mode = 'compress' | 'decompress'
 type Row = { file: File; blob: Blob; name: string }
 
 const tabClass = (active: boolean) =>
-  `rounded-[3px] px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer ${
+  `px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer ${
     active ? 'bg-hover text-ink shadow-xs' : 'text-muted hover:text-ink'
   }`
 
@@ -94,7 +94,7 @@ export function CompressTool({
 
   return (
     <div className="space-y-6">
-      <div className="inline-flex rounded-[4px] border border-line bg-sunk p-0.5">
+      <div className="inline-flex border border-line bg-sunk p-0.5">
         <button
           type="button"
           onClick={() => switchTo('compress')}
@@ -141,7 +141,7 @@ export function CompressTool({
       />
 
       {files.length > 0 && (
-        <div className="flex items-center justify-between rounded-[5px] border border-line bg-surface px-4 py-2.5">
+        <div className="flex items-center justify-between border border-line bg-surface px-4 py-2.5">
           <p className="text-xs text-muted">
             {files.length} {files.length === 1 ? 'file' : 'files'} ready.
           </p>
@@ -149,7 +149,7 @@ export function CompressTool({
             type="button"
             onClick={run}
             disabled={busy}
-            className="rounded-[4px] bg-accent px-4 py-2 text-xs font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50 cursor-pointer"
+            className="bg-accent px-4 py-2 text-xs font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50 cursor-pointer"
           >
             {busy
               ? 'Working…'
@@ -165,7 +165,7 @@ export function CompressTool({
           {problems.map((problem) => (
             <li
               key={problem}
-              className="rounded-[5px] border border-bad/30 bg-bad-soft px-4 py-3 text-xs text-bad"
+              className="border border-bad/30 bg-bad-soft px-4 py-3 text-xs text-bad"
             >
               {problem}
             </li>
@@ -174,7 +174,7 @@ export function CompressTool({
       )}
 
       {rows && rows.length > 0 && (
-        <section className="rounded-[5px] border border-line bg-surface">
+        <section className="border border-line bg-surface">
           <header className="border-b border-line px-4 py-2.5">
             <h2 className="text-xs font-medium text-ink">
               {rows.length} {rows.length === 1 ? 'file' : 'files'} processed
@@ -199,7 +199,7 @@ export function CompressTool({
                 <button
                   type="button"
                   onClick={() => downloadBlob(row.blob, row.name)}
-                  className="rounded-[3px] border border-line bg-sunk px-2 py-0.5 text-xs text-muted hover:border-edge hover:text-ink cursor-pointer"
+                  className="border border-line bg-sunk px-2 py-0.5 text-xs text-muted hover:border-edge hover:text-ink cursor-pointer"
                 >
                   Download
                 </button>
@@ -215,7 +215,7 @@ export function CompressTool({
             type="button"
             onClick={saveAll}
             disabled={saving}
-            className="rounded-[4px] bg-accent px-4 py-2 text-xs font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50 cursor-pointer"
+            className="bg-accent px-4 py-2 text-xs font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50 cursor-pointer"
           >
             {saving ? 'Saving…' : 'Download all'}
           </button>
