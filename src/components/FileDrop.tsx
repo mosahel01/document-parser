@@ -43,19 +43,25 @@ export function FileDrop({
         }
       }}
       onDrop={handleDrop}
-      className={`rounded-[5px] border border-dashed p-8 text-center transition-colors ${
+      className={`group rounded-xl border-2 border-dashed px-5 py-8 text-center transition-colors sm:py-9 ${
         isOver
-          ? 'border-accent bg-hover/80'
-          : 'border-edge bg-surface/80 hover:border-line hover:bg-hover/30'
+          ? 'border-accent bg-accent-soft'
+          : 'border-edge bg-paper hover:border-accent hover:bg-accent-soft/50'
       }`}
     >
-      <div className="mx-auto mb-2 flex size-8 items-center justify-center rounded-[3px] border border-line bg-sunk text-muted">
+      <div
+        className={`mx-auto mb-3.5 flex size-12 items-center justify-center rounded-xl transition-colors ${
+          isOver
+            ? 'bg-accent text-accent-ink'
+            : 'bg-accent-soft text-accent group-hover:bg-accent group-hover:text-accent-ink'
+        }`}
+      >
         <svg
           viewBox="0 0 24 24"
-          className="size-4"
+          className="size-6"
           fill="none"
           stroke="currentColor"
-          strokeWidth="1.8"
+          strokeWidth="1.7"
           strokeLinecap="round"
           strokeLinejoin="round"
           aria-hidden="true"
@@ -66,8 +72,12 @@ export function FileDrop({
         </svg>
       </div>
 
-      <p className="text-xs font-medium text-ink">{label}</p>
-      {hint && <p className="mt-1 text-[11px] text-muted">{hint}</p>}
+      <p className="text-base font-bold text-ink">{label}</p>
+      {hint && (
+        <p className="mx-auto mt-2 max-w-md text-xs leading-relaxed text-muted">
+          {hint}
+        </p>
+      )}
 
       <input
         id={id}
@@ -83,9 +93,21 @@ export function FileDrop({
       />
       <label
         htmlFor={id}
-        className="mt-3.5 inline-block cursor-pointer rounded-[4px] border border-line bg-surface px-3 py-1.5 text-xs font-medium text-ink hover:border-edge hover:bg-hover peer-focus-visible:ring-1 peer-focus-visible:ring-accent"
+        className="mt-5 inline-flex cursor-pointer items-center gap-2 rounded-md bg-accent px-5 py-2.5 text-sm font-semibold text-accent-ink transition-colors hover:bg-accent-hover peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent"
       >
-        Browse files
+        Select files
+        <svg
+          viewBox="0 0 24 24"
+          className="size-4"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M5 12h14M13 6l6 6-6 6" />
+        </svg>
       </label>
     </div>
   )
