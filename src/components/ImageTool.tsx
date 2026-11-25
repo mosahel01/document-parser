@@ -31,7 +31,7 @@ const CORNER_POSITION: Record<Corner, string> = {
 }
 
 const smallButton =
-  'rounded border border-edge px-3 py-1 text-sm text-muted hover:border-accent hover:text-ink disabled:opacity-40'
+  'border border-edge px-3 py-1 text-sm text-muted hover:border-accent hover:text-ink disabled:opacity-40'
 
 /** The format to start on, so the common case needs no choice. */
 function startFormat(name: string): ImageFormat {
@@ -424,17 +424,17 @@ export function ImageTool({ initialFiles }: { initialFiles?: File[] }) {
         accept="image/*"
         multiple={false}
         label="Drop the photo to crop, resize, or rotate"
-        hint="PNG, JPG, WebP, GIF, BMP, AVIF, or SVG. Nothing is uploaded."
+        hint="PNG, JPG, WebP, GIF, BMP, AVIF, or SVG."
       />
 
       {error && (
-        <p className="rounded-xl border border-bad/30 bg-bad-soft px-5 py-3 text-sm text-bad">
+        <p className="border border-bad/30 bg-bad-soft px-5 py-3 text-sm text-bad">
           {error}
         </p>
       )}
 
       {source && (
-        <section className="rounded-xl border border-line bg-surface">
+        <section className="border border-line bg-surface">
           <header className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-3">
             <div className="min-w-0">
               <h2 className="truncate text-sm font-medium text-ink">
@@ -450,14 +450,14 @@ export function ImageTool({ initialFiles }: { initialFiles?: File[] }) {
           </header>
 
           <div className="space-y-5 p-5">
-            <div className="relative inline-block max-w-full rounded-lg bg-sunk p-2 pt-4">
+            <div className="relative inline-block max-w-full bg-sunk p-2 pt-4">
               {turned && (
                 <button
                   type="button"
                   aria-label="Tilt the photo"
                   title="Drag to tilt the photo"
                   onPointerDown={startSpin}
-                  className="absolute left-1/2 top-1 z-20 flex size-7 -translate-x-1/2 cursor-grab touch-none items-center justify-center rounded-full border border-edge bg-paper text-base text-muted shadow hover:text-ink active:cursor-grabbing"
+                  className="absolute left-1/2 top-1 z-20 flex size-7 -translate-x-1/2 cursor-grab touch-none items-center justify-center border border-edge bg-paper text-base text-muted shadow hover:text-ink active:cursor-grabbing"
                 >
                   ↻
                 </button>
@@ -502,7 +502,7 @@ export function ImageTool({ initialFiles }: { initialFiles?: File[] }) {
                           event.stopPropagation()
                           startCorner(event, corner)
                         }}
-                        className={`absolute size-3 rounded-sm border border-black/40 bg-white ${CORNER_POSITION[corner]}`}
+                        className={`absolute size-3 border border-black/40 bg-white ${CORNER_POSITION[corner]}`}
                       />
                     ))}
                   </div>
@@ -533,7 +533,7 @@ export function ImageTool({ initialFiles }: { initialFiles?: File[] }) {
                     step={1}
                     value={Math.round(normalized(angle + draft) * 10) / 10}
                     onChange={(event) => rotateTo(Number(event.target.value))}
-                    className="block w-20 rounded-lg border border-edge bg-paper px-2 py-1 text-sm text-ink"
+                    className="block w-20 border border-edge bg-paper px-2 py-1 text-sm text-ink"
                   />
                   <span>°</span>
                 </span>
@@ -590,7 +590,7 @@ export function ImageTool({ initialFiles }: { initialFiles?: File[] }) {
                           ),
                         )
                       }
-                      className="mt-1 block w-20 rounded-lg border border-edge bg-paper px-2 py-1 text-sm text-ink"
+                      className="mt-1 block w-20 border border-edge bg-paper px-2 py-1 text-sm text-ink"
                     />
                   </label>
                 ))}
@@ -607,7 +607,7 @@ export function ImageTool({ initialFiles }: { initialFiles?: File[] }) {
                   onChange={(event) =>
                     resize('width', Number(event.target.value))
                   }
-                  className="mt-1 block w-24 rounded-lg border border-edge bg-paper px-2 py-1 text-sm text-ink"
+                  className="mt-1 block w-24 border border-edge bg-paper px-2 py-1 text-sm text-ink"
                 />
               </label>
               <label className="text-sm text-muted">
@@ -619,7 +619,7 @@ export function ImageTool({ initialFiles }: { initialFiles?: File[] }) {
                   onChange={(event) =>
                     resize('height', Number(event.target.value))
                   }
-                  className="mt-1 block w-24 rounded-lg border border-edge bg-paper px-2 py-1 text-sm text-ink"
+                  className="mt-1 block w-24 border border-edge bg-paper px-2 py-1 text-sm text-ink"
                 />
               </label>
               <label className="flex items-center gap-2 pb-1 text-sm text-muted">
@@ -638,13 +638,13 @@ export function ImageTool({ initialFiles }: { initialFiles?: File[] }) {
             <div className="flex flex-wrap items-end justify-between gap-4">
               <div>
                 <span className="block text-sm text-muted">Save as</span>
-                <div className="mt-1 inline-flex gap-1 rounded-lg border border-edge p-1">
+                <div className="mt-1 inline-flex gap-1 border border-edge p-1">
                   {FORMATS.map((option) => (
                     <button
                       key={option.id}
                       type="button"
                       onClick={() => setFormat(option.id)}
-                      className={`rounded-md px-3 py-1 text-sm font-medium ${
+                      className={`px-3 py-1 text-sm font-medium ${
                         format === option.id
                           ? 'bg-accent text-accent-ink'
                           : 'text-muted hover:text-ink'
@@ -694,7 +694,7 @@ export function ImageTool({ initialFiles }: { initialFiles?: File[] }) {
             type="button"
             onClick={() => void save()}
             disabled={busy || !turned}
-            className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50"
+            className="bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50"
           >
             {busy ? 'Saving…' : 'Download'}
           </button>
