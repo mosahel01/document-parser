@@ -3,30 +3,24 @@ import type { CSSProperties, ReactElement } from 'react'
 export type ToolCardProps = {
   id: string
   title: string
-  description: string
   icon: ReactElement
   category?: string
   badge?: string
-  color?: string
-  backgroundColor?: string
   onClick?: () => void
   comingSoon?: boolean
 }
 
 export function ToolCard({
   title,
-  description,
   icon,
   category,
   badge,
-  color = 'var(--accent)',
-  backgroundColor = 'var(--accent-soft)',
   onClick,
   comingSoon = false,
 }: ToolCardProps) {
   const style = {
-    '--card-color': color,
-    '--card-bg': backgroundColor,
+    '--card-color': 'var(--accent)',
+    '--card-bg': 'var(--accent-soft)',
   } as CSSProperties
 
   const body = (
@@ -60,9 +54,6 @@ export function ToolCard({
       </span>
 
       <h3 className="text-sm font-bold leading-snug text-ink">{title}</h3>
-      <p className="mt-1.5 text-xs leading-snug text-muted line-clamp-2">
-        {description}
-      </p>
       {category && <span className="sr-only">{category}</span>}
     </>
   )
