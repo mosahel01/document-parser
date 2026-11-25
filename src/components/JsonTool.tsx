@@ -94,7 +94,7 @@ export function JsonTool({ initialFiles }: { initialFiles?: File[] }) {
           />
         </div>
 
-        <div className="flex flex-col rounded-[5px] border border-line bg-surface p-4">
+        <div className="flex flex-col border border-line bg-surface p-4">
           <label htmlFor="json-input" className="mb-2 text-xs font-medium text-ink">
             Or paste raw JSON:
           </label>
@@ -108,17 +108,17 @@ export function JsonTool({ initialFiles }: { initialFiles?: File[] }) {
             }}
             placeholder='{"hello": "world", "status": true}'
             rows={6}
-            className="flex-1 w-full rounded-[4px] border border-line bg-sunk p-3 font-mono text-xs text-ink outline-none focus:border-accent focus:ring-1 focus:ring-accent resize-none placeholder:text-faint"
+            className="flex-1 w-full border border-line bg-sunk p-3 font-mono text-xs text-ink outline-none focus:border-accent focus:ring-1 focus:ring-accent resize-none placeholder:text-faint"
           />
         </div>
       </div>
 
       {/* Options Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-4 rounded-[5px] border border-line bg-surface p-4">
+      <div className="flex flex-wrap items-center justify-between gap-4 border border-line bg-surface p-4">
         <div className="flex flex-wrap items-center gap-4 text-xs">
           <div className="flex items-center gap-2">
             <span className="font-medium text-muted">Indentation:</span>
-            <div className="inline-flex rounded-[4px] border border-line bg-sunk p-0.5">
+            <div className="inline-flex border border-line bg-sunk p-0.5">
               {(
                 [
                   [2, '2 spaces'],
@@ -131,7 +131,7 @@ export function JsonTool({ initialFiles }: { initialFiles?: File[] }) {
                   key={val}
                   type="button"
                   onClick={() => setIndent(val)}
-                  className={`rounded-[3px] px-2.5 py-1 text-xs font-medium transition-colors cursor-pointer ${
+                  className={`px-2.5 py-1 text-xs font-medium transition-colors cursor-pointer ${
                     indent === val
                       ? 'bg-hover text-ink shadow-xs'
                       : 'text-muted hover:text-ink'
@@ -148,7 +148,7 @@ export function JsonTool({ initialFiles }: { initialFiles?: File[] }) {
               type="checkbox"
               checked={sortKeys}
               onChange={(e) => setSortKeys(e.target.checked)}
-              className="rounded-[2px] border-edge bg-sunk text-accent focus:ring-accent"
+              className="border-edge bg-sunk text-accent focus:ring-accent"
             />
             <span>Sort object keys alphabetically</span>
           </label>
@@ -157,7 +157,7 @@ export function JsonTool({ initialFiles }: { initialFiles?: File[] }) {
         <button
           type="button"
           onClick={handleProcess}
-          className="rounded-[4px] bg-accent px-4 py-2 text-xs font-medium text-accent-ink hover:bg-accent-hover cursor-pointer"
+          className="bg-accent px-4 py-2 text-xs font-medium text-accent-ink hover:bg-accent-hover cursor-pointer"
         >
           Format &amp; Validate
         </button>
@@ -165,7 +165,7 @@ export function JsonTool({ initialFiles }: { initialFiles?: File[] }) {
 
       {/* Error Callout */}
       {error && (
-        <div className="rounded-[5px] border border-bad/30 bg-bad-soft p-4 text-xs text-bad">
+        <div className="border border-bad/30 bg-bad-soft p-4 text-xs text-bad">
           <div className="flex items-center gap-2 font-medium">
             <svg viewBox="0 0 24 24" className="size-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="12" cy="12" r="10" />
@@ -185,7 +185,7 @@ export function JsonTool({ initialFiles }: { initialFiles?: File[] }) {
 
       {/* Result Display */}
       {result && (
-        <div className="rounded-[5px] border border-line bg-surface">
+        <div className="border border-line bg-surface">
           <div className="flex items-center justify-between border-b border-line px-4 py-2.5 text-xs">
             <div className="flex items-center gap-3">
               <span className="font-medium text-good">Valid JSON</span>
@@ -209,7 +209,7 @@ export function JsonTool({ initialFiles }: { initialFiles?: File[] }) {
               <button
                 type="button"
                 onClick={handleCopy}
-                className="rounded-[3px] border border-line bg-sunk px-2.5 py-1 text-xs text-muted hover:border-edge hover:text-ink cursor-pointer"
+                className="border border-line bg-sunk px-2.5 py-1 text-xs text-muted hover:border-edge hover:text-ink cursor-pointer"
               >
                 {copied ? 'Copied!' : 'Copy to clipboard'}
               </button>
@@ -230,14 +230,14 @@ export function JsonTool({ initialFiles }: { initialFiles?: File[] }) {
           <button
             type="button"
             onClick={handleCopy}
-            className="rounded-[4px] border border-line bg-surface px-4 py-2 text-xs font-medium text-ink hover:bg-hover cursor-pointer"
+            className="border border-line bg-surface px-4 py-2 text-xs font-medium text-ink hover:bg-hover cursor-pointer"
           >
             {copied ? 'Copied' : 'Copy'}
           </button>
           <button
             type="button"
             onClick={handleDownload}
-            className="rounded-[4px] bg-accent px-4 py-2 text-xs font-medium text-accent-ink hover:bg-accent-hover cursor-pointer"
+            className="bg-accent px-4 py-2 text-xs font-medium text-accent-ink hover:bg-accent-hover cursor-pointer"
           >
             Download {fileName}
           </button>
