@@ -143,6 +143,23 @@ describe('pagesToPdf', () => {
     expect(result.getPage(0).getRotation().angle).toBe(180)
   })
 
+  it('crops only the pages that ask for it', async () => {
+    const blob = await pagesToPdf([await sized([200, 300])], [
+      { source: 0, page: 0, turn: 0 },
+      {
+        source: 0,
+        page: 1,
+        turn: 0,
+        crop: { top: 10, right: 10, bottom: 10, left: 10 },
+      },
+    ])
+    const result = await PDFDocument.load(await blob.arrayBuffer())
+
+    expect(result.getPage(0).getCropBox().width).toBe(200)
+    expect(result.getPage(1).getCropBox().width).toBeCloseTo(240)
+    expect(result.getPage(1).getCropBox().height).toBeCloseTo(80)
+  })
+
   it('refuses to save a document with no pages', async () => {
     await expect(pagesToPdf([await sized([200])], [])).rejects.toThrow(
       'no pages left to save',
