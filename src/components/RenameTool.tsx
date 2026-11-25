@@ -52,7 +52,7 @@ export function RenameTool({ initialFiles }: { initialFiles?: File[] }) {
       <FileDrop
         onFiles={(incoming) => setFiles([...files, ...incoming])}
         label="Drop the files you want to rename"
-        hint="One file or a whole batch. Nothing is uploaded."
+        hint="One file or a whole batch."
       />
 
       <FileList
@@ -65,7 +65,7 @@ export function RenameTool({ initialFiles }: { initialFiles?: File[] }) {
 
       {files.length > 0 && (
         <>
-          <section className="rounded-[5px] border border-line bg-surface p-4">
+          <section className="border border-line bg-surface p-4">
             <div className="grid gap-3 sm:grid-cols-[2fr_1fr]">
               <div>
                 <label
@@ -79,7 +79,7 @@ export function RenameTool({ initialFiles }: { initialFiles?: File[] }) {
                   value={name}
                   onChange={(event) => setName(event.target.value)}
                   placeholder="document"
-                  className="mt-1 w-full rounded-[4px] border border-line bg-sunk px-2.5 py-1.5 font-mono text-xs text-ink outline-none focus:border-accent focus:ring-1 focus:ring-accent"
+                  className="mt-1 w-full border border-line bg-sunk px-2.5 py-1.5 font-mono text-xs text-ink outline-none focus:border-accent focus:ring-1 focus:ring-accent"
                 />
               </div>
               <div>
@@ -97,7 +97,7 @@ export function RenameTool({ initialFiles }: { initialFiles?: File[] }) {
                   value={extension}
                   onChange={(event) => setExtension(event.target.value)}
                   placeholder="pdf"
-                  className="mt-1 w-full rounded-[4px] border border-line bg-sunk px-2.5 py-1.5 font-mono text-xs text-ink outline-none focus:border-accent focus:ring-1 focus:ring-accent"
+                  className="mt-1 w-full border border-line bg-sunk px-2.5 py-1.5 font-mono text-xs text-ink outline-none focus:border-accent focus:ring-1 focus:ring-accent"
                 />
               </div>
             </div>
@@ -116,7 +116,7 @@ export function RenameTool({ initialFiles }: { initialFiles?: File[] }) {
             </p>
           </section>
 
-          <section className="rounded-[5px] border border-line bg-surface">
+          <section className="border border-line bg-surface">
             <header className="border-b border-line px-4 py-2.5">
               <h2 className="text-xs font-medium text-ink">Preview Plan</h2>
               <p className="font-mono text-[11px] text-faint">
@@ -149,7 +149,7 @@ export function RenameTool({ initialFiles }: { initialFiles?: File[] }) {
                         <span className="break-all font-mono text-[11px] font-medium text-ink">{row.next}</span>
                         {(row.conversion.kind === 'image' ||
                           row.conversion.kind === 'pdf') && (
-                          <span className="ml-2 rounded-[2px] bg-good-soft px-1.5 py-0.2 font-mono text-[10px] font-medium text-good border border-line">
+                          <span className="ml-2 bg-good-soft px-1.5 py-0.2 font-mono text-[10px] font-medium text-good border border-line">
                             converts
                           </span>
                         )}
@@ -162,7 +162,7 @@ export function RenameTool({ initialFiles }: { initialFiles?: File[] }) {
                           type="button"
                           onClick={() => void saveOne(row)}
                           disabled={busy}
-                          className="rounded-[3px] border border-line bg-sunk px-2 py-0.5 text-xs text-muted hover:border-edge hover:text-ink cursor-pointer disabled:opacity-50"
+                          className="border border-line bg-sunk px-2 py-0.5 text-xs text-muted hover:border-edge hover:text-ink cursor-pointer disabled:opacity-50"
                         >
                           Download
                         </button>
@@ -179,7 +179,7 @@ export function RenameTool({ initialFiles }: { initialFiles?: File[] }) {
               type="button"
               onClick={saveAll}
               disabled={busy}
-              className="rounded-[4px] bg-accent px-4 py-2 text-xs font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50 cursor-pointer"
+              className="bg-accent px-4 py-2 text-xs font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50 cursor-pointer"
             >
               {progress
                 ? `Preparing ${progress.done} of ${progress.total}…`
