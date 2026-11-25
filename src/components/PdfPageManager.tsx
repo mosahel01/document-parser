@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import { DownloadBar } from './DownloadBar'
 import { FileDrop } from './FileDrop'
 import { PdfPreview } from './PdfPreview'
@@ -12,6 +12,7 @@ import {
   pdfBaseName,
   type PageSlot,
 } from '../tools/pdf'
+import { cropMarginsAreValid, type CropMargins } from '../lib/pageGeometry'
 import { renderPageThumbs } from '../lib/pdfThumbs'
 import { formatSize } from '../lib/format'
 
@@ -27,12 +28,73 @@ const newSlotId = () => `slot-${(slotCounter += 1)}`
 const THUMBS_PER_FILE = 60
 
 const smallButton =
-  'border border-line bg-sunk px-2.5 py-1 text-xs text-muted hover:border-edge hover:text-ink disabled:opacity-40 cursor-pointer'
+  'rounded-md border border-line bg-sunk px-2.5 py-1 text-xs font-medium text-muted transition-colors hover:border-edge hover:text-ink disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer'
+
+const EMPTY_CROP: CropMargins = { top: 5, right: 5, bottom: 5, left: 5 }
+
+const CROP_EDGES: { key: keyof CropMargins; label: string }[] = [
+  { key: 'top', label: 'Top' },
+  { key: 'right', label: 'Right' },
+  { key: 'bottom', label: 'Bottom' },
+  { key: 'left', label: 'Left' },
+]
 
 /**
- * The page editor: rotate, delete, duplicate, reorder, and pull pages in from
- * another PDF. It builds a fresh document from the slots on save, so the
- * original file is never touched.
+ * One page as it will be seen. Rotation is applied on the square frame, so a
+ * quarter turn always fits without guessing the page's aspect ratio. A crop is
+ * shown as a dashed window with everything outside it shaded, which is exactly
+ * what the finished page keeps.
+ */
+function PageView({
+  thumb,
+  turn,
+  crop,
+  large = false,
+}: {
+  thumb?: string
+  turn: number
+  crop?: CropMargins
+  large?: boolean
+}) {
+  return (
+    <div className="relative flex aspect-square w-full items-center justify-center overflow-hidden bg-sunk">
+      {thumb ? (
+        <img
+          src={thumb}
+          alt=""
+          draggable={false}
+          className="max-h-full max-w-full object-contain transition-transform duration-200 ease-out"
+          style={{ transform: `rotate(${turn}deg)` }}
+        />
+      ) : (
+        <span className={large ? 'text-sm text-faint' : 'text-xs text-faint'}>
+          no picture
+        </span>
+      )}
+
+      {crop && (
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute border-2 border-dashed border-accent"
+          style={{
+            top: `${crop.top}%`,
+            right: `${crop.right}%`,
+            bottom: `${crop.bottom}%`,
+            left: `${crop.left}%`,
+            boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.45)',
+          }}
+        />
+      )}
+    </div>
+  )
+}
+
+/**
+ * The page editor: rotate, delete, duplicate, reorder, crop, and pull pages in
+ * from another PDF. Pages can be picked one at a time, all at once, or by a
+ * typed range, and a large preview follows the chosen page while it is changed.
+ * It builds a fresh document from the slots on save, so the original file is
+ * never touched.
  */
 export function PdfPageManager({ initialFiles }: { initialFiles?: File[] }) {
   const [book, setBook] = useState<Book>({ sources: [], slots: [] })
@@ -40,6 +102,13 @@ export function PdfPageManager({ initialFiles }: { initialFiles?: File[] }) {
   /** Sources whose thumbnails have been read, so a blank card says why. */
   const [finished, setFinished] = useState<ReadonlySet<number>>(new Set())
   const [selected, setSelected] = useState<Set<string>>(new Set())
+  /** The page shown in the large preview; the last one clicked or selected. */
+  const [active, setActive] = useState<string | null>(null)
+  const [range, setRange] = useState('')
+  const [rangeError, setRangeError] = useState<string | null>(null)
+  const [cropOpen, setCropOpen] = useState(false)
+  const [crop, setCrop] = useState<CropMargins>(EMPTY_CROP)
+  const [cropError, setCropError] = useState<string | null>(null)
   const [dragging, setDragging] = useState<string | null>(null)
   const [busy, setBusy] = useState<'load' | 'save' | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -48,16 +117,6 @@ export function PdfPageManager({ initialFiles }: { initialFiles?: File[] }) {
     name: string
     note: string
   } | null>(null)
-
-  // STEP 2: range input state
-  const [rangeInput, setRangeInput] = useState('')
-  const [rangeError, setRangeError] = useState<string | null>(null)
-
-  // STEP 3: lightbox state
-  const [lightboxId, setLightboxId] = useState<string | null>(null)
-
-  // STEP 4: auto-preview flag
-  const autoPreviewPending = useRef(false)
 
   const rendered = useRef<Set<number>>(new Set())
 
@@ -168,83 +227,59 @@ export function PdfPageManager({ initialFiles }: { initialFiles?: File[] }) {
     }
   }, [book.sources])
 
-  // STEP 3: Close lightbox on Escape key
-  useEffect(() => {
-    if (lightboxId === null) return
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') setLightboxId(null)
-    }
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
-  }, [lightboxId])
-
-  // STEP 4: saveTo as useCallback so we can depend on it safely
-  const saveTo = useCallback(
-    async (destination: 'download' | 'preview') => {
-      setBusy('save')
-      setError(null)
-      try {
-        const blob = await pagesToPdf(book.sources, book.slots)
-        const name =
-          book.sources.length === 1
-            ? `${pdfBaseName(book.sources[0].name)}-pages.pdf`
-            : `${joinedBaseName(book.sources.map((file) => file.name))}.pdf`
-
-        if (destination === 'download') {
-          downloadBlob(blob, name)
-        } else {
-          setPreview({
-            blob,
-            name,
-            note: `${book.slots.length} ${book.slots.length === 1 ? 'page' : 'pages'}, in the order shown`,
-          })
-        }
-      } catch (problem) {
-        setError(
-          problem instanceof Error ? problem.message : 'Saving the PDF failed.',
-        )
-      } finally {
-        setBusy(null)
-      }
-    },
-    [book],
-  )
-
-  // STEP 4: Auto-preview effect — fires when slots change and the flag is set
-  // Keep a ref to saveTo so the effect never goes stale.
-  // useLayoutEffect syncs the ref before the browser paints (React-idiomatic).
-  const saveToRef = useRef(saveTo)
-  useLayoutEffect(() => {
-    saveToRef.current = saveTo
-  })
-
-  useEffect(() => {
-    if (!autoPreviewPending.current) return
-    autoPreviewPending.current = false
-    void saveToRef.current('preview')
-  }, [book.slots])
+  /** Keep the big preview on a page that the next action will change. */
+  function focusSelection() {
+    if (active && selected.has(active)) return
+    const first = book.slots.find((slot) => selected.has(slot.id))
+    if (first) setActive(first.id)
+  }
 
   function toggle(id: string) {
-    // Clear the range input when the user clicks cards manually so the field
-    // never shows a stale value that disagrees with the actual selection.
-    setRangeInput('')
-    setRangeError(null)
-    setSelected((current) => {
-      const next = new Set(current)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
+    const next = new Set(selected)
+    if (next.has(id)) next.delete(id)
+    else next.add(id)
+
+    setSelected(next)
+    setActive(next.has(id) ? id : (next.values().next().value ?? active))
+    setPreview(null)
   }
 
   function selectAll() {
-    setRangeInput('')
+    const ids = book.slots.map((slot) => slot.id)
+    setSelected(new Set(ids))
+    setActive(ids[0] ?? null)
     setRangeError(null)
-    setSelected(new Set(book.slots.map((slot) => slot.id)))
+    setPreview(null)
+  }
+
+  function clearSelection() {
+    setSelected(new Set())
+    setRangeError(null)
+    setPreview(null)
+  }
+
+  /** The typed "1-3, 7" route, read against the output page order. */
+  function selectRange(event: FormEvent) {
+    event.preventDefault()
+    const parsed = parsePageSelection(range, book.slots.length)
+    if (parsed.error) {
+      setRangeError(parsed.error)
+      return
+    }
+
+    const ids = parsed.pages
+      .map((index) => book.slots[index]?.id)
+      .filter((id): id is string => id !== undefined)
+
+    setSelected(new Set(ids))
+    setActive(ids[0] ?? null)
+    setRangeError(null)
+    setPreview(null)
   }
 
   function turnSelected(delta: number) {
-    const newCount = book.slots.length
+    if (selected.size === 0) return
+    focusSelection()
     setBook((current) => ({
       ...current,
       slots: current.slots.map((slot) =>
@@ -253,11 +288,11 @@ export function PdfPageManager({ initialFiles }: { initialFiles?: File[] }) {
           : slot,
       ),
     }))
-    if (newCount <= 20) autoPreviewPending.current = true
+    setPreview(null)
   }
 
   function duplicateSelected() {
-    const newCount = book.slots.length + selected.size
+    if (selected.size === 0) return
     setBook((current) => {
       const slots: Slot[] = []
       for (const slot of current.slots) {
@@ -266,19 +301,67 @@ export function PdfPageManager({ initialFiles }: { initialFiles?: File[] }) {
       }
       return { ...current, slots }
     })
-    if (newCount <= 20) autoPreviewPending.current = true
+    setPreview(null)
   }
 
   function deleteSelected() {
     if (selected.size === 0) return
-    const newCount = book.slots.length - selected.size
     setBook((current) => ({
       ...current,
       slots: current.slots.filter((slot) => !selected.has(slot.id)),
     }))
     setSelected(new Set())
+    setActive(null)
     setPreview(null)
-    if (newCount > 0 && newCount <= 20) autoPreviewPending.current = true
+  }
+
+  function applyCrop() {
+    if (selected.size === 0) return
+    if (!cropMarginsAreValid(crop)) {
+      setCropError(
+        'Margins must be zero or more, and opposite sides together cannot reach 100%.',
+      )
+      return
+    }
+
+    focusSelection()
+    setBook((current) => ({
+      ...current,
+      slots: current.slots.map((slot) =>
+        selected.has(slot.id) ? { ...slot, crop: { ...crop } } : slot,
+      ),
+    }))
+    setCropError(null)
+    setPreview(null)
+  }
+
+  function removeCrop() {
+    if (selected.size === 0) return
+    setBook((current) => ({
+      ...current,
+      slots: current.slots.map((slot) => {
+        if (!selected.has(slot.id)) return slot
+        const next = { ...slot }
+        delete next.crop
+        return next
+      }),
+    }))
+    setCropError(null)
+    setPreview(null)
+  }
+
+  function moveSlot(id: string, delta: number) {
+    setBook((current) => {
+      const from = current.slots.findIndex((slot) => slot.id === id)
+      const to = from + delta
+      if (from < 0 || to < 0 || to >= current.slots.length) return current
+
+      const slots = [...current.slots]
+      const [moved] = slots.splice(from, 1)
+      slots.splice(to, 0, moved)
+      return { ...current, slots }
+    })
+    setPreview(null)
   }
 
   function dropOn(targetId: string) {
@@ -296,41 +379,64 @@ export function PdfPageManager({ initialFiles }: { initialFiles?: File[] }) {
       slots.splice(to, 0, moved)
       return { ...current, slots }
     })
+    setPreview(null)
   }
 
-  // STEP 2: Range input handler
-  function handleRangeChange(value: string) {
-    setRangeInput(value)
-    if (value.trim() === '') {
-      setRangeError(null)
-      return
-    }
-    const result = parsePageSelection(value, book.slots.length)
-    if (result.error === null && result.pages.length > 0) {
-      setRangeError(null)
-      const ids = new Set(result.pages.map((idx) => book.slots[idx].id))
-      setSelected(ids)
-    } else if (result.error !== null) {
-      setRangeError(result.error)
+  function removeSlot(id: string) {
+    setBook((current) => ({
+      ...current,
+      slots: current.slots.filter((entry) => entry.id !== id),
+    }))
+    setSelected((current) => {
+      const next = new Set(current)
+      next.delete(id)
+      return next
+    })
+    setActive((current) => (current === id ? null : current))
+    setPreview(null)
+  }
+
+  async function saveTo(destination: 'download' | 'preview') {
+    setBusy('save')
+    setError(null)
+    try {
+      const blob = await pagesToPdf(book.sources, book.slots)
+      const name =
+        book.sources.length === 1
+          ? `${pdfBaseName(book.sources[0].name)}-pages.pdf`
+          : `${joinedBaseName(book.sources.map((file) => file.name))}.pdf`
+
+      if (destination === 'download') {
+        downloadBlob(blob, name)
+      } else {
+        setPreview({
+          blob,
+          name,
+          note: `${book.slots.length} ${book.slots.length === 1 ? 'page' : 'pages'}, in the order shown`,
+        })
+      }
+    } catch (problem) {
+      setError(
+        problem instanceof Error ? problem.message : 'Saving the PDF failed.',
+      )
+    } finally {
+      setBusy(null)
     }
   }
 
   const pages = book.slots.length
-
-  // STEP 3: Resolve lightbox slot
-  const lbSlot = lightboxId !== null
-    ? book.slots.find((s) => s.id === lightboxId)
+  const activeSlot =
+    book.slots.find((slot) => slot.id === active) ??
+    book.slots.find((slot) => selected.has(slot.id)) ??
+    book.slots[0]
+  const activeIndex = activeSlot
+    ? book.slots.findIndex((slot) => slot.id === activeSlot.id)
+    : -1
+  const activeThumb = activeSlot
+    ? thumbs[`${activeSlot.source}:${activeSlot.page + 1}`]
     : undefined
-  const lbIndex = lightboxId !== null
-    ? book.slots.findIndex((s) => s.id === lightboxId) + 1
-    : 0
-  const lbThumb =
-    lbSlot !== undefined
-      ? thumbs[`${lbSlot.source}:${lbSlot.page + 1}`]
-      : undefined
-
-  // If the lightbox slot was deleted while the modal is open, the render guard
-  // `lbSlot !== undefined` already hides the modal. No effect needed here.
+  const activeReady =
+    activeSlot !== undefined && finished.has(activeSlot.source)
 
   return (
     <div className="space-y-6">
@@ -342,258 +448,351 @@ export function PdfPageManager({ initialFiles }: { initialFiles?: File[] }) {
             ? 'Drop a PDF to edit its pages'
             : 'Drop another PDF to add its pages'
         }
-        hint="Rotate, delete, copy, and drag pages into the order you want."
+        hint="Rotate, crop, delete, copy, and drag pages into the order you want."
       />
 
       {error && (
-        <p className="border border-bad/30 bg-bad-soft px-5 py-3 text-sm text-bad">
+        <p className="rounded-lg border border-bad/30 bg-bad-soft px-5 py-3 text-sm text-bad">
           {error}
         </p>
       )}
 
       {pages > 0 && (
-        <section className="border border-line bg-surface">
+        <section className="overflow-hidden rounded-xl border border-line bg-surface">
           <header className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-3">
             <div>
-              <h2 className="text-sm font-medium text-ink">
+              <h2 className="text-sm font-semibold text-ink">
                 {pages} {pages === 1 ? 'page' : 'pages'}
               </h2>
-              <p className="text-sm text-muted">
+              <p className="text-xs text-muted">
                 {book.sources
                   .map((file) => `${file.name} (${formatSize(file.size)})`)
                   .join(', ')}
               </p>
             </div>
-            <div className="flex items-center gap-3">
-              {busy === 'save' && pages <= 20 && (
-                <span className="text-xs text-muted">Rebuilding preview…</span>
-              )}
-              <button
-                type="button"
-                onClick={() => void saveTo('preview')}
-                disabled={busy !== null}
-                className="border border-edge px-4 py-2 text-sm font-medium text-ink hover:bg-hover disabled:opacity-50"
-              >
-                Preview
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() => void saveTo('preview')}
+              disabled={busy !== null}
+              className={smallButton}
+            >
+              Preview result
+            </button>
           </header>
 
-          <div className="flex flex-wrap items-center gap-2 border-b border-line px-5 py-2">
-            <span className="text-sm text-muted">
-              {selected.size === 0
-                ? 'Click a page to select it, or drag one to move it.'
-                : `${selected.size} selected`}
-            </span>
-            <button
-              type="button"
-              onClick={() => turnSelected(-90)}
-              disabled={selected.size === 0}
-              className={smallButton}
-            >
-              Rotate left
-            </button>
-            <button
-              type="button"
-              onClick={() => turnSelected(90)}
-              disabled={selected.size === 0}
-              className={smallButton}
-            >
-              Rotate right
-            </button>
-            <button
-              type="button"
-              onClick={duplicateSelected}
-              disabled={selected.size === 0}
-              className={smallButton}
-            >
-              Copy
-            </button>
-            <button
-              type="button"
-              onClick={deleteSelected}
-              disabled={selected.size === 0}
-              className={`${smallButton} hover:border-bad hover:text-bad`}
-            >
-              Delete
-            </button>
-            <button
-              type="button"
-              onClick={selectAll}
-              disabled={selected.size === pages}
-              className={smallButton}
-            >
-              Select all
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setSelected(new Set())
-                setRangeInput('')
-                setRangeError(null)
-              }}
-              disabled={selected.size === 0}
-              className={smallButton}
-            >
-              Clear
-            </button>
-            {/* STEP 2: Range input */}
-            <span className="text-xs text-muted">Range:</span>
-            <input
-              type="text"
-              value={rangeInput}
-              onChange={(e) => handleRangeChange(e.target.value)}
-              placeholder="1-3, 7"
-              className="border border-line bg-sunk px-2 py-1 text-xs text-ink placeholder:text-faint w-24 outline-none focus:border-edge"
-            />
-            {rangeInput !== '' && (
-              <button
-                type="button"
-                onClick={() => {
-                  setRangeInput('')
-                  setRangeError(null)
-                  setSelected(new Set())
-                }}
-                className="cursor-pointer px-1 text-faint hover:text-ink"
-                aria-label="Clear range"
-              >
-                ×
-              </button>
-            )}
-            {rangeError !== null && (
-              <span className="text-xs text-bad">{rangeError}</span>
-            )}
-          </div>
-
-          <ul className="grid grid-cols-2 gap-3 p-5 sm:grid-cols-4 lg:grid-cols-5">
-            {book.slots.map((slot, index) => {
-              const thumb = thumbs[`${slot.source}:${slot.page + 1}`]
-              const isSelected = selected.has(slot.id)
-              const label = `page ${index + 1}`
-
-              return (
-                <li
-                  key={slot.id}
-                  draggable
-                  onDragStart={(event) => {
-                    setDragging(slot.id)
-                    event.dataTransfer.effectAllowed = 'move'
-                  }}
-                  onDragEnd={() => setDragging(null)}
-                  onDragOver={(event) => {
-                    if (dragging) event.preventDefault()
-                  }}
-                  onDrop={(event) => {
-                    event.preventDefault()
-                    dropOn(slot.id)
-                  }}
-                  className={`overflow-hidden border bg-surface ${
-                    isSelected
-                      ? 'border-accent ring-1 ring-accent'
-                      : 'border-line'
-                  } ${dragging === slot.id ? 'opacity-40' : ''}`}
-                >
-                  {/* STEP 3: double-click opens lightbox */}
+          <div className="grid gap-5 p-4 lg:grid-cols-[minmax(0,1fr)_300px] lg:p-5">
+            <div className="min-w-0 space-y-4">
+              {/* Three ways to pick pages: click, all, or a typed range. */}
+              <div className="space-y-2 rounded-lg border border-line bg-paper p-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-faint">
+                    Select pages
+                  </span>
+                  <span className="text-xs text-muted">click any page</span>
+                  <button type="button" onClick={selectAll} className={smallButton}>
+                    Select all
+                  </button>
+                  <form
+                    onSubmit={selectRange}
+                    className="flex flex-wrap items-center gap-2"
+                  >
+                    <input
+                      value={range}
+                      onChange={(event) => {
+                        setRange(event.target.value)
+                        setRangeError(null)
+                      }}
+                      placeholder="1-3, 7"
+                      aria-label="Page numbers or ranges to select"
+                      aria-invalid={rangeError !== null}
+                      className="w-28 rounded-md border border-line bg-sunk px-2.5 py-1 font-mono text-xs text-ink outline-none focus:border-accent focus:ring-1 focus:ring-accent"
+                    />
+                    <button type="submit" className={smallButton}>
+                      Select range
+                    </button>
+                  </form>
                   <button
                     type="button"
-                    onClick={() => toggle(slot.id)}
-                    onDoubleClick={() => setLightboxId(slot.id)}
-                    aria-pressed={isSelected}
-                    aria-label={`Select ${label}`}
-                    className="block w-full"
+                    onClick={clearSelection}
+                    disabled={selected.size === 0}
+                    className={smallButton}
                   >
-                    <span className="flex aspect-[3/4] items-center justify-center overflow-hidden bg-sunk">
-                      {thumb ? (
-                        // STEP 1: rotate thumbnail with CSS transform
-                        <img
-                          src={thumb}
-                          alt=""
-                          draggable={false}
-                          className="max-h-full max-w-full object-contain"
-                          style={{
-                            transform: `rotate(${slot.turn}deg)`,
-                            transition: 'transform 0.2s',
-                          }}
-                        />
-                      ) : (
-                        <span className="text-xs text-faint">
-                          {finished.has(slot.source)
-                            ? 'no picture'
-                            : 'reading…'}
-                        </span>
-                      )}
-                    </span>
+                    Clear
                   </button>
+                  <span className="ml-auto text-xs text-muted">
+                    {selected.size === 0
+                      ? 'Nothing selected'
+                      : `${selected.size} of ${pages} selected`}
+                  </span>
+                </div>
+                {rangeError && <p className="text-xs text-bad">{rangeError}</p>}
+              </div>
 
-                  <div className="flex items-center justify-between gap-1 border-t border-line px-1.5 py-1">
-                    <span className="text-xs text-muted">
-                      {index + 1}
-                      {slot.turn !== 0 && (
-                        <span className="ml-1 text-faint">↻{slot.turn}°</span>
-                      )}
-                    </span>
-                    <span className="flex items-center gap-0.5">
-                      <button
-                        type="button"
-                        aria-label={`Drag to reorder ${label}`}
-                        className="px-1 text-faint hover:bg-hover hover:text-ink cursor-grab select-none"
-                      >
-                        <svg viewBox="0 0 10 16" className="size-3" fill="currentColor" aria-hidden="true">
-                          <circle cx="2" cy="2" r="1.2" /><circle cx="8" cy="2" r="1.2" />
-                          <circle cx="2" cy="8" r="1.2" /><circle cx="8" cy="8" r="1.2" />
-                          <circle cx="2" cy="14" r="1.2" /><circle cx="8" cy="14" r="1.2" />
-                        </svg>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setBook((current) => ({
-                            ...current,
-                            slots: current.slots.map((entry) =>
-                              entry.id === slot.id
-                                ? { ...entry, turn: (entry.turn + 90) % 360 }
-                                : entry,
-                            ),
-                          }))
-                          // STEP 4: auto-preview for per-card rotation
-                          if (pages <= 20) autoPreviewPending.current = true
-                        }}
-                        aria-label={`Turn ${label} a quarter turn`}
-                        className="px-1 text-faint hover:bg-hover hover:text-ink"
-                      >
-                        ↻
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setBook((current) => ({
-                            ...current,
-                            slots: current.slots.filter(
-                              (entry) => entry.id !== slot.id,
-                            ),
-                          }))
-                          setSelected((current) => {
-                            const next = new Set(current)
-                            next.delete(slot.id)
-                            return next
-                          })
-                          setPreview(null)
-                          // STEP 4: auto-preview for per-card delete
-                          if (pages - 1 > 0 && pages - 1 <= 20) {
-                            autoPreviewPending.current = true
-                          }
-                        }}
-                        aria-label={`Remove ${label}`}
-                        className="px-1 text-faint hover:bg-hover hover:text-ink"
-                      >
-                        ×
-                      </button>
-                    </span>
+              {/* Actions act on the picked pages and update the preview at once. */}
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => turnSelected(-90)}
+                  disabled={selected.size === 0}
+                  className={smallButton}
+                >
+                  Rotate left
+                </button>
+                <button
+                  type="button"
+                  onClick={() => turnSelected(90)}
+                  disabled={selected.size === 0}
+                  className={smallButton}
+                >
+                  Rotate right
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!cropOpen && activeSlot?.crop) setCrop(activeSlot.crop)
+                    setCropError(null)
+                    setCropOpen((open) => !open)
+                  }}
+                  disabled={selected.size === 0}
+                  className={smallButton}
+                >
+                  Crop…
+                </button>
+                <button
+                  type="button"
+                  onClick={duplicateSelected}
+                  disabled={selected.size === 0}
+                  className={smallButton}
+                >
+                  Copy
+                </button>
+                <button
+                  type="button"
+                  onClick={deleteSelected}
+                  disabled={selected.size === 0}
+                  className={`${smallButton} hover:border-bad hover:text-bad`}
+                >
+                  Delete
+                </button>
+              </div>
+
+              {cropOpen && (
+                <div className="space-y-3 rounded-lg border border-line bg-paper p-3">
+                  <div>
+                    <h3 className="text-xs font-semibold text-ink">
+                      Crop the selected pages
+                    </h3>
+                    <p className="mt-0.5 text-[11px] text-muted">
+                      Percentages are taken from each page as it is seen, so a
+                      sideways page is trimmed on its visible edges.
+                    </p>
                   </div>
-                </li>
-              )
-            })}
-          </ul>
+                  <div className="flex flex-wrap items-end gap-3">
+                    {CROP_EDGES.map((edge) => (
+                      <label key={edge.key} className="text-xs text-muted">
+                        {edge.label} %
+                        <input
+                          type="number"
+                          min={0}
+                          max={45}
+                          step={1}
+                          value={crop[edge.key]}
+                          onChange={(event) => {
+                            setCrop({
+                              ...crop,
+                              [edge.key]: Number(event.target.value),
+                            })
+                            setCropError(null)
+                          }}
+                          className="mt-1 block w-20 rounded-md border border-line bg-sunk px-2.5 py-1.5 text-xs text-ink outline-none focus:border-accent focus:ring-1 focus:ring-accent"
+                        />
+                      </label>
+                    ))}
+                    <button type="button" onClick={applyCrop} className="rounded-md bg-accent px-4 py-1.5 text-xs font-semibold text-accent-ink transition-colors hover:bg-accent-hover cursor-pointer">
+                      Apply crop
+                    </button>
+                    <button type="button" onClick={removeCrop} className={smallButton}>
+                      Remove crop
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCropOpen(false)
+                        setCropError(null)
+                      }}
+                      className="text-xs text-muted underline hover:text-ink cursor-pointer"
+                    >
+                      Close
+                    </button>
+                  </div>
+                  {cropError && <p className="text-xs text-bad">{cropError}</p>}
+                </div>
+              )}
+
+              <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
+                {book.slots.map((slot, index) => {
+                  const thumb = thumbs[`${slot.source}:${slot.page + 1}`]
+                  const isSelected = selected.has(slot.id)
+                  const isActive = activeSlot?.id === slot.id
+                  const label = `page ${index + 1}`
+
+                  return (
+                    <li
+                      key={slot.id}
+                      draggable
+                      onDragStart={(event) => {
+                        setDragging(slot.id)
+                        event.dataTransfer.effectAllowed = 'move'
+                      }}
+                      onDragEnd={() => setDragging(null)}
+                      onDragOver={(event) => {
+                        if (dragging) event.preventDefault()
+                      }}
+                      onDrop={(event) => {
+                        event.preventDefault()
+                        dropOn(slot.id)
+                      }}
+                      className={`overflow-hidden rounded-lg border bg-paper transition-shadow ${
+                        isSelected
+                          ? 'border-accent ring-1 ring-accent'
+                          : isActive
+                            ? 'border-edge'
+                            : 'border-line'
+                      } ${dragging === slot.id ? 'opacity-40' : ''}`}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => toggle(slot.id)}
+                        aria-pressed={isSelected}
+                        aria-label={`Select ${label}`}
+                        className="block w-full cursor-pointer"
+                      >
+                        {thumb ? (
+                          <PageView thumb={thumb} turn={slot.turn} crop={slot.crop} />
+                        ) : (
+                          <span className="flex aspect-square items-center justify-center bg-sunk text-xs text-faint">
+                            {finished.has(slot.source) ? 'no picture' : 'reading…'}
+                          </span>
+                        )}
+                      </button>
+
+                      <div className="flex items-center justify-between gap-1 border-t border-line px-2 py-1.5">
+                        <span className="text-xs text-muted">
+                          {index + 1}
+                          {slot.turn !== 0 && (
+                            <span className="ml-1 text-faint">↻{slot.turn}°</span>
+                          )}
+                          {slot.crop && (
+                            <span className="ml-1 text-accent" title="Cropped">
+                              ✂
+                            </span>
+                          )}
+                        </span>
+                        <span className="flex items-center gap-0.5">
+                          <button
+                            type="button"
+                            onClick={() => moveSlot(slot.id, -1)}
+                            disabled={index === 0}
+                            aria-label={`Move ${label} left`}
+                            className="rounded px-1 text-faint hover:bg-hover hover:text-ink disabled:opacity-30 cursor-pointer"
+                          >
+                            ←
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => moveSlot(slot.id, 1)}
+                            disabled={index === book.slots.length - 1}
+                            aria-label={`Move ${label} right`}
+                            className="rounded px-1 text-faint hover:bg-hover hover:text-ink disabled:opacity-30 cursor-pointer"
+                          >
+                            →
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setActive(slot.id)
+                              setBook((current) => ({
+                                ...current,
+                                slots: current.slots.map((entry) =>
+                                  entry.id === slot.id
+                                    ? {
+                                        ...entry,
+                                        turn: (entry.turn + 90) % 360,
+                                      }
+                                    : entry,
+                                ),
+                              }))
+                              setPreview(null)
+                            }}
+                            aria-label={`Turn ${label} a quarter turn`}
+                            className="rounded px-1 text-faint hover:bg-hover hover:text-ink cursor-pointer"
+                          >
+                            ↻
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => removeSlot(slot.id)}
+                            aria-label={`Remove ${label}`}
+                            className="rounded px-1 text-faint hover:bg-hover hover:text-ink cursor-pointer"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      </div>
+                    </li>
+                  )
+                })}
+              </ul>
+            </div>
+
+            {/* A big, live view of the page being worked on. */}
+            <aside className="order-first self-start rounded-xl border border-line bg-paper p-3 lg:order-last lg:sticky lg:top-24">
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-faint">
+                  Preview
+                </span>
+                {activeSlot && (
+                  <span className="text-xs text-muted">
+                    Page {activeIndex + 1} of {pages}
+                  </span>
+                )}
+              </div>
+
+              {activeSlot ? (
+                <>
+                  <PageView
+                    thumb={activeThumb}
+                    turn={activeSlot.turn}
+                    crop={activeSlot.crop}
+                    large
+                  />
+                  <p className="mt-2 text-[11px] leading-relaxed text-muted">
+                    {activeSlot.turn === 0
+                      ? 'Not turned'
+                      : `Turned ${activeSlot.turn}° clockwise`}
+                    {activeSlot.crop
+                      ? ` · cropped ${activeSlot.crop.top}% top, ${activeSlot.crop.right}% right, ${activeSlot.crop.bottom}% bottom, ${activeSlot.crop.left}% left`
+                      : ' · not cropped'}
+                  </p>
+                  {!activeThumb && (
+                    <p className="mt-1 text-[11px] text-faint">
+                      {activeReady
+                        ? 'No picture for this page, but the changes still save.'
+                        : `Reading ${book.sources[activeSlot.source]?.name ?? 'the file'}…`}
+                    </p>
+                  )}
+                  {selected.size > 1 && (
+                    <p className="mt-1 text-[11px] text-faint">
+                      {selected.size} pages are selected. This preview shows one;
+                      every selected page gets the same change.
+                    </p>
+                  )}
+                </>
+              ) : (
+                <p className="text-xs text-muted">No page selected.</p>
+              )}
+            </aside>
+          </div>
         </section>
       )}
 
@@ -604,11 +803,11 @@ export function PdfPageManager({ initialFiles }: { initialFiles?: File[] }) {
       )}
 
       {preview && (
-        <section className="border border-line bg-surface">
+        <section className="overflow-hidden rounded-xl border border-line bg-surface">
           <header className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-3">
             <div>
-              <h2 className="text-sm font-medium text-ink">{preview.name}</h2>
-              <p className="text-sm text-muted">
+              <h2 className="text-sm font-semibold text-ink">{preview.name}</h2>
+              <p className="text-xs text-muted">
                 {preview.note} · {formatSize(preview.blob.size)}
               </p>
             </div>
@@ -616,7 +815,7 @@ export function PdfPageManager({ initialFiles }: { initialFiles?: File[] }) {
               <button
                 type="button"
                 onClick={() => setPreview(null)}
-                className="text-sm text-muted hover:text-ink"
+                className="text-xs font-medium text-muted hover:text-ink cursor-pointer"
               >
                 Close preview
               </button>
@@ -633,7 +832,7 @@ export function PdfPageManager({ initialFiles }: { initialFiles?: File[] }) {
           <button
             type="button"
             onClick={() => downloadBlob(preview.blob, preview.name)}
-            className="bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover"
+            className="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-accent-ink transition-colors hover:bg-accent-hover cursor-pointer"
           >
             Download
           </button>
@@ -645,137 +844,12 @@ export function PdfPageManager({ initialFiles }: { initialFiles?: File[] }) {
               type="button"
               onClick={() => void saveTo('download')}
               disabled={busy !== null}
-              className="bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50"
+              className="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-accent-ink transition-colors hover:bg-accent-hover disabled:opacity-50 cursor-pointer"
             >
               {busy === 'save' ? 'Saving…' : 'Save PDF'}
             </button>
           </DownloadBar>
         )
-      )}
-
-      {/* STEP 3: Lightbox modal */}
-      {lightboxId !== null && lbSlot !== undefined && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
-          onClick={() => setLightboxId(null)}
-        >
-          <div
-            className="bg-surface border border-line p-4 flex flex-col gap-3 max-w-[90vw] max-h-[90vh] overflow-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between gap-4">
-              <span className="text-sm font-medium text-ink">
-                Page {lbIndex}
-                {lbSlot.turn !== 0 ? ` · ↻${lbSlot.turn}°` : ''}
-              </span>
-              <button
-                type="button"
-                onClick={() => setLightboxId(null)}
-                className="text-muted hover:text-ink text-sm"
-              >
-                Close
-              </button>
-            </div>
-            {lbThumb !== undefined ? (
-              // At 90° and 270° the image is sideways: its visual height maps to
-              // its layout width, so we constrain max-w instead of max-h to
-              // prevent the rotated image from overflowing the viewport.
-              <div
-                className="flex items-center justify-center overflow-hidden"
-                style={{
-                  // Give the container the rotated image's visual footprint so
-                  // the modal does not shrink the image unexpectedly.
-                  maxHeight:
-                    lbSlot.turn === 90 || lbSlot.turn === 270
-                      ? '70vw'
-                      : '70vh',
-                  maxWidth:
-                    lbSlot.turn === 90 || lbSlot.turn === 270
-                      ? '70vh'
-                      : '70vw',
-                }}
-              >
-                <img
-                  src={lbThumb}
-                  alt=""
-                  className="object-contain"
-                  style={{
-                    transform: `rotate(${lbSlot.turn}deg)`,
-                    maxHeight:
-                      lbSlot.turn === 90 || lbSlot.turn === 270
-                        ? '70vw'
-                        : '70vh',
-                    maxWidth:
-                      lbSlot.turn === 90 || lbSlot.turn === 270
-                        ? '70vh'
-                        : '70vw',
-                  }}
-                />
-              </div>
-            ) : (
-              <span className="text-xs text-muted">No preview</span>
-            )}
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setBook((current) => ({
-                    ...current,
-                    slots: current.slots.map((s) =>
-                      s.id === lightboxId
-                        ? { ...s, turn: (s.turn - 90 + 360) % 360 }
-                        : s,
-                    ),
-                  }))
-                  if (book.slots.length <= 20) autoPreviewPending.current = true
-                }}
-                className={smallButton}
-              >
-                Rotate left
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setBook((current) => ({
-                    ...current,
-                    slots: current.slots.map((s) =>
-                      s.id === lightboxId
-                        ? { ...s, turn: (s.turn + 90) % 360 }
-                        : s,
-                    ),
-                  }))
-                  if (book.slots.length <= 20) autoPreviewPending.current = true
-                }}
-                className={smallButton}
-              >
-                Rotate right
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  const newCount = book.slots.length - 1
-                  setBook((current) => ({
-                    ...current,
-                    slots: current.slots.filter((s) => s.id !== lightboxId),
-                  }))
-                  setSelected((current) => {
-                    const next = new Set(current)
-                    next.delete(lightboxId)
-                    return next
-                  })
-                  setPreview(null)
-                  if (newCount > 0 && newCount <= 20) {
-                    autoPreviewPending.current = true
-                  }
-                  setLightboxId(null)
-                }}
-                className={`${smallButton} hover:border-bad hover:text-bad`}
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        </div>
       )}
     </div>
   )
