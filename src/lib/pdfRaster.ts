@@ -200,7 +200,7 @@ export async function compressPdf(
   }
 
   const document = await PDFDocument.create()
-  document.setProducer('Document Toolkit')
+  document.setProducer('MergePDF')
 
   for (const image of images) {
     const bytes = new Uint8Array(
