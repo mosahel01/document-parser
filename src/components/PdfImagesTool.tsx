@@ -17,7 +17,7 @@ import {
 import { formatSize } from '../lib/format'
 
 const field =
-  'rounded-[4px] border border-line bg-sunk px-2.5 py-1.5 text-xs text-ink outline-none focus:border-accent focus:ring-1 focus:ring-accent'
+  'border border-line bg-sunk px-2.5 py-1.5 text-xs text-ink outline-none focus:border-accent focus:ring-1 focus:ring-accent'
 
 export function PdfToImagesTool({ initialFiles }: { initialFiles?: File[] }) {
   const handedPdf =
@@ -114,7 +114,7 @@ export function PdfToImagesTool({ initialFiles }: { initialFiles?: File[] }) {
       />
 
       {file && (
-        <section className="rounded-[5px] border border-line bg-surface p-4">
+        <section className="border border-line bg-surface p-4">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-3">
             <div className="flex min-w-0 items-center gap-3">
               <FilePreview name={file.name} blob={file} />
@@ -128,7 +128,7 @@ export function PdfToImagesTool({ initialFiles }: { initialFiles?: File[] }) {
             <button
               type="button"
               onClick={() => choose(null)}
-              className="rounded-[3px] border border-line bg-sunk px-2.5 py-1 text-xs text-muted hover:border-edge hover:text-ink cursor-pointer"
+              className="border border-line bg-sunk px-2.5 py-1 text-xs text-muted hover:border-edge hover:text-ink cursor-pointer"
             >
               Choose another
             </button>
@@ -188,7 +188,7 @@ export function PdfToImagesTool({ initialFiles }: { initialFiles?: File[] }) {
               type="button"
               onClick={() => void run()}
               disabled={busy}
-              className="rounded-[4px] bg-accent px-4 py-2 text-xs font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50 cursor-pointer"
+              className="bg-accent px-4 py-2 text-xs font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50 cursor-pointer"
             >
               {busy
                 ? progress
@@ -203,7 +203,7 @@ export function PdfToImagesTool({ initialFiles }: { initialFiles?: File[] }) {
                 onClick={() => {
                   stopped.current = true
                 }}
-                className="rounded-[4px] border border-line bg-sunk px-3 py-2 text-xs font-medium text-ink hover:border-edge cursor-pointer"
+                className="border border-line bg-sunk px-3 py-2 text-xs font-medium text-ink hover:border-edge cursor-pointer"
               >
                 Stop
               </button>
@@ -218,13 +218,13 @@ export function PdfToImagesTool({ initialFiles }: { initialFiles?: File[] }) {
       )}
 
       {error && (
-        <p className="rounded-[5px] border border-bad/30 bg-bad-soft px-4 py-3 text-xs text-bad">
+        <p className="border border-bad/30 bg-bad-soft px-4 py-3 text-xs text-bad">
           {error}
         </p>
       )}
 
       {rows && rows.length > 0 && (
-        <section className="rounded-[5px] border border-line bg-surface">
+        <section className="border border-line bg-surface">
           <header className="border-b border-line px-4 py-2.5">
             <h2 className="text-xs font-medium text-ink">
               {rows.length} {rows.length === 1 ? 'image' : 'images'}
@@ -238,7 +238,7 @@ export function PdfToImagesTool({ initialFiles }: { initialFiles?: File[] }) {
             {rows.map((row) => (
               <li
                 key={row.name}
-                className="overflow-hidden rounded-[4px] border border-line bg-sunk"
+                className="overflow-hidden border border-line bg-sunk"
               >
                 <div className="flex aspect-[3/4] items-center justify-center overflow-hidden p-2">
                   <FilePreview
@@ -258,7 +258,7 @@ export function PdfToImagesTool({ initialFiles }: { initialFiles?: File[] }) {
                     <button
                       type="button"
                       onClick={() => downloadBlob(row.image.blob, row.name)}
-                      className="rounded-[2px] border border-line bg-sunk px-1.5 py-0.5 text-[10px] text-muted hover:border-edge hover:text-ink cursor-pointer"
+                      className="border border-line bg-sunk px-1.5 py-0.5 text-[10px] text-muted hover:border-edge hover:text-ink cursor-pointer"
                     >
                       Download
                     </button>
@@ -278,7 +278,7 @@ export function PdfToImagesTool({ initialFiles }: { initialFiles?: File[] }) {
             type="button"
             onClick={() => void saveAll()}
             disabled={saving}
-            className="rounded-[4px] bg-accent px-4 py-2 text-xs font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50 cursor-pointer"
+            className="bg-accent px-4 py-2 text-xs font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50 cursor-pointer"
           >
             {saving ? 'Saving…' : 'Download all'}
           </button>
@@ -359,7 +359,7 @@ export function ImagesToPdfTool({ initialFiles }: { initialFiles?: File[] }) {
       />
 
       {files.length > 0 && (
-        <section className="rounded-[5px] border border-line bg-surface p-4">
+        <section className="border border-line bg-surface p-4">
           <div className="flex flex-wrap items-end gap-3">
             <label className="text-xs text-muted">
               Page size
@@ -415,7 +415,7 @@ export function ImagesToPdfTool({ initialFiles }: { initialFiles?: File[] }) {
               type="button"
               onClick={() => void make('preview')}
               disabled={busy}
-              className="rounded-[4px] border border-line bg-sunk px-3 py-1.5 text-xs font-medium text-ink hover:border-edge disabled:opacity-50 cursor-pointer"
+              className="border border-line bg-sunk px-3 py-1.5 text-xs font-medium text-ink hover:border-edge disabled:opacity-50 cursor-pointer"
             >
               Preview PDF
             </button>
@@ -429,13 +429,13 @@ export function ImagesToPdfTool({ initialFiles }: { initialFiles?: File[] }) {
       )}
 
       {error && (
-        <p className="rounded-[5px] border border-bad/30 bg-bad-soft px-4 py-3 text-xs text-bad">
+        <p className="border border-bad/30 bg-bad-soft px-4 py-3 text-xs text-bad">
           {error}
         </p>
       )}
 
       {preview && (
-        <section className="rounded-[5px] border border-line bg-surface">
+        <section className="border border-line bg-surface">
           <header className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-4 py-2.5">
             <div>
               <h2 className="text-xs font-medium text-ink">{preview.name}</h2>
@@ -447,7 +447,7 @@ export function ImagesToPdfTool({ initialFiles }: { initialFiles?: File[] }) {
             <button
               type="button"
               onClick={resetPreview}
-              className="rounded-[3px] border border-line bg-sunk px-2 py-0.5 text-xs text-muted hover:border-edge hover:text-ink cursor-pointer"
+              className="border border-line bg-sunk px-2 py-0.5 text-xs text-muted hover:border-edge hover:text-ink cursor-pointer"
             >
               Close preview
             </button>
@@ -464,7 +464,7 @@ export function ImagesToPdfTool({ initialFiles }: { initialFiles?: File[] }) {
             <button
               type="button"
               onClick={() => downloadBlob(preview.blob, preview.name)}
-              className="rounded-[4px] bg-accent px-4 py-2 text-xs font-medium text-accent-ink hover:bg-accent-hover cursor-pointer"
+              className="bg-accent px-4 py-2 text-xs font-medium text-accent-ink hover:bg-accent-hover cursor-pointer"
             >
               Download {preview.name}
             </button>
@@ -477,7 +477,7 @@ export function ImagesToPdfTool({ initialFiles }: { initialFiles?: File[] }) {
               type="button"
               onClick={() => void make('download')}
               disabled={busy}
-              className="rounded-[4px] bg-accent px-4 py-2 text-xs font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50 cursor-pointer"
+              className="bg-accent px-4 py-2 text-xs font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50 cursor-pointer"
             >
               {busy ? 'Making the PDF…' : `Download ${name}`}
             </button>
