@@ -9,7 +9,7 @@ import { cropPdf, type CropMargins } from '../tools/pdfEnhance'
 import { formatSize } from '../lib/format'
 
 const field =
-  'w-20 rounded-[4px] border border-line bg-sunk px-2.5 py-1.5 text-xs text-ink outline-none focus:border-accent focus:ring-1 focus:ring-accent'
+  'w-20 border border-line bg-sunk px-2.5 py-1.5 text-xs text-ink outline-none focus:border-accent focus:ring-1 focus:ring-accent'
 
 const EDGES: { key: keyof CropMargins; label: string }[] = [
   { key: 'top', label: 'Top' },
@@ -86,7 +86,7 @@ export function PdfCropTool({ initialFiles }: { initialFiles?: File[] }) {
       />
 
       {file && (
-        <section className="rounded-[5px] border border-line bg-surface p-4">
+        <section className="border border-line bg-surface p-4">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-3">
             <div className="flex min-w-0 items-center gap-3">
               <FilePreview name={file.name} blob={file} />
@@ -100,7 +100,7 @@ export function PdfCropTool({ initialFiles }: { initialFiles?: File[] }) {
             <button
               type="button"
               onClick={() => choose(null)}
-              className="rounded-[3px] border border-line bg-sunk px-2.5 py-1 text-xs text-muted hover:border-edge hover:text-ink cursor-pointer"
+              className="border border-line bg-sunk px-2.5 py-1 text-xs text-muted hover:border-edge hover:text-ink cursor-pointer"
             >
               Choose another
             </button>
@@ -135,7 +135,7 @@ export function PdfCropTool({ initialFiles }: { initialFiles?: File[] }) {
                 setMargins({ top: 5, right: 5, bottom: 5, left: 5 })
                 setPreview(null)
               }}
-              className="rounded-[4px] border border-line bg-sunk px-3 py-1.5 text-xs text-muted hover:border-edge hover:text-ink cursor-pointer"
+              className="border border-line bg-sunk px-3 py-1.5 text-xs text-muted hover:border-edge hover:text-ink cursor-pointer"
             >
               Trim 5% all round
             </button>
@@ -144,7 +144,7 @@ export function PdfCropTool({ initialFiles }: { initialFiles?: File[] }) {
               type="button"
               onClick={() => void run()}
               disabled={busy || !valid}
-              className="rounded-[4px] bg-accent px-4 py-1.5 text-xs font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50 cursor-pointer"
+              className="bg-accent px-4 py-1.5 text-xs font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50 cursor-pointer"
             >
               {busy ? 'Cropping…' : 'Preview crop'}
             </button>
@@ -165,13 +165,13 @@ export function PdfCropTool({ initialFiles }: { initialFiles?: File[] }) {
       )}
 
       {error && (
-        <p className="rounded-[5px] border border-bad/30 bg-bad-soft px-4 py-3 text-xs text-bad">
+        <p className="border border-bad/30 bg-bad-soft px-4 py-3 text-xs text-bad">
           {error}
         </p>
       )}
 
       {preview && (
-        <section className="rounded-[5px] border border-line bg-surface">
+        <section className="border border-line bg-surface">
           <header className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-4 py-2.5">
             <div>
               <h2 className="text-xs font-medium text-ink">{preview.name}</h2>
@@ -182,7 +182,7 @@ export function PdfCropTool({ initialFiles }: { initialFiles?: File[] }) {
             <button
               type="button"
               onClick={() => setPreview(null)}
-              className="rounded-[3px] border border-line bg-sunk px-2 py-0.5 text-xs text-muted hover:text-ink cursor-pointer"
+              className="border border-line bg-sunk px-2 py-0.5 text-xs text-muted hover:text-ink cursor-pointer"
             >
               Close preview
             </button>
@@ -198,7 +198,7 @@ export function PdfCropTool({ initialFiles }: { initialFiles?: File[] }) {
           <button
             type="button"
             onClick={() => downloadBlob(preview.blob, preview.name)}
-            className="rounded-[4px] bg-accent px-4 py-2 text-xs font-medium text-accent-ink hover:bg-accent-hover cursor-pointer"
+            className="bg-accent px-4 py-2 text-xs font-medium text-accent-ink hover:bg-accent-hover cursor-pointer"
           >
             Download {preview.name}
           </button>
