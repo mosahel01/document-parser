@@ -13,7 +13,7 @@ import {
 import { formatSize } from '../lib/format'
 
 const field =
-  'rounded-[4px] border border-line bg-sunk px-3 py-1.5 text-xs text-ink outline-none focus:border-accent focus:ring-1 focus:ring-accent'
+  'border border-line bg-sunk px-3 py-1.5 text-xs text-ink outline-none focus:border-accent focus:ring-1 focus:ring-accent'
 
 function saved(result: CompressionResult): string {
   if (result.keptOriginal) return 'no gain'
@@ -92,7 +92,7 @@ export function PdfCompressTool({ initialFiles }: { initialFiles?: File[] }) {
       />
 
       {file && (
-        <section className="rounded-[5px] border border-line bg-surface p-4">
+        <section className="border border-line bg-surface p-4">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-3">
             <div className="flex min-w-0 items-center gap-3">
               <FilePreview name={file.name} blob={file} />
@@ -106,7 +106,7 @@ export function PdfCompressTool({ initialFiles }: { initialFiles?: File[] }) {
             <button
               type="button"
               onClick={() => choose(null)}
-              className="rounded-[3px] border border-line bg-sunk px-2.5 py-1 text-xs text-muted hover:border-edge hover:text-ink cursor-pointer"
+              className="border border-line bg-sunk px-2.5 py-1 text-xs text-muted hover:border-edge hover:text-ink cursor-pointer"
             >
               Choose another
             </button>
@@ -150,7 +150,7 @@ export function PdfCompressTool({ initialFiles }: { initialFiles?: File[] }) {
               type="button"
               onClick={() => void run()}
               disabled={busy}
-              className="rounded-[4px] bg-accent px-4 py-2 text-xs font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50 cursor-pointer"
+              className="bg-accent px-4 py-2 text-xs font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50 cursor-pointer"
             >
               {busy
                 ? progress
@@ -165,7 +165,7 @@ export function PdfCompressTool({ initialFiles }: { initialFiles?: File[] }) {
                 onClick={() => {
                   stopped.current = true
                 }}
-                className="rounded-[4px] border border-line bg-sunk px-3 py-2 text-xs font-medium text-ink hover:border-edge cursor-pointer"
+                className="border border-line bg-sunk px-3 py-2 text-xs font-medium text-ink hover:border-edge cursor-pointer"
               >
                 Stop
               </button>
@@ -182,13 +182,13 @@ export function PdfCompressTool({ initialFiles }: { initialFiles?: File[] }) {
       )}
 
       {error && (
-        <p className="rounded-[5px] border border-bad/30 bg-bad-soft px-4 py-3 text-xs text-bad">
+        <p className="border border-bad/30 bg-bad-soft px-4 py-3 text-xs text-bad">
           {error}
         </p>
       )}
 
       {result && (
-        <section className="rounded-[5px] border border-line bg-surface">
+        <section className="border border-line bg-surface">
           <header className="flex flex-wrap items-center justify-between border-b border-line px-4 py-2.5">
             <div>
               <h2 className="text-xs font-medium text-ink">
@@ -216,7 +216,7 @@ export function PdfCompressTool({ initialFiles }: { initialFiles?: File[] }) {
           <button
             type="button"
             onClick={() => downloadBlob(result.blob, result.name)}
-            className="rounded-[4px] bg-accent px-4 py-2 text-xs font-medium text-accent-ink hover:bg-accent-hover cursor-pointer"
+            className="bg-accent px-4 py-2 text-xs font-medium text-accent-ink hover:bg-accent-hover cursor-pointer"
           >
             Download {result.name}
           </button>
