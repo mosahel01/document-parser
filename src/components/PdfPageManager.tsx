@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { DownloadBar } from './DownloadBar'
 import { FileDrop } from './FileDrop'
 import { PdfPreview } from './PdfPreview'
@@ -8,6 +8,7 @@ import {
   MAX_ARRANGE_PAGES,
   countPages,
   pagesToPdf,
+  parsePageSelection,
   pdfBaseName,
   type PageSlot,
 } from '../tools/pdf'
@@ -26,7 +27,7 @@ const newSlotId = () => `slot-${(slotCounter += 1)}`
 const THUMBS_PER_FILE = 60
 
 const smallButton =
-  'rounded-[3px] border border-line bg-sunk px-2.5 py-1 text-xs text-muted hover:border-edge hover:text-ink disabled:opacity-40 cursor-pointer'
+  'border border-line bg-sunk px-2.5 py-1 text-xs text-muted hover:border-edge hover:text-ink disabled:opacity-40 cursor-pointer'
 
 /**
  * The page editor: rotate, delete, duplicate, reorder, and pull pages in from
@@ -47,6 +48,15 @@ export function PdfPageManager({ initialFiles }: { initialFiles?: File[] }) {
     name: string
     note: string
   } | null>(null)
+
+  // STEP 2: range input state
+  const [rangeInput, setRangeInput] = useState('')
+
+  // STEP 3: lightbox state
+  const [lightboxId, setLightboxId] = useState<string | null>(null)
+
+  // STEP 4: auto-preview flag
+  const autoPreviewPending = useRef(false)
 
   const rendered = useRef<Set<number>>(new Set())
 
@@ -157,6 +167,62 @@ export function PdfPageManager({ initialFiles }: { initialFiles?: File[] }) {
     }
   }, [book.sources])
 
+  // STEP 3: Close lightbox on Escape key
+  useEffect(() => {
+    if (lightboxId === null) return
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') setLightboxId(null)
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [lightboxId])
+
+  // STEP 4: saveTo as useCallback so we can depend on it safely
+  const saveTo = useCallback(
+    async (destination: 'download' | 'preview') => {
+      setBusy('save')
+      setError(null)
+      try {
+        const blob = await pagesToPdf(book.sources, book.slots)
+        const name =
+          book.sources.length === 1
+            ? `${pdfBaseName(book.sources[0].name)}-pages.pdf`
+            : `${joinedBaseName(book.sources.map((file) => file.name))}.pdf`
+
+        if (destination === 'download') {
+          downloadBlob(blob, name)
+        } else {
+          setPreview({
+            blob,
+            name,
+            note: `${book.slots.length} ${book.slots.length === 1 ? 'page' : 'pages'}, in the order shown`,
+          })
+        }
+      } catch (problem) {
+        setError(
+          problem instanceof Error ? problem.message : 'Saving the PDF failed.',
+        )
+      } finally {
+        setBusy(null)
+      }
+    },
+    [book],
+  )
+
+  // STEP 4: Auto-preview effect — fires when slots change and the flag is set
+  // Keep a ref to saveTo so the effect never goes stale.
+  // useLayoutEffect syncs the ref before the browser paints (React-idiomatic).
+  const saveToRef = useRef(saveTo)
+  useLayoutEffect(() => {
+    saveToRef.current = saveTo
+  })
+
+  useEffect(() => {
+    if (!autoPreviewPending.current) return
+    autoPreviewPending.current = false
+    void saveToRef.current('preview')
+  }, [book.slots])
+
   function toggle(id: string) {
     setSelected((current) => {
       const next = new Set(current)
@@ -171,6 +237,7 @@ export function PdfPageManager({ initialFiles }: { initialFiles?: File[] }) {
   }
 
   function turnSelected(delta: number) {
+    const newCount = book.slots.length
     setBook((current) => ({
       ...current,
       slots: current.slots.map((slot) =>
@@ -179,9 +246,11 @@ export function PdfPageManager({ initialFiles }: { initialFiles?: File[] }) {
           : slot,
       ),
     }))
+    if (newCount <= 20) autoPreviewPending.current = true
   }
 
   function duplicateSelected() {
+    const newCount = book.slots.length + selected.size
     setBook((current) => {
       const slots: Slot[] = []
       for (const slot of current.slots) {
@@ -190,16 +259,19 @@ export function PdfPageManager({ initialFiles }: { initialFiles?: File[] }) {
       }
       return { ...current, slots }
     })
+    if (newCount <= 20) autoPreviewPending.current = true
   }
 
   function deleteSelected() {
     if (selected.size === 0) return
+    const newCount = book.slots.length - selected.size
     setBook((current) => ({
       ...current,
       slots: current.slots.filter((slot) => !selected.has(slot.id)),
     }))
     setSelected(new Set())
     setPreview(null)
+    if (newCount > 0 && newCount <= 20) autoPreviewPending.current = true
   }
 
   function moveSlot(id: string, delta: number) {
@@ -232,35 +304,33 @@ export function PdfPageManager({ initialFiles }: { initialFiles?: File[] }) {
     })
   }
 
-  async function saveTo(destination: 'download' | 'preview') {
-    setBusy('save')
-    setError(null)
-    try {
-      const blob = await pagesToPdf(book.sources, book.slots)
-      const name =
-        book.sources.length === 1
-          ? `${pdfBaseName(book.sources[0].name)}-pages.pdf`
-          : `${joinedBaseName(book.sources.map((file) => file.name))}.pdf`
-
-      if (destination === 'download') {
-        downloadBlob(blob, name)
-      } else {
-        setPreview({
-          blob,
-          name,
-          note: `${book.slots.length} ${book.slots.length === 1 ? 'page' : 'pages'}, in the order shown`,
-        })
-      }
-    } catch (problem) {
-      setError(
-        problem instanceof Error ? problem.message : 'Saving the PDF failed.',
-      )
-    } finally {
-      setBusy(null)
+  // STEP 2: Range input handler
+  function handleRangeChange(value: string) {
+    setRangeInput(value)
+    if (value.trim() === '') return
+    const result = parsePageSelection(value, book.slots.length)
+    if (result.error === null && result.pages.length > 0) {
+      const ids = new Set(result.pages.map((idx) => book.slots[idx].id))
+      setSelected(ids)
     }
   }
 
   const pages = book.slots.length
+
+  // STEP 3: Resolve lightbox slot
+  const lbSlot = lightboxId !== null
+    ? book.slots.find((s) => s.id === lightboxId)
+    : undefined
+  const lbIndex = lightboxId !== null
+    ? book.slots.findIndex((s) => s.id === lightboxId) + 1
+    : 0
+  const lbThumb =
+    lbSlot !== undefined
+      ? thumbs[`${lbSlot.source}:${lbSlot.page + 1}`]
+      : undefined
+
+  // If the lightbox slot was deleted while the modal is open, the render guard
+  // `lbSlot !== undefined` already hides the modal. No effect needed here.
 
   return (
     <div className="space-y-6">
@@ -276,13 +346,13 @@ export function PdfPageManager({ initialFiles }: { initialFiles?: File[] }) {
       />
 
       {error && (
-        <p className="rounded-xl border border-bad/30 bg-bad-soft px-5 py-3 text-sm text-bad">
+        <p className="border border-bad/30 bg-bad-soft px-5 py-3 text-sm text-bad">
           {error}
         </p>
       )}
 
       {pages > 0 && (
-        <section className="rounded-xl border border-line bg-surface">
+        <section className="border border-line bg-surface">
           <header className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-3">
             <div>
               <h2 className="text-sm font-medium text-ink">
@@ -295,11 +365,14 @@ export function PdfPageManager({ initialFiles }: { initialFiles?: File[] }) {
               </p>
             </div>
             <div className="flex items-center gap-3">
+              {busy === 'save' && pages <= 20 && (
+                <span className="text-xs text-muted">Rebuilding preview…</span>
+              )}
               <button
                 type="button"
                 onClick={() => void saveTo('preview')}
                 disabled={busy !== null}
-                className="rounded-lg border border-edge px-4 py-2 text-sm font-medium text-ink hover:bg-hover disabled:opacity-50"
+                className="border border-edge px-4 py-2 text-sm font-medium text-ink hover:bg-hover disabled:opacity-50"
               >
                 Preview
               </button>
@@ -354,12 +427,37 @@ export function PdfPageManager({ initialFiles }: { initialFiles?: File[] }) {
             </button>
             <button
               type="button"
-              onClick={() => setSelected(new Set())}
+              onClick={() => {
+                setSelected(new Set())
+                setRangeInput('')
+              }}
               disabled={selected.size === 0}
               className={smallButton}
             >
               Clear
             </button>
+            {/* STEP 2: Range input */}
+            <span className="text-xs text-muted">Range:</span>
+            <input
+              type="text"
+              value={rangeInput}
+              onChange={(e) => handleRangeChange(e.target.value)}
+              placeholder="1-3, 7"
+              className="border border-line bg-sunk px-2 py-1 text-xs text-ink placeholder:text-faint w-24 outline-none focus:border-edge"
+            />
+            {rangeInput !== '' && (
+              <button
+                type="button"
+                onClick={() => {
+                  setRangeInput('')
+                  setSelected(new Set())
+                }}
+                className="cursor-pointer px-1 text-faint hover:text-ink"
+                aria-label="Clear range"
+              >
+                ×
+              </button>
+            )}
           </div>
 
           <ul className="grid grid-cols-2 gap-3 p-5 sm:grid-cols-4 lg:grid-cols-5">
@@ -384,26 +482,33 @@ export function PdfPageManager({ initialFiles }: { initialFiles?: File[] }) {
                     event.preventDefault()
                     dropOn(slot.id)
                   }}
-                  className={`overflow-hidden rounded-lg border bg-surface ${
+                  className={`overflow-hidden border bg-surface ${
                     isSelected
                       ? 'border-accent ring-1 ring-accent'
                       : 'border-line'
                   } ${dragging === slot.id ? 'opacity-40' : ''}`}
                 >
+                  {/* STEP 3: double-click opens lightbox */}
                   <button
                     type="button"
                     onClick={() => toggle(slot.id)}
+                    onDoubleClick={() => setLightboxId(slot.id)}
                     aria-pressed={isSelected}
                     aria-label={`Select ${label}`}
                     className="block w-full"
                   >
                     <span className="flex aspect-[3/4] items-center justify-center overflow-hidden bg-sunk">
                       {thumb ? (
+                        // STEP 1: rotate thumbnail with CSS transform
                         <img
                           src={thumb}
                           alt=""
                           draggable={false}
                           className="max-h-full max-w-full object-contain"
+                          style={{
+                            transform: `rotate(${slot.turn}deg)`,
+                            transition: 'transform 0.2s',
+                          }}
                         />
                       ) : (
                         <span className="text-xs text-faint">
@@ -428,7 +533,7 @@ export function PdfPageManager({ initialFiles }: { initialFiles?: File[] }) {
                         onClick={() => moveSlot(slot.id, -1)}
                         disabled={index === 0}
                         aria-label={`Move ${label} left`}
-                        className="rounded px-1 text-faint hover:bg-hover hover:text-ink disabled:opacity-30"
+                        className="px-1 text-faint hover:bg-hover hover:text-ink disabled:opacity-30"
                       >
                         ←
                       </button>
@@ -437,13 +542,13 @@ export function PdfPageManager({ initialFiles }: { initialFiles?: File[] }) {
                         onClick={() => moveSlot(slot.id, 1)}
                         disabled={index === book.slots.length - 1}
                         aria-label={`Move ${label} right`}
-                        className="rounded px-1 text-faint hover:bg-hover hover:text-ink disabled:opacity-30"
+                        className="px-1 text-faint hover:bg-hover hover:text-ink disabled:opacity-30"
                       >
                         →
                       </button>
                       <button
                         type="button"
-                        onClick={() =>
+                        onClick={() => {
                           setBook((current) => ({
                             ...current,
                             slots: current.slots.map((entry) =>
@@ -452,9 +557,11 @@ export function PdfPageManager({ initialFiles }: { initialFiles?: File[] }) {
                                 : entry,
                             ),
                           }))
-                        }
+                          // STEP 4: auto-preview for per-card rotation
+                          if (pages <= 20) autoPreviewPending.current = true
+                        }}
                         aria-label={`Turn ${label} a quarter turn`}
-                        className="rounded px-1 text-faint hover:bg-hover hover:text-ink"
+                        className="px-1 text-faint hover:bg-hover hover:text-ink"
                       >
                         ↻
                       </button>
@@ -473,9 +580,13 @@ export function PdfPageManager({ initialFiles }: { initialFiles?: File[] }) {
                             return next
                           })
                           setPreview(null)
+                          // STEP 4: auto-preview for per-card delete
+                          if (pages - 1 > 0 && pages - 1 <= 20) {
+                            autoPreviewPending.current = true
+                          }
                         }}
                         aria-label={`Remove ${label}`}
-                        className="rounded px-1 text-faint hover:bg-hover hover:text-ink"
+                        className="px-1 text-faint hover:bg-hover hover:text-ink"
                       >
                         ×
                       </button>
@@ -495,7 +606,7 @@ export function PdfPageManager({ initialFiles }: { initialFiles?: File[] }) {
       )}
 
       {preview && (
-        <section className="rounded-xl border border-line bg-surface">
+        <section className="border border-line bg-surface">
           <header className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-3">
             <div>
               <h2 className="text-sm font-medium text-ink">{preview.name}</h2>
@@ -524,7 +635,7 @@ export function PdfPageManager({ initialFiles }: { initialFiles?: File[] }) {
           <button
             type="button"
             onClick={() => downloadBlob(preview.blob, preview.name)}
-            className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover"
+            className="bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover"
           >
             Download
           </button>
@@ -536,12 +647,101 @@ export function PdfPageManager({ initialFiles }: { initialFiles?: File[] }) {
               type="button"
               onClick={() => void saveTo('download')}
               disabled={busy !== null}
-              className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50"
+              className="bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50"
             >
               {busy === 'save' ? 'Saving…' : 'Save PDF'}
             </button>
           </DownloadBar>
         )
+      )}
+
+      {/* STEP 3: Lightbox modal */}
+      {lightboxId !== null && lbSlot !== undefined && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
+          onClick={() => setLightboxId(null)}
+        >
+          <div
+            className="bg-surface border border-line p-4 flex flex-col gap-3 max-w-[90vw] max-h-[90vh] overflow-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between gap-4">
+              <span className="text-sm font-medium text-ink">
+                Page {lbIndex}
+                {lbSlot.turn !== 0 ? ` · ↻${lbSlot.turn}°` : ''}
+              </span>
+              <button
+                type="button"
+                onClick={() => setLightboxId(null)}
+                className="text-muted hover:text-ink text-sm"
+              >
+                Close
+              </button>
+            </div>
+            {lbThumb !== undefined ? (
+              <img
+                src={lbThumb}
+                alt=""
+                className="max-h-[70vh] object-contain mx-auto"
+                style={{ transform: `rotate(${lbSlot.turn}deg)` }}
+              />
+            ) : (
+              <span className="text-xs text-muted">No preview</span>
+            )}
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setBook((current) => ({
+                    ...current,
+                    slots: current.slots.map((s) =>
+                      s.id === lightboxId
+                        ? { ...s, turn: (s.turn - 90 + 360) % 360 }
+                        : s,
+                    ),
+                  }))
+                }}
+                className={smallButton}
+              >
+                Rotate left
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setBook((current) => ({
+                    ...current,
+                    slots: current.slots.map((s) =>
+                      s.id === lightboxId
+                        ? { ...s, turn: (s.turn + 90) % 360 }
+                        : s,
+                    ),
+                  }))
+                }}
+                className={smallButton}
+              >
+                Rotate right
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setBook((current) => ({
+                    ...current,
+                    slots: current.slots.filter((s) => s.id !== lightboxId),
+                  }))
+                  setSelected((current) => {
+                    const next = new Set(current)
+                    next.delete(lightboxId)
+                    return next
+                  })
+                  setLightboxId(null)
+                }}
+                className={`${smallButton} hover:border-bad hover:text-bad`}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )
