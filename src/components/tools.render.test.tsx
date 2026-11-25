@@ -28,7 +28,9 @@ describe('first paint', () => {
 
   it('renders the home screen with a tab for every tool', () => {
     expect(
-      renderToString(<HomeTool onStart={() => {}} />).length,
+      renderToString(
+        <HomeTool onStart={() => {}} onSelectTool={() => {}} />,
+      ).length,
     ).toBeGreaterThan(100)
 
     // The app crashed once because a tab existed without a tool behind it.
@@ -36,7 +38,7 @@ describe('first paint', () => {
     // labels and the brand name appear.
     const page = renderToString(<App />)
     for (const label of [
-      'Document Toolkit',
+      'MergePDF',
       'PDF',
       'Images',
       'Documents',
@@ -44,5 +46,30 @@ describe('first paint', () => {
     ]) {
       expect(page).toContain(label)
     }
+  })
+
+  it('shows the tool directory, planned heavy tools, and footer links', () => {
+    const page = renderToString(<App />)
+
+    // The directory is one grid with filters, so the default view must carry
+    // both the tools that work today and the ones still waiting on a server.
+    for (const label of [
+      'All tools',
+      'Popular',
+      'Coming soon',
+      'Unlock PDF',
+      'Protect PDF',
+      'OCR PDF',
+    ]) {
+      expect(page).toContain(label)
+    }
+
+    // The footer links are icons only, but keep real destinations and names
+    // for screen readers. It must not bring back the old "Why us" block.
+    expect(page).toContain('https://github.com/mosahel01/mergepdf')
+    expect(page).toContain('https://x.com/mo1sahilkhan')
+    expect(page).toContain('aria-label="Source on GitHub"')
+    expect(page).toContain('aria-label="Mo Sahil Khan on X"')
+    expect(page).not.toContain('Why us')
   })
 })
