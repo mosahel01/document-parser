@@ -1,0 +1,7 @@
+{
+  "task_id": "task-ui-restyle",
+  "task_description": "Restyle the All PDF Tools section to match generated.html, update AppHeader button label, fix Brand logo colors, and add hamburger open/close animation in MobileNavigation.",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001"],
+  "blocked_reason": null
+}
