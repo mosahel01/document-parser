@@ -51,6 +51,7 @@ export function PdfPageManager({ initialFiles }: { initialFiles?: File[] }) {
 
   // STEP 2: range input state
   const [rangeInput, setRangeInput] = useState('')
+  const [rangeError, setRangeError] = useState<string | null>(null)
 
   // STEP 3: lightbox state
   const [lightboxId, setLightboxId] = useState<string | null>(null)
@@ -224,6 +225,10 @@ export function PdfPageManager({ initialFiles }: { initialFiles?: File[] }) {
   }, [book.slots])
 
   function toggle(id: string) {
+    // Clear the range input when the user clicks cards manually so the field
+    // never shows a stale value that disagrees with the actual selection.
+    setRangeInput('')
+    setRangeError(null)
     setSelected((current) => {
       const next = new Set(current)
       if (next.has(id)) next.delete(id)
@@ -233,6 +238,8 @@ export function PdfPageManager({ initialFiles }: { initialFiles?: File[] }) {
   }
 
   function selectAll() {
+    setRangeInput('')
+    setRangeError(null)
     setSelected(new Set(book.slots.map((slot) => slot.id)))
   }
 
@@ -307,11 +314,17 @@ export function PdfPageManager({ initialFiles }: { initialFiles?: File[] }) {
   // STEP 2: Range input handler
   function handleRangeChange(value: string) {
     setRangeInput(value)
-    if (value.trim() === '') return
+    if (value.trim() === '') {
+      setRangeError(null)
+      return
+    }
     const result = parsePageSelection(value, book.slots.length)
     if (result.error === null && result.pages.length > 0) {
+      setRangeError(null)
       const ids = new Set(result.pages.map((idx) => book.slots[idx].id))
       setSelected(ids)
+    } else if (result.error !== null) {
+      setRangeError(result.error)
     }
   }
 
@@ -430,6 +443,7 @@ export function PdfPageManager({ initialFiles }: { initialFiles?: File[] }) {
               onClick={() => {
                 setSelected(new Set())
                 setRangeInput('')
+                setRangeError(null)
               }}
               disabled={selected.size === 0}
               className={smallButton}
@@ -450,6 +464,7 @@ export function PdfPageManager({ initialFiles }: { initialFiles?: File[] }) {
                 type="button"
                 onClick={() => {
                   setRangeInput('')
+                  setRangeError(null)
                   setSelected(new Set())
                 }}
                 className="cursor-pointer px-1 text-faint hover:text-ink"
@@ -457,6 +472,9 @@ export function PdfPageManager({ initialFiles }: { initialFiles?: File[] }) {
               >
                 ×
               </button>
+            )}
+            {rangeError !== null && (
+              <span className="text-xs text-bad">{rangeError}</span>
             )}
           </div>
 
@@ -679,12 +697,41 @@ export function PdfPageManager({ initialFiles }: { initialFiles?: File[] }) {
               </button>
             </div>
             {lbThumb !== undefined ? (
-              <img
-                src={lbThumb}
-                alt=""
-                className="max-h-[70vh] object-contain mx-auto"
-                style={{ transform: `rotate(${lbSlot.turn}deg)` }}
-              />
+              // At 90° and 270° the image is sideways: its visual height maps to
+              // its layout width, so we constrain max-w instead of max-h to
+              // prevent the rotated image from overflowing the viewport.
+              <div
+                className="flex items-center justify-center overflow-hidden"
+                style={{
+                  // Give the container the rotated image's visual footprint so
+                  // the modal does not shrink the image unexpectedly.
+                  maxHeight:
+                    lbSlot.turn === 90 || lbSlot.turn === 270
+                      ? '70vw'
+                      : '70vh',
+                  maxWidth:
+                    lbSlot.turn === 90 || lbSlot.turn === 270
+                      ? '70vh'
+                      : '70vw',
+                }}
+              >
+                <img
+                  src={lbThumb}
+                  alt=""
+                  className="object-contain"
+                  style={{
+                    transform: `rotate(${lbSlot.turn}deg)`,
+                    maxHeight:
+                      lbSlot.turn === 90 || lbSlot.turn === 270
+                        ? '70vw'
+                        : '70vh',
+                    maxWidth:
+                      lbSlot.turn === 90 || lbSlot.turn === 270
+                        ? '70vh'
+                        : '70vw',
+                  }}
+                />
+              </div>
             ) : (
               <span className="text-xs text-muted">No preview</span>
             )}
@@ -700,6 +747,7 @@ export function PdfPageManager({ initialFiles }: { initialFiles?: File[] }) {
                         : s,
                     ),
                   }))
+                  if (book.slots.length <= 20) autoPreviewPending.current = true
                 }}
                 className={smallButton}
               >
@@ -716,6 +764,7 @@ export function PdfPageManager({ initialFiles }: { initialFiles?: File[] }) {
                         : s,
                     ),
                   }))
+                  if (book.slots.length <= 20) autoPreviewPending.current = true
                 }}
                 className={smallButton}
               >
