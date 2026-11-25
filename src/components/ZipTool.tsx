@@ -16,7 +16,7 @@ import { formatSize } from '../lib/format'
 type Mode = 'create' | 'open'
 
 const tabClass = (active: boolean) =>
-  `rounded-[3px] px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer ${
+  `px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer ${
     active ? 'bg-hover text-ink shadow-xs' : 'text-muted hover:text-ink'
   }`
 
@@ -113,7 +113,7 @@ export function ZipTool({
 
   return (
     <div className="space-y-6">
-      <div className="inline-flex rounded-[4px] border border-line bg-sunk p-0.5">
+      <div className="inline-flex border border-line bg-sunk p-0.5">
         <button
           type="button"
           onClick={() => setMode('create')}
@@ -154,7 +154,7 @@ export function ZipTool({
                 type="button"
                 onClick={createArchive}
                 disabled={zipping}
-                className="rounded-[4px] bg-accent px-4 py-2 text-xs font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50 cursor-pointer"
+                className="bg-accent px-4 py-2 text-xs font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50 cursor-pointer"
               >
                 {zipping ? 'Packing…' : `Download ${zipName}`}
               </button>
@@ -177,13 +177,13 @@ export function ZipTool({
           {reading && <p className="text-xs text-muted">Reading archive index...</p>}
 
           {error && (
-            <p className="rounded-[5px] border border-bad/30 bg-bad-soft px-4 py-3 text-xs text-bad">
+            <p className="border border-bad/30 bg-bad-soft px-4 py-3 text-xs text-bad">
               {error}
             </p>
           )}
 
           {archive && !error && entries && (
-            <section className="rounded-[5px] border border-line bg-surface">
+            <section className="border border-line bg-surface">
               <header className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-4 py-2.5">
                 <div>
                   <h2 className="text-xs font-medium text-ink">
@@ -201,7 +201,7 @@ export function ZipTool({
                     setArchive(null)
                     setEntries(null)
                   }}
-                  className="rounded-[3px] border border-line bg-sunk px-2 py-0.5 text-xs text-muted hover:border-edge hover:text-ink cursor-pointer"
+                  className="border border-line bg-sunk px-2 py-0.5 text-xs text-muted hover:border-edge hover:text-ink cursor-pointer"
                 >
                   Close archive
                 </button>
@@ -245,7 +245,7 @@ export function ZipTool({
                                   names[index],
                                 )
                               }
-                              className="rounded-[3px] border border-line bg-sunk px-2 py-0.5 text-xs text-muted hover:border-edge hover:text-ink cursor-pointer"
+                              className="border border-line bg-sunk px-2 py-0.5 text-xs text-muted hover:border-edge hover:text-ink cursor-pointer"
                             >
                               Extract
                             </button>
@@ -265,7 +265,7 @@ export function ZipTool({
                 type="button"
                 onClick={downloadEverything}
                 disabled={saving}
-                className="rounded-[4px] bg-accent px-4 py-2 text-xs font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50 cursor-pointer"
+                className="bg-accent px-4 py-2 text-xs font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50 cursor-pointer"
               >
                 {saving ? 'Saving…' : 'Extract All Files'}
               </button>
