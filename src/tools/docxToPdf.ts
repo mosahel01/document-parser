@@ -118,7 +118,7 @@ export async function blocksToPdf(blocks: DocxBlock[]): Promise<Blob> {
   const { PDFDocument, StandardFonts, rgb } = await import('pdf-lib')
 
   const document = await PDFDocument.create()
-  document.setProducer('Document Toolkit')
+  document.setProducer('MergePDF')
 
   const body = await document.embedFont(StandardFonts.Helvetica)
   const heading = await document.embedFont(StandardFonts.HelveticaBold)
