@@ -773,6 +773,7 @@ export function PdfPageManager({ initialFiles }: { initialFiles?: File[] }) {
               <button
                 type="button"
                 onClick={() => {
+                  const newCount = book.slots.length - 1
                   setBook((current) => ({
                     ...current,
                     slots: current.slots.filter((s) => s.id !== lightboxId),
@@ -782,6 +783,9 @@ export function PdfPageManager({ initialFiles }: { initialFiles?: File[] }) {
                     next.delete(lightboxId)
                     return next
                   })
+                  if (newCount > 0 && newCount <= 20) {
+                    autoPreviewPending.current = true
+                  }
                   setLightboxId(null)
                 }}
                 className={`${smallButton} hover:border-bad hover:text-bad`}
