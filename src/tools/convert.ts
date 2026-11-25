@@ -412,7 +412,7 @@ export async function imagesToPdf(
   // Imported here so the PDF library is fetched only when someone asks for a PDF.
   const { PDFDocument } = await import('pdf-lib')
   const document = await PDFDocument.create()
-  document.setProducer('Document Toolkit')
+  document.setProducer('MergePDF')
 
   for (const file of files) {
     const image = await embedForPdf(document, file)
