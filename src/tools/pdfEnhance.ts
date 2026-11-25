@@ -6,8 +6,15 @@ import {
   type PDFPage,
 } from 'pdf-lib'
 import { openPdf, savePdf } from './pdf'
+import {
+  cropBoxFor,
+  type Box,
+  type CropBox,
+  type CropMargins,
+} from '../lib/pageGeometry'
 
-type Box = { x: number; y: number; width: number; height: number }
+export { cropBoxFor }
+export type { CropBox, CropMargins }
 
 /** A page's quarter-turn, normalised to 0, 90, 180, or 270. */
 function rotationOf(page: PDFPage): number {
@@ -65,16 +72,6 @@ function toPagePoint(
 
 /* ------------------------------------------------------------------ crop */
 
-/** How much to take off each side, as a percentage of the visible page. */
-export type CropMargins = {
-  top: number
-  right: number
-  bottom: number
-  left: number
-}
-
-export type CropBox = Box
-
 function assertMargins(margins: CropMargins): void {
   const values = [margins.top, margins.right, margins.bottom, margins.left]
 
@@ -86,64 +83,6 @@ function assertMargins(margins: CropMargins): void {
   }
   if (margins.top + margins.bottom >= 100) {
     throw new Error('The top and bottom margins together would remove the page.')
-  }
-}
-
-/**
- * The crop box a page would get. The margins are read against the page as it
- * is seen, so 10% off the top of a sideways scan still takes the visible top.
- */
-export function cropBoxFor(
-  base: Box,
-  margins: CropMargins,
-  rotation = 0,
-): CropBox {
-  const sideways = rotation === 90 || rotation === 270
-  const visibleWidth = sideways ? base.height : base.width
-  const visibleHeight = sideways ? base.width : base.height
-
-  const top = (margins.top / 100) * visibleHeight
-  const right = (margins.right / 100) * visibleWidth
-  const bottom = (margins.bottom / 100) * visibleHeight
-  const left = (margins.left / 100) * visibleWidth
-
-  let boxLeft: number
-  let boxRight: number
-  let boxTop: number
-  let boxBottom: number
-
-  switch (rotation) {
-    case 90:
-      // The visible top is the page's left edge, and so on clockwise.
-      boxLeft = top
-      boxTop = right
-      boxRight = bottom
-      boxBottom = left
-      break
-    case 180:
-      boxLeft = right
-      boxTop = bottom
-      boxRight = left
-      boxBottom = top
-      break
-    case 270:
-      boxLeft = bottom
-      boxTop = left
-      boxRight = top
-      boxBottom = right
-      break
-    default:
-      boxLeft = left
-      boxTop = top
-      boxRight = right
-      boxBottom = bottom
-  }
-
-  return {
-    x: base.x + boxLeft,
-    y: base.y + boxBottom,
-    width: base.width - boxLeft - boxRight,
-    height: base.height - boxTop - boxBottom,
   }
 }
 
