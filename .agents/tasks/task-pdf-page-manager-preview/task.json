@@ -1,0 +1,7 @@
+{
+  "task_id": "task-pdf-page-manager-preview",
+  "task_description": "Enhance PdfPageManager with visual thumbnail rotation, range selection input, page lightbox modal, and auto-preview after operations on small documents.",
+  "status": "completed",
+  "feature_order": ["FEAT-001"],
+  "blocked_reason": null
+}
