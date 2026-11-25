@@ -106,7 +106,7 @@ export function ConvertTool({ initialFiles }: { initialFiles?: File[] }) {
           setResults(null)
         }}
         label="Drop the files to convert"
-        hint="Photos, PDFs, Word documents, or text. Nothing is uploaded."
+        hint="Photos, PDFs, Word documents, or text."
       />
 
       <FileList
@@ -118,7 +118,7 @@ export function ConvertTool({ initialFiles }: { initialFiles?: File[] }) {
       />
 
       {files.length > 0 && target === null && (
-        <p className="rounded-[5px] border border-line bg-surface px-4 py-3 text-xs text-muted">
+        <p className="border border-line bg-surface px-4 py-3 text-xs text-muted">
           These files have no format in common, so there is nothing all of them
           can become. Convert one kind at a time, for example the photos, then
           the PDFs.
@@ -126,13 +126,13 @@ export function ConvertTool({ initialFiles }: { initialFiles?: File[] }) {
       )}
 
       {files.length > 0 && target !== null && (
-        <section className="rounded-[5px] border border-line bg-surface p-4">
+        <section className="border border-line bg-surface p-4">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
               <span className="block text-xs font-medium text-ink">
                 Convert to
               </span>
-              <div className="mt-1 inline-flex flex-wrap gap-1 rounded-[4px] border border-line bg-sunk p-0.5">
+              <div className="mt-1 inline-flex flex-wrap gap-1 border border-line bg-sunk p-0.5">
                 {targets.map((option) => (
                   <button
                     key={option}
@@ -141,7 +141,7 @@ export function ConvertTool({ initialFiles }: { initialFiles?: File[] }) {
                       setPicked(option)
                       setResults(null)
                     }}
-                    className={`rounded-[3px] px-2.5 py-1 text-xs font-medium transition-colors cursor-pointer ${
+                    className={`px-2.5 py-1 text-xs font-medium transition-colors cursor-pointer ${
                       target === option
                         ? 'bg-hover text-ink shadow-xs'
                         : 'text-muted hover:text-ink'
@@ -174,7 +174,7 @@ export function ConvertTool({ initialFiles }: { initialFiles?: File[] }) {
               type="button"
               onClick={run}
               disabled={busy}
-              className="rounded-[4px] bg-accent px-4 py-2 text-xs font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50 cursor-pointer"
+              className="bg-accent px-4 py-2 text-xs font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50 cursor-pointer"
             >
               {busy ? 'Converting…' : 'Convert'}
             </button>
@@ -193,7 +193,7 @@ export function ConvertTool({ initialFiles }: { initialFiles?: File[] }) {
           {problems.map((problem) => (
             <li
               key={problem}
-              className="rounded-[5px] border border-bad/30 bg-bad-soft px-4 py-3 text-xs text-bad"
+              className="border border-bad/30 bg-bad-soft px-4 py-3 text-xs text-bad"
             >
               {problem}
             </li>
@@ -202,7 +202,7 @@ export function ConvertTool({ initialFiles }: { initialFiles?: File[] }) {
       )}
 
       {results && results.length > 0 && (
-        <section className="rounded-[5px] border border-line bg-surface">
+        <section className="border border-line bg-surface">
           <header className="border-b border-line px-4 py-2.5">
             <h2 className="text-xs font-medium text-ink">Converted Results</h2>
             <p className="font-mono text-[11px] text-faint">
@@ -247,7 +247,7 @@ export function ConvertTool({ initialFiles }: { initialFiles?: File[] }) {
                   <button
                     type="button"
                     onClick={() => downloadBlob(result.blob, result.name)}
-                    className="ml-auto shrink-0 rounded-[3px] border border-line bg-sunk px-2.5 py-1 text-xs text-muted hover:border-edge hover:text-ink cursor-pointer"
+                    className="ml-auto shrink-0 border border-line bg-sunk px-2.5 py-1 text-xs text-muted hover:border-edge hover:text-ink cursor-pointer"
                   >
                     Download
                   </button>
@@ -264,7 +264,7 @@ export function ConvertTool({ initialFiles }: { initialFiles?: File[] }) {
             type="button"
             onClick={saveAll}
             disabled={saving}
-            className="rounded-[4px] bg-accent px-4 py-2 text-xs font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50 cursor-pointer"
+            className="bg-accent px-4 py-2 text-xs font-medium text-accent-ink hover:bg-accent-hover disabled:opacity-50 cursor-pointer"
           >
             {saving ? 'Saving…' : 'Download all'}
           </button>
