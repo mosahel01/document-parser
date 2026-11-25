@@ -2,7 +2,7 @@ type BrandMarkProps = {
   className?: string
 }
 
-/** The red rounded-square mark used in the header, footer and empty states. */
+/** The blue rounded-square mark used in the header, footer and empty states. */
 export function BrandMark({ className = 'size-8' }: BrandMarkProps) {
   return (
     <svg
