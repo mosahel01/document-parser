@@ -88,9 +88,9 @@ export function ExtractTextTool({ initialFiles }: { initialFiles?: File[] }) {
       )}
 
       {file && (
-        <div className="flex items-center justify-between rounded-[5px] border border-line bg-surface p-4">
+        <div className="flex items-center justify-between border border-line bg-surface p-4">
           <div className="flex items-center gap-3">
-            <div className="flex size-8 items-center justify-center rounded-[3px] border border-line bg-sunk text-ink font-mono text-xs uppercase">
+            <div className="flex size-8 items-center justify-center border border-line bg-sunk text-ink font-mono text-xs uppercase">
               {file.name.split('.').pop() || 'doc'}
             </div>
             <div>
@@ -104,7 +104,7 @@ export function ExtractTextTool({ initialFiles }: { initialFiles?: File[] }) {
           <button
             type="button"
             onClick={handleReset}
-            className="rounded-[3px] border border-line bg-sunk px-2.5 py-1 text-xs text-muted hover:border-edge hover:text-ink cursor-pointer"
+            className="border border-line bg-sunk px-2.5 py-1 text-xs text-muted hover:border-edge hover:text-ink cursor-pointer"
           >
             Change file
           </button>
@@ -112,20 +112,20 @@ export function ExtractTextTool({ initialFiles }: { initialFiles?: File[] }) {
       )}
 
       {busy && (
-        <div className="rounded-[5px] border border-line bg-surface p-8 text-center">
+        <div className="border border-line bg-surface p-8 text-center">
           <p className="text-xs text-muted">Reading document content and extracting text...</p>
         </div>
       )}
 
       {error && (
-        <div className="rounded-[5px] border border-bad/30 bg-bad-soft p-4 text-xs text-bad">
+        <div className="border border-bad/30 bg-bad-soft p-4 text-xs text-bad">
           <p className="font-medium">Extraction error</p>
           <p className="mt-1 font-mono text-[11px] opacity-90">{error}</p>
         </div>
       )}
 
       {result && (
-        <div className="rounded-[5px] border border-line bg-surface">
+        <div className="border border-line bg-surface">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-4 py-2.5 text-xs">
             <div className="flex items-center gap-3 font-mono text-muted">
               <span>{result.wordCount.toLocaleString()} words</span>
@@ -139,7 +139,7 @@ export function ExtractTextTool({ initialFiles }: { initialFiles?: File[] }) {
               <button
                 type="button"
                 onClick={handleCopy}
-                className="rounded-[3px] border border-line bg-sunk px-2.5 py-1 text-xs text-muted hover:border-edge hover:text-ink cursor-pointer"
+                className="border border-line bg-sunk px-2.5 py-1 text-xs text-muted hover:border-edge hover:text-ink cursor-pointer"
               >
                 {copied ? 'Copied!' : 'Copy text'}
               </button>
@@ -151,7 +151,7 @@ export function ExtractTextTool({ initialFiles }: { initialFiles?: File[] }) {
               readOnly
               value={result.text}
               rows={16}
-              className="w-full rounded-[4px] border border-line bg-sunk p-3 font-mono text-xs text-ink outline-none resize-y"
+              className="w-full border border-line bg-sunk p-3 font-mono text-xs text-ink outline-none resize-y"
             />
           </div>
         </div>
@@ -164,14 +164,14 @@ export function ExtractTextTool({ initialFiles }: { initialFiles?: File[] }) {
           <button
             type="button"
             onClick={handleCopy}
-            className="rounded-[4px] border border-line bg-surface px-4 py-2 text-xs font-medium text-ink hover:bg-hover cursor-pointer"
+            className="border border-line bg-surface px-4 py-2 text-xs font-medium text-ink hover:bg-hover cursor-pointer"
           >
             {copied ? 'Copied' : 'Copy'}
           </button>
           <button
             type="button"
             onClick={handleDownload}
-            className="rounded-[4px] bg-accent px-4 py-2 text-xs font-medium text-accent-ink hover:bg-accent-hover cursor-pointer"
+            className="bg-accent px-4 py-2 text-xs font-medium text-accent-ink hover:bg-accent-hover cursor-pointer"
           >
             Download as .txt
           </button>
