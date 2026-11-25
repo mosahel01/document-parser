@@ -63,7 +63,7 @@ export function MobileNavigation({
   // If the window grows past the breakpoint, the menu is no longer needed.
   useEffect(() => {
     if (!open) return
-    const query = window.matchMedia('(min-width: 1280px)')
+    const query = window.matchMedia('(min-width: 768px)')
     function handleChange() {
       if (query.matches) setOpen(false)
     }
@@ -79,7 +79,7 @@ export function MobileNavigation({
         onClick={() => setOpen((value) => !value)}
         aria-label={open ? 'Close navigation menu' : 'Open navigation menu'}
         aria-expanded={open}
-        className="flex size-9 shrink-0 cursor-pointer flex-col items-center justify-center gap-1 text-muted transition-colors hover:text-ink xl:hidden"
+        className="flex size-9 shrink-0 cursor-pointer flex-col items-center justify-center gap-1 text-muted transition-colors hover:text-ink md:hidden"
       >
         <span className={`h-0.5 w-5 rounded-full bg-current transition-all duration-200 ${open ? 'rotate-45 translate-y-[6px]' : ''}`} />
         <span className={`h-0.5 w-5 rounded-full bg-current transition-all duration-200 ${open ? 'opacity-0' : ''}`} />
@@ -92,7 +92,7 @@ export function MobileNavigation({
           role="dialog"
           aria-modal="true"
           aria-label="Site navigation"
-          className="fixed inset-0 z-50 overflow-y-auto bg-paper p-5 xl:hidden"
+          className="fixed inset-0 z-50 overflow-y-auto bg-paper p-5 md:hidden"
         >
           <div className="mb-6 flex items-center justify-between">
             <button

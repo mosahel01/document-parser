@@ -748,19 +748,19 @@ export function HomeTool({ onStart, onSelectTool, initialFilter }: HomeToolProps
       </section>
 
       {/* Tool directory */}
-      <section id="tools" className="scroll-mt-24 py-16 sm:py-20">
+      <section id="tools" className="scroll-mt-24 pb-20 pt-[72px]">
         <div className="mx-auto max-w-[1200px] px-5">
-          <div className="mb-10 text-center">
-            <h2 className="text-2xl font-extrabold tracking-[-0.03em] text-ink sm:text-4xl">
+          <div className="mb-12 text-center">
+            <h2 className="text-[clamp(24px,3.5vw,36px)] font-extrabold tracking-[-0.03em] text-ink">
               All PDF Tools
             </h2>
-            <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-muted">
-              Everything you need to work with PDFs, images, and documents in one
-              place. Fast, reliable, and secure.
+            <p className="mx-auto mt-3 max-w-[500px] text-base leading-relaxed text-muted">
+              Everything you need to work with PDFs in one place. All tools are
+              fast, reliable, and secure.
             </p>
           </div>
 
-          <div className="mb-8 flex flex-wrap justify-center gap-2">
+          <div className="mb-9 flex flex-wrap justify-center gap-2">
             {filters.map((item) => {
               const selected = item.id === filter
               return (
@@ -781,8 +781,7 @@ export function HomeTool({ onStart, onSelectTool, initialFilter }: HomeToolProps
             })}
           </div>
 
-
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(190px,1fr))] gap-4">
             {visibleTools.map((tool) => (
               <ToolCard
                 key={tool.id}

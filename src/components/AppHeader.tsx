@@ -83,7 +83,7 @@ export function AppHeader({
             </button>
           </div>
 
-          <div className="ml-2 hidden xl:block">
+          <div className="ml-2 hidden md:block">
             <NavigationMenu
               categories={categories}
               activeToolId={activeToolId}
@@ -104,7 +104,7 @@ export function AppHeader({
             <button
               type="button"
               onClick={onGoHome}
-              className="hidden cursor-pointer rounded-md border-2 border-accent px-4 py-2 text-sm font-semibold text-accent transition-colors hover:bg-accent-soft sm:inline-flex"
+              className="hidden cursor-pointer rounded-md border-2 border-accent px-4 py-2 text-sm font-semibold text-accent transition-colors hover:bg-accent-soft md:inline-flex"
             >
               Browse all tools
             </button>
