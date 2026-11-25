@@ -71,8 +71,8 @@ export function FilePreview({ name, blob, variant = 'thumb' }: FilePreviewProps)
         alt=""
         className={
           variant === 'wide'
-            ? 'max-h-56 w-full rounded-lg bg-surface object-contain ring-1 ring-line'
-            : 'size-9 shrink-0 rounded object-cover ring-1 ring-line'
+            ? 'max-h-56 w-full bg-surface object-contain ring-1 ring-line'
+            : 'size-9 shrink-0 object-cover ring-1 ring-line'
         }
       />
     )
@@ -85,7 +85,7 @@ export function FilePreview({ name, blob, variant = 'thumb' }: FilePreviewProps)
       <pre
         className={
           variant === 'wide'
-            ? 'max-h-40 overflow-hidden whitespace-pre-wrap rounded-lg bg-sunk p-3 text-xs text-muted'
+            ? 'max-h-40 overflow-hidden whitespace-pre-wrap bg-sunk p-3 text-xs text-muted'
             : 'max-w-56 overflow-hidden whitespace-pre-wrap text-xs text-muted'
         }
       >
@@ -98,8 +98,8 @@ export function FilePreview({ name, blob, variant = 'thumb' }: FilePreviewProps)
     <span
       className={
         variant === 'wide'
-          ? 'inline-flex rounded bg-hover px-2 py-1 text-xs font-medium text-muted'
-          : 'inline-flex w-9 shrink-0 justify-center rounded bg-hover px-1 py-1 text-[0.7rem] font-medium text-muted'
+          ? 'inline-flex bg-hover px-2 py-1 text-xs font-medium text-muted'
+          : 'inline-flex w-9 shrink-0 justify-center bg-hover px-1 py-1 text-[0.7rem] font-medium text-muted'
       }
     >
       {extensionLabel(name)}
