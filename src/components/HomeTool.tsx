@@ -29,12 +29,9 @@ type ToolTag =
 type HomeToolItem = {
   id: string
   title: string
-  description: string
   category: string
   tags: ToolTag[]
   icon: ReactElement
-  color: string
-  backgroundColor: string
   popular?: boolean
   soon?: boolean
   badge?: string
@@ -63,12 +60,9 @@ const catalog: HomeToolItem[] = [
   {
     id: 'merge',
     title: 'Merge PDF',
-    description: 'Combine PDFs in the order you want with the easiest PDF merger available.',
     category: 'PDF',
     tags: ['pdf'],
     popular: true,
-    color: '#e2173a',
-    backgroundColor: '#fff0f2',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <path d="M9 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9M9 3v6h12M9 3l6 6" />
@@ -78,12 +72,9 @@ const catalog: HomeToolItem[] = [
   {
     id: 'extract',
     title: 'Split PDF',
-    description: 'Separate one page or a whole set for easy conversion into independent PDF files.',
     category: 'PDF',
     tags: ['pdf', 'extract'],
     popular: true,
-    color: '#3b82f6',
-    backgroundColor: '#eff6ff',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <path d="M12 2v20M2 12h20" />
@@ -93,11 +84,8 @@ const catalog: HomeToolItem[] = [
   {
     id: 'organize',
     title: 'Organize PDF',
-    description: 'Sort, rotate, delete and reorder PDF pages with drag-and-drop ease.',
     category: 'PDF',
     tags: ['pdf'],
-    color: '#8b5cf6',
-    backgroundColor: '#ede9fe',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <rect x="2" y="3" width="6" height="4" rx="1" />
@@ -110,12 +98,9 @@ const catalog: HomeToolItem[] = [
   {
     id: 'compressPdf',
     title: 'Compress PDF',
-    description: 'Reduce file size while optimizing for maximal PDF quality.',
     category: 'PDF',
     tags: ['pdf'],
     popular: true,
-    color: '#f59e0b',
-    backgroundColor: '#fef3c7',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
@@ -126,11 +111,8 @@ const catalog: HomeToolItem[] = [
   {
     id: 'crop',
     title: 'Crop PDF',
-    description: 'Trim margins from every page without altering the contents.',
     category: 'PDF',
     tags: ['pdf'],
-    color: '#10b981',
-    backgroundColor: '#d1fae5',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <path d="M6 2v14a2 2 0 0 0 2 2h14M18 22V8a2 2 0 0 0-2-2H2" />
@@ -140,11 +122,8 @@ const catalog: HomeToolItem[] = [
   {
     id: 'number',
     title: 'Add Page Numbers',
-    description: 'Add page numbers into PDFs with ease. Choose your position and typography.',
     category: 'PDF',
     tags: ['pdf'],
-    color: '#e2173a',
-    backgroundColor: '#fff0f2',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <path d="M9 10h.01M15 10h.01M12 10h.01M12 14h.01M6 10h.01M18 10h.01M6 14h.01M18 14h.01M9 14h.01M15 14h.01" />
@@ -155,11 +134,8 @@ const catalog: HomeToolItem[] = [
   {
     id: 'watermark',
     title: 'Watermark PDF',
-    description: 'Stamp text over your PDF in seconds. Choose the typography, transparency and position.',
     category: 'PDF',
     tags: ['pdf'],
-    color: '#06b6d4',
-    backgroundColor: '#ecfeff',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
@@ -169,11 +145,8 @@ const catalog: HomeToolItem[] = [
   {
     id: 'toImages',
     title: 'PDF to JPG',
-    description: 'Convert each PDF page into a JPG or extract all images from a PDF.',
     category: 'PDF',
     tags: ['pdf', 'extract'],
-    color: '#e2173a',
-    backgroundColor: '#fff0f2',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <rect x="3" y="3" width="18" height="18" rx="2" />
@@ -185,12 +158,9 @@ const catalog: HomeToolItem[] = [
   {
     id: 'imagesToPdf',
     title: 'JPG to PDF',
-    description: 'Convert images to PDF in seconds. Easily adjust orientation and margins.',
     category: 'Images',
     tags: ['pdf', 'images'],
     popular: true,
-    color: '#10b981',
-    backgroundColor: '#d1fae5',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <rect x="3" y="3" width="18" height="18" rx="2" />
@@ -202,12 +172,9 @@ const catalog: HomeToolItem[] = [
   {
     id: 'image',
     title: 'Crop Image',
-    description: 'Drag a crop box, straighten, rotate, and resize photos with precision.',
     category: 'Images',
     tags: ['images'],
     popular: true,
-    color: '#8b5cf6',
-    backgroundColor: '#ede9fe',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <path d="M6 2v14a2 2 0 0 0 2 2h14M18 22V8a2 2 0 0 0-2-2H2" />
@@ -217,12 +184,9 @@ const catalog: HomeToolItem[] = [
   {
     id: 'convert',
     title: 'Convert Files',
-    description: 'Convert between PNG, JPG, WebP, PDF, Word, HTML, Markdown, and text.',
     category: 'Documents',
     tags: ['images', 'documents'],
     popular: true,
-    color: '#3b82f6',
-    backgroundColor: '#eff6ff',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <path d="M20 7h-9m0 0 3-3m-3 3 3 3M4 17h9m0 0-3-3m3 3-3 3" />
@@ -232,12 +196,9 @@ const catalog: HomeToolItem[] = [
   {
     id: 'word',
     title: 'Word to PDF',
-    description: 'Read DOCX files, or move the words between Word and PDF in either direction.',
     category: 'Documents',
     tags: ['documents'],
     popular: true,
-    color: '#2563eb',
-    backgroundColor: '#eff6ff',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
@@ -248,11 +209,8 @@ const catalog: HomeToolItem[] = [
   {
     id: 'extractText',
     title: 'Extract Text',
-    description: 'Pull text paragraphs from PDF, DOCX, and text files in one click.',
     category: 'Documents',
     tags: ['documents', 'extract'],
-    color: '#06b6d4',
-    backgroundColor: '#ecfeff',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <path d="M4 6h16M4 12h10M4 18h14" />
@@ -262,11 +220,8 @@ const catalog: HomeToolItem[] = [
   {
     id: 'replace',
     title: 'Find & Replace',
-    description: 'Search and replace text or regular expressions across several files.',
     category: 'Documents',
     tags: ['documents', 'developer'],
-    color: '#8b5cf6',
-    backgroundColor: '#ede9fe',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <path d="m21 21-4.3-4.3M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm-2-8h4" />
@@ -276,12 +231,9 @@ const catalog: HomeToolItem[] = [
   {
     id: 'zip',
     title: 'Zip / Unzip',
-    description: 'Pack files into a zip archive or inspect and extract its contents.',
     category: 'Archive',
     tags: ['archive', 'extract'],
     popular: true,
-    color: '#f59e0b',
-    backgroundColor: '#fef3c7',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <path d="M21 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v3" />
@@ -294,11 +246,8 @@ const catalog: HomeToolItem[] = [
   {
     id: 'gzip',
     title: 'Gzip',
-    description: 'Compress single files into .gz archives, or unpack existing ones.',
     category: 'Archive',
     tags: ['archive', 'developer'],
-    color: '#10b981',
-    backgroundColor: '#d1fae5',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <path d="M12 3v12m0 0-4-4m4 4 4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
@@ -308,11 +257,8 @@ const catalog: HomeToolItem[] = [
   {
     id: 'rename',
     title: 'Batch Rename',
-    description: 'Rename files with numbering and optional extension conversion.',
     category: 'Archive',
     tags: ['archive', 'developer'],
-    color: '#e2173a',
-    backgroundColor: '#fff0f2',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
@@ -322,11 +268,8 @@ const catalog: HomeToolItem[] = [
   {
     id: 'jsonFormatter',
     title: 'JSON Formatter',
-    description: 'Validate, format, indent (2/4/tab), minify, and sort keys in JSON.',
     category: 'Developer',
     tags: ['developer'],
-    color: '#374151',
-    backgroundColor: '#f3f4f6',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <path d="M8 3H7a2 2 0 0 0-2 2v3a2 2 0 0 1-2 2 2 2 0 0 1 2 2v3a2 2 0 0 0 2 2h1M16 3h1a2 2 0 0 1 2 2v3a2 2 0 0 0 2 2 2 2 0 0 0-2 2v3a2 2 0 0 1-2 2h-1" />
@@ -336,13 +279,8 @@ const catalog: HomeToolItem[] = [
   {
     id: 'unlockPdf',
     title: 'Unlock PDF',
-    description: 'Remove PDF password security, giving you the freedom to use your PDFs as you want.',
     category: 'PDF',
     tags: ['pdf'],
-    soon: true,
-    badge: 'Soon',
-    color: '#e2173a',
-    backgroundColor: '#fff0f2',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <rect x="3" y="11" width="18" height="11" rx="2" />
@@ -353,13 +291,8 @@ const catalog: HomeToolItem[] = [
   {
     id: 'protectPdf',
     title: 'Protect PDF',
-    description: 'Protect PDF files with a password. Encrypt documents to prevent unauthorized access.',
     category: 'PDF',
     tags: ['pdf'],
-    soon: true,
-    badge: 'Soon',
-    color: '#374151',
-    backgroundColor: '#f3f4f6',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <rect x="3" y="11" width="18" height="11" rx="2" />
@@ -370,13 +303,10 @@ const catalog: HomeToolItem[] = [
   {
     id: 'ocrPdf',
     title: 'OCR PDF',
-    description: 'Easily convert scanned PDF into searchable and selectable documents.',
     category: 'PDF',
     tags: ['pdf', 'extract'],
     soon: true,
     badge: 'Soon',
-    color: '#3b82f6',
-    backgroundColor: '#eff6ff',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M7 8h10M7 12h6M7 16h8" />
@@ -386,13 +316,8 @@ const catalog: HomeToolItem[] = [
   {
     id: 'signPdf',
     title: 'Sign PDF',
-    description: 'Draw, type or upload your signature to electronically sign documents.',
     category: 'PDF',
     tags: ['pdf'],
-    soon: true,
-    badge: 'Soon',
-    color: '#f59e0b',
-    backgroundColor: '#fef3c7',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
@@ -402,13 +327,8 @@ const catalog: HomeToolItem[] = [
   {
     id: 'repairPdf',
     title: 'Repair PDF',
-    description: 'Repair a damaged PDF and recover data from corrupt PDF files.',
     category: 'PDF',
     tags: ['pdf'],
-    soon: true,
-    badge: 'Soon',
-    color: '#f59e0b',
-    backgroundColor: '#fef3c7',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.5-2.5 2.5-2.5Z" />
@@ -418,13 +338,8 @@ const catalog: HomeToolItem[] = [
   {
     id: 'redactPdf',
     title: 'Redact PDF',
-    description: 'Permanently remove sensitive text and images from a document.',
     category: 'PDF',
     tags: ['pdf'],
-    soon: true,
-    badge: 'Soon',
-    color: '#e2173a',
-    backgroundColor: '#fff0f2',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <path d="m3 3 18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M9.9 5.2A10.4 10.4 0 0 1 12 5c7 0 10 7 10 7a17.8 17.8 0 0 1-3.1 4.1M6.6 6.6C3.7 8.4 2 12 2 12s3 7 10 7a10.4 10.4 0 0 0 4.2-.9" />
@@ -434,13 +349,8 @@ const catalog: HomeToolItem[] = [
   {
     id: 'pdfToPowerPoint',
     title: 'PDF to PowerPoint',
-    description: 'Turn your PDF files into easy-to-edit PPT and PPTX slideshows.',
     category: 'Documents',
     tags: ['pdf', 'documents'],
-    soon: true,
-    badge: 'Soon',
-    color: '#f97316',
-    backgroundColor: '#fff7ed',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <rect x="2" y="3" width="20" height="14" rx="2" />
@@ -451,13 +361,8 @@ const catalog: HomeToolItem[] = [
   {
     id: 'pdfToExcel',
     title: 'PDF to Excel',
-    description: 'Pull data straight from PDFs into Excel spreadsheets in a few seconds.',
     category: 'Documents',
     tags: ['pdf', 'documents'],
-    soon: true,
-    badge: 'Soon',
-    color: '#10b981',
-    backgroundColor: '#d1fae5',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <path d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z" />
@@ -467,13 +372,10 @@ const catalog: HomeToolItem[] = [
   {
     id: 'scanToPdf',
     title: 'Scan to PDF',
-    description: 'Capture documents with your phone camera and convert them to PDF.',
     category: 'PDF',
     tags: ['pdf', 'images'],
     soon: true,
     badge: 'Soon',
-    color: '#10b981',
-    backgroundColor: '#d1fae5',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
@@ -484,13 +386,10 @@ const catalog: HomeToolItem[] = [
   {
     id: 'htmlToPdf',
     title: 'HTML to PDF',
-    description: 'Convert webpages in HTML to PDF. Copy and paste the URL of the page.',
     category: 'Documents',
     tags: ['documents'],
     soon: true,
     badge: 'Soon',
-    color: '#8b5cf6',
-    backgroundColor: '#ede9fe',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
@@ -629,7 +528,7 @@ export function HomeTool({ onStart, onSelectTool, initialFilter }: HomeToolProps
           </h1>
           <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-muted">
             Merge, split, compress, convert, rotate, watermark and edit PDFs
-            with just a few clicks — free, online, and entirely in your browser.
+            with just a few clicks — online and entirely in your browser.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <button
@@ -651,7 +550,7 @@ export function HomeTool({ onStart, onSelectTool, initialFilter }: HomeToolProps
                 <polyline points="17 8 12 3 7 8" />
                 <line x1="12" y1="3" x2="12" y2="15" />
               </svg>
-              Start for free
+              Get started
             </button>
             <button
               type="button"
@@ -748,17 +647,8 @@ export function HomeTool({ onStart, onSelectTool, initialFilter }: HomeToolProps
       </section>
 
       {/* Tool directory */}
-      <section id="tools" className="scroll-mt-24 pb-20 pt-[72px]">
+      <section id="tools" className="scroll-mt-24 pb-20 pt-8">
         <div className="mx-auto max-w-[1200px] px-5">
-          <div className="mb-12 text-center">
-            <h2 className="text-[clamp(24px,3.5vw,36px)] font-extrabold tracking-[-0.03em] text-ink">
-              All PDF Tools
-            </h2>
-            <p className="mx-auto mt-3 max-w-[500px] text-base leading-relaxed text-muted">
-              Everything you need to work with PDFs in one place. All tools are
-              fast, reliable, and secure.
-            </p>
-          </div>
 
           <div className="mb-9 flex flex-wrap justify-center gap-2">
             {filters.map((item) => {
@@ -787,12 +677,9 @@ export function HomeTool({ onStart, onSelectTool, initialFilter }: HomeToolProps
                 key={tool.id}
                 id={tool.id}
                 title={tool.title}
-                description={tool.description}
                 icon={tool.icon}
                 category={tool.category}
-                color={tool.color}
-                backgroundColor={tool.backgroundColor}
-                badge={tool.soon ? 'Soon' : 'Free'}
+                badge={tool.soon ? 'Soon' : undefined}
                 comingSoon={tool.soon}
                 onClick={tool.soon ? undefined : () => onSelectTool(tool.id)}
               />
@@ -806,29 +693,6 @@ export function HomeTool({ onStart, onSelectTool, initialFilter }: HomeToolProps
               heavier engine, and they are planned rather than available now.
             </p>
           )}
-        </div>
-      </section>
-
-      {/* Feature banner */}
-      <section className="bg-gradient-to-r from-accent to-[#ff5272] py-14 text-white">
-        <div className="mx-auto flex max-w-[1200px] flex-col items-center justify-between gap-8 px-5 text-center md:flex-row md:text-left">
-          <div>
-            <h2 className="text-2xl font-extrabold tracking-[-0.02em] sm:text-3xl">
-              Work smarter with MergePDF
-            </h2>
-            <p className="mt-3 max-w-lg text-sm leading-relaxed text-white/90">
-              No account, no upload, no waiting in a queue. Your files are
-              processed on your own device, which makes every task private and
-              instant.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={openPicker}
-            className="shrink-0 cursor-pointer rounded-lg bg-white px-7 py-3 text-sm font-bold text-accent transition-colors hover:bg-accent-soft"
-          >
-            Get started free
-          </button>
         </div>
       </section>
 
@@ -870,7 +734,7 @@ export function HomeTool({ onStart, onSelectTool, initialFilter }: HomeToolProps
             { value: String(availableCount), label: 'tools ready to use' },
             { value: '100%', label: 'processed on your device' },
             { value: '0', label: 'bytes uploaded' },
-            { value: '$0', label: 'free, with no account' },
+            { value: '$0', label: 'with no account' },
           ].map((stat) => (
             <div key={stat.label}>
               <div className="text-3xl font-extrabold tracking-[-0.03em] text-accent sm:text-5xl">
@@ -882,92 +746,6 @@ export function HomeTool({ onStart, onSelectTool, initialFilter }: HomeToolProps
         </div>
       </section>
 
-      {/* Privacy */}
-      <section id="privacy" className="scroll-mt-24 py-16 sm:py-20">
-        <div className="mx-auto flex max-w-[1100px] flex-col items-center gap-12 px-5 lg:flex-row lg:gap-16">
-          <div className="min-w-0 flex-1">
-            <h2 className="text-2xl font-extrabold tracking-[-0.03em] text-ink sm:text-4xl">
-              Your privacy and security come first
-            </h2>
-            <p className="mt-4 max-w-xl text-sm leading-relaxed text-muted">
-              The safest file is the one that never leaves your device. Every
-              tool here runs in the browser, so there is no server copy, no
-              upload, and nothing left behind.
-            </p>
-            <div className="mt-7 flex flex-col gap-5">
-              {[
-                {
-                  title: 'No upload',
-                  body: 'Your files never travel over the network. The work happens in this tab.',
-                  icon: (
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                    </svg>
-                  ),
-                },
-                {
-                  title: 'No account needed',
-                  body: 'There is nothing to sign up for and no profile to maintain.',
-                  icon: (
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <rect x="3" y="11" width="18" height="11" rx="2" />
-                      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                    </svg>
-                  ),
-                },
-                {
-                  title: 'No storage',
-                  body: 'Close the tab and the files are gone. There is no bucket to clean up.',
-                  icon: (
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <circle cx="12" cy="12" r="10" />
-                      <path d="M12 6v6l4 2" />
-                    </svg>
-                  ),
-                },
-                {
-                  title: 'Open and inspectable',
-                  body: 'The tools are plain browser code, so the handling is visible rather than promised.',
-                  icon: (
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M16 18l6-6-6-6M8 6l-6 6 6 6" />
-                    </svg>
-                  ),
-                },
-              ].map((feature) => (
-                <div key={feature.title} className="flex items-start gap-3.5">
-                  <span className="flex size-10 shrink-0 items-center justify-center rounded-[10px] bg-accent-soft text-accent [&>svg]:size-5">
-                    {feature.icon}
-                  </span>
-                  <div>
-                    <h3 className="text-sm font-bold text-ink">{feature.title}</h3>
-                    <p className="mt-0.5 text-xs leading-relaxed text-muted">
-                      {feature.body}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="flex min-w-0 flex-1 items-center justify-center rounded-2xl border-[1.5px] border-line bg-surface p-8">
-            <div className="flex size-40 items-center justify-center rounded-full border-2 border-accent bg-gradient-to-br from-accent-soft to-paper">
-              <svg
-                viewBox="0 0 24 24"
-                className="size-[72px] text-accent"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                aria-hidden="true"
-              >
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                <path d="m9 12 2 2 4-4" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Pricing */}
       <section className="bg-surface py-16 sm:py-20">
         <div className="mx-auto max-w-[1100px] px-5">
@@ -976,18 +754,18 @@ export function HomeTool({ onStart, onSelectTool, initialFilter }: HomeToolProps
               Simple, transparent pricing
             </h2>
             <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-muted">
-              Start for free. There is no paid tier today, and the roadmap below
+              Get started. There is no paid tier today, and the roadmap below
               is clearly marked as planned.
             </p>
           </div>
 
           <div className="mt-12 grid gap-6 md:grid-cols-3">
-            <div className="relative rounded-2xl border-[1.5px] border-accent bg-paper px-7 py-8 shadow-[0_0_0_3px_rgba(226,23,58,0.08)]">
+            <div className="relative rounded-2xl border-[1.5px] border-accent bg-paper px-7 py-8 shadow-[0_0_0_3px_rgba(0,81,242,0.10)]">
               <span className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-accent px-3.5 py-1 text-[10px] font-bold uppercase tracking-[0.05em] text-white">
-                Free forever
+                Browser tools
               </span>
               <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted">
-                Free
+                Standard
               </div>
               <div className="mt-2 flex items-start gap-0.5">
                 <span className="mt-2 text-xl font-bold text-ink">$</span>
@@ -1119,21 +897,21 @@ export function HomeTool({ onStart, onSelectTool, initialFilter }: HomeToolProps
                 name: 'Students & researchers',
                 role: 'Reading, citing, and sharing papers',
                 body: 'Merge readings, split a chapter out of a book, and pull the words into notes without sending anything to a server.',
-                color: '#3b82f6',
+                color: '#0051f2',
               },
               {
                 initials: 'SM',
                 name: 'Small teams',
                 role: 'Reports, invoices, and handovers',
                 body: 'Compress a scan, number the pages, and watermark a draft before it goes out — all from the same tab.',
-                color: '#10b981',
+                color: '#0051f2',
               },
               {
                 initials: 'PV',
                 name: 'Privacy-first work',
                 role: 'Confidential and personal files',
                 body: 'Contracts, medical letters, and identity documents stay on the device that opened them. There is no upload to trust.',
-                color: '#8b5cf6',
+                color: '#0051f2',
               },
             ].map((item) => (
               <div
@@ -1195,7 +973,7 @@ export function HomeTool({ onStart, onSelectTool, initialFilter }: HomeToolProps
                 <span className="size-2 rounded-full bg-[#febc2e]" />
                 <span className="size-2 rounded-full bg-[#28c840]" />
               </div>
-              <div className="flex flex-col items-center justify-center gap-3 rounded-xl bg-gradient-to-br from-accent to-[#ff5272] px-6 py-12 text-center text-white">
+              <div className="flex flex-col items-center justify-center gap-3 rounded-xl bg-gradient-to-br from-accent to-[#4d8bff] px-6 py-12 text-center text-white">
                 <BrandMark className="size-12" />
                 <span className="text-lg font-bold">MergePDF</span>
                 <small className="text-[11px] text-white/80">
