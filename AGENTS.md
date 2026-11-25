@@ -100,12 +100,22 @@ and "after", instead of only counting matches.
 ### Editing pages
 
 The PDF tab's Pages mode lists one card per output page: turn it, delete it,
-copy it, drag it, or drop another PDF in to pull pages from it. Saving rebuilds
-a fresh document from that list (`pagesToPdf`), so the original file is never
-rewritten and the same page can appear twice with a different rotation. A turn
-is added to the rotation the page already had, so a sideways scan comes out
-upright instead of upside down. Thumbnails come from `renderPageThumbs`, shared
-with the split view; the page editor keeps its state while you switch modes.
+copy it, crop it, drag it, or drop another PDF in to pull pages from it. Saving
+rebuilds a fresh document from that list (`pagesToPdf`), so the original file is
+never rewritten and the same page can appear twice with a different rotation or
+crop. A turn is added to the rotation the page already had, so a sideways scan
+comes out upright instead of upside down. Thumbnails come from
+`renderPageThumbs`, shared with the split view; the page editor keeps its state
+while you switch modes.
+
+Pages are picked three ways: click one at a time, select all, or type a range
+(`1-3, 7`). Every operation — rotate, crop, copy, delete — acts on the picked
+set, and the large preview on the right follows the page last touched, turning
+with it and shading everything a crop would remove. A turn is a CSS rotation on
+the preview, so the picture updates instantly and no page is redrawn until it is
+saved. A page can carry its own crop margins (`PageSlot.crop`), applied by
+`pagesToPdf`; the same geometry lives in `src/lib/pageGeometry.ts`, shared with
+the separate crop tool rather than copied.
 
 ### Finishing PDFs
 
@@ -171,16 +181,27 @@ converter, the JPEG path fills white first, because JPEG has no transparency.
 
 ### Look
 
+The product name is **MergePDF** (mergepdf.com). The look follows the supplied
+`generated.html` reference: a blue brand (`#0051f2`), white cards on pale grey,
+rounded corners, a hero, a filterable tool grid, and roomy marketing sections.
+The header carries a dismissible privacy banner, blue wordmark, category
+dropdowns, search, theme switch, and a single blue action. The footer is dark and
+keeps only real destinations.
+
 The theme is a class on `<html>`, flipped by `ThemeToggle` and remembered in
-`localStorage` under `document-toolkit-theme`; the inline script in `index.html`
-sets it before the first paint, so a dark-mode visitor never sees a flash of
-white. Every colour comes from a token in `index.css` (`paper`, `surface`,
-`sunk`, `hover`, `line`, `edge`, `ink`, `muted`, `faint`, `accent`, `good`,
+`localStorage` under `mergepdf-theme`; the inline script in `index.html` sets it
+before the first paint, so a dark-mode visitor never sees a flash of white. Every
+colour comes from a token in `index.css` (`paper`, `surface`, `sunk`, `hover`,
+`line`, `edge`, `ink`, `muted`, `faint`, `accent`, `accent-soft`, `pink`, `good`,
 `bad`, `warn`). Components therefore carry no `dark:` variants: swapping the
-token values under `.dark` restyles the whole app. Ubuntu and Ubuntu Mono are
-bundled through `@fontsource`, so the page looks the same on a machine that has
-never installed them. The column is `max-w-5xl`; the old narrow measure was
-right for mono but wasted a wide screen.
+token values under `.dark` restyles the whole app.
+
+Inter is bundled through `@fontsource` for the interface and Ubuntu Mono remains
+for technical labels, so the page looks the same on a machine that has never
+installed either. The old global square-corner rule is gone; form controls take a
+small radius and `@layer components` rounds bordered panels, while explicit
+`rounded-full`/`rounded-none` utilities still win. Home uses the full width with
+its own `max-w-[1200px]` sections; tool pages stay in a `max-w-6xl` column.
 
 ## Who it is for
 
@@ -195,7 +216,8 @@ billing are deliberately deferred.
 | Language | TypeScript everywhere | One language; the owner is most comfortable in TS |
 | Framework | React + Vite | Explicit and inspectable; no hidden conventions |
 | Styling | Tailwind CSS v4 | Fast to write, readable in markup, nothing to architect yet |
-| Colour and fonts | CSS tokens, Ubuntu bundled | One token set drives both themes; a bundled font looks the same everywhere |
+| Colour and fonts | CSS tokens, Inter + Ubuntu Mono bundled | One token set drives both themes; a bundled font looks the same everywhere |
+| Reference design | `generated.html`, adapted honestly | Keeps the familiar PDF-tool layout without fake pricing, reviews, or uploads |
 | Backend later | Node + Fastify | Small, well documented, TypeScript friendly |
 | Heavy jobs later | CLI tools in a container | Do not reimplement LibreOffice or Tesseract |
 | Database | None for now | Add when there is real data worth keeping |
@@ -262,7 +284,7 @@ billing are deliberately deferred.
   to PDF and PDF to Word as text *(done, basic)*, PDF compression *(done,
   rasterised)*, PDF cropping *(done)*, page numbers and watermark *(done)*,
   PDF to JPG/PNG *(done)*, several photos to one PDF *(done)*.
-- **Phase 2** — server and container for faithful DOCX to PDF and OCR.
+- **Phase 2** — server and container for faithful DOCX to PDF, OCR, unlocking, protecting, signing, repairing, and redacting PDFs.
 - **Phase 3** — accounts, history, limits, expiry and cleanup.
 - **Phase 4** — remaining features, decided later.
 
