@@ -1,5 +1,6 @@
 import { PDFDocument, RotationTypes, degrees } from 'pdf-lib'
 import { formatSize } from '../lib/format'
+import { cropBoxFor, type CropMargins } from '../lib/pageGeometry'
 
 /** Each page becomes a whole PDF, so a huge document would fill memory fast. */
 export const MAX_SPLIT_PAGES = 200
@@ -83,7 +84,7 @@ export async function openPdf<T>(
 }
 
 export async function savePdf(document: PDFDocument): Promise<Blob> {
-  document.setProducer('Document Toolkit')
+  document.setProducer('MergePDF')
   const bytes = await document.save()
   // pdf-lib types the buffer loosely; Blob needs a plain ArrayBuffer.
   return new Blob([bytes as Uint8Array<ArrayBuffer>], {
@@ -121,6 +122,8 @@ export type PageSlot = {
   page: number
   /** Degrees to add to the page's own rotation: 0, 90, 180, or 270. */
   turn: number
+  /** Optional margins to trim from this copy, as visible-page percentages. */
+  crop?: CropMargins
 }
 
 /**
@@ -166,7 +169,16 @@ export async function pagesToPdf(
     const own = page.getRotation()
     const ownAngle =
       own.type === RotationTypes.Radians ? (own.angle * 180) / Math.PI : own.angle
-    page.setRotation(degrees(normaliseAngle(ownAngle + slot.turn)))
+    const turn = normaliseAngle(ownAngle + slot.turn)
+    page.setRotation(degrees(turn))
+
+    if (slot.crop) {
+      const next = cropBoxFor(page.getCropBox(), slot.crop, turn)
+      if (next.width >= 10 && next.height >= 10) {
+        page.setCropBox(next.x, next.y, next.width, next.height)
+      }
+    }
+
     output.addPage(page)
   }
 
