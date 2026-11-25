@@ -579,7 +579,7 @@ function ActionButton({
   )
 }
 
-export function HomeTool({ onStart, onSelectTool, onOpenSearch, initialFilter }: HomeToolProps) {
+export function HomeTool({ onStart, onSelectTool, initialFilter }: HomeToolProps) {
   const [files, setFiles] = useState<File[]>([])
   const [filter, setFilter] = useState<FilterId>(() => {
     const valid = filters.find((f) => f.id === initialFilter)
@@ -597,7 +597,6 @@ export function HomeTool({ onStart, onSelectTool, onOpenSearch, initialFilter }:
   })
 
   const availableCount = catalog.filter((tool) => !tool.soon).length
-  const activeFilter = filters.find((item) => item.id === filter) ?? filters[0]
 
   function scrollTo(id: string) {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
@@ -770,7 +769,7 @@ export function HomeTool({ onStart, onSelectTool, onOpenSearch, initialFilter }:
                   type="button"
                   onClick={() => setFilter(item.id)}
                   aria-pressed={selected}
-                  className={`cursor-pointer rounded-full border-[1.5px] px-4 py-1.5 text-xs font-semibold transition-colors ${
+                  className={`cursor-pointer rounded-full border-[1.5px] px-[18px] py-[8px] text-[13px] font-semibold transition-colors ${
                     selected
                       ? 'border-accent bg-accent text-accent-ink'
                       : 'border-line bg-paper text-muted hover:border-accent hover:text-accent'
@@ -782,35 +781,6 @@ export function HomeTool({ onStart, onSelectTool, onOpenSearch, initialFilter }:
             })}
           </div>
 
-          <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <span className="text-xs font-medium text-muted">
-              Showing <strong className="text-ink">{visibleTools.length}</strong>{' '}
-              {visibleTools.length === 1 ? 'tool' : 'tools'} in{' '}
-              <strong className="text-ink">{activeFilter.label}</strong>
-            </span>
-            <button
-              type="button"
-              onClick={onOpenSearch}
-              className="flex cursor-pointer items-center gap-2 self-start rounded-md border border-line bg-paper px-3 py-2 text-xs font-medium text-muted transition-colors hover:border-accent hover:text-accent sm:self-auto"
-            >
-              <svg
-                viewBox="0 0 24 24"
-                className="size-3.5"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                aria-hidden="true"
-              >
-                <circle cx="11" cy="11" r="8" />
-                <path d="m21 21-4.3-4.3" />
-              </svg>
-              Search tools
-              <kbd className="rounded border border-line bg-surface px-1.5 py-0.5 font-mono text-[9px] text-faint">
-                ⌘K
-              </kbd>
-            </button>
-          </div>
 
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
             {visibleTools.map((tool) => (

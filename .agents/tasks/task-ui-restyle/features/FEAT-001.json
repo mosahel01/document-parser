@@ -1,0 +1,32 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "Restyle UI to match generated.html: (1) ToolCard padding/border-radius, (2) HomeTool filter tabs and remove search row, (3) AppHeader button label change, (4) Brand logo text colors, (5) hamburger animation in MobileNavigation.",
+  "status": "in_progress",
+  "steps": [
+    "1. src/components/ToolCard.tsx — Change card border-radius from rounded-xl to rounded-[10px]. Change padding from px-4 pb-5 pt-7 to px-5 pb-6 pt-7 (28px top, 20px sides, 24px bottom — closest Tailwind values: pt-7=28px, px-5=20px, pb-6=24px). Keep everything else (hover translateY, border, shadow, colored top bar span). The comingSoon variant should also use rounded-[10px] and matching padding.",
+    "2. src/components/HomeTool.tsx — Filter tabs: change px-4 py-1.5 text-xs to px-[18px] py-[8px] text-[13px] font-semibold (to match generated.html .cat-tab: 8px 18px padding, 20px border-radius, 1.5px border, 13px font, 600 weight). The rounded-full stays. Keep all 9 filter IDs unchanged.",
+    "3. src/components/HomeTool.tsx — Remove the entire 'mb-5 flex flex-col gap-3...' block (the 'Showing X tools in Y' + search button row that sits between the filter tabs div and the tool grid div). Keep the grid and everything before/after.",
+    "4. src/components/AppHeader.tsx — Change the 'All tools' button label to 'Start for free'. Keep all other classes and behavior identical (it already calls onGoHome).",
+    "5. src/components/Brand.tsx — In BrandWordmark, the non-inverse variant uses 'text-brand' for 'Merge' and 'text-ink' for 'PDF'. Change 'text-brand' to 'text-accent' so the logo reads: Merge in accent red, PDF in ink dark. (The inverse variant already uses text-accent and text-white — leave that unchanged.)",
+    "6. src/components/MobileNavigation.tsx — Add transition-all duration-200 to all three hamburger spans. When open=true: top span adds 'rotate-45 translate-y-[6px]', middle span adds 'opacity-0', bottom span adds '-rotate-45 -translate-y-[6px]'. Use conditional className with the open state."
+  ],
+  "acceptance_criteria": [
+    "npm run build exits 0 with no TypeScript errors",
+    "npm run lint exits 0",
+    "npm test passes all existing tests",
+    "ToolCard uses rounded-[10px] border radius",
+    "Filter tabs use text-[13px] font-semibold px-[18px] py-[8px]",
+    "The 'Showing X tools / search button' row is gone from the HomeTool tools section",
+    "AppHeader 'Start for free' button is visible in sm+ viewports",
+    "BrandWordmark 'Merge' uses text-accent class instead of text-brand",
+    "Hamburger spans have transition-all duration-200 and rotate/opacity classes toggled by open state"
+  ],
+  "verification": [
+    "npm run build",
+    "npm run lint",
+    "npm test"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

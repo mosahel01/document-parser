@@ -1,4 +1,4 @@
-import type { ReactElement } from 'react'
+import type { CSSProperties, ReactElement } from 'react'
 
 export type ToolCardProps = {
   id: string
@@ -7,7 +7,10 @@ export type ToolCardProps = {
   icon: ReactElement
   category?: string
   badge?: string
-  onClick: () => void
+  color?: string
+  backgroundColor?: string
+  onClick?: () => void
+  comingSoon?: boolean
 }
 
 export function ToolCard({
@@ -16,45 +19,74 @@ export function ToolCard({
   icon,
   category,
   badge,
+  color = 'var(--accent)',
+  backgroundColor = 'var(--accent-soft)',
   onClick,
+  comingSoon = false,
 }: ToolCardProps) {
+  const style = {
+    '--card-color': color,
+    '--card-bg': backgroundColor,
+  } as CSSProperties
+
+  const body = (
+    <>
+      <span
+        className="absolute inset-x-0 top-0 h-[3px] opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+        style={{ backgroundColor: 'var(--card-color)' }}
+        aria-hidden="true"
+      />
+
+      {badge && (
+        <span
+          className={`absolute right-2.5 top-2.5 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.05em] ${
+            comingSoon
+              ? 'bg-warn-soft text-warn'
+              : 'bg-good-soft text-good'
+          }`}
+        >
+          {badge}
+        </span>
+      )}
+
+      <span
+        className="mx-auto mb-3.5 flex size-14 shrink-0 items-center justify-center rounded-[14px] transition-transform duration-200 group-hover:-translate-y-0.5 [&>svg]:size-7"
+        style={{
+          backgroundColor: 'var(--card-bg)',
+          color: 'var(--card-color)',
+        }}
+      >
+        {icon}
+      </span>
+
+      <h3 className="text-sm font-bold leading-snug text-ink">{title}</h3>
+      <p className="mt-1.5 text-xs leading-snug text-muted line-clamp-2">
+        {description}
+      </p>
+      {category && <span className="sr-only">{category}</span>}
+    </>
+  )
+
+  if (comingSoon) {
+    return (
+      <div
+        aria-disabled="true"
+        style={style}
+        className="relative flex h-full flex-col overflow-hidden rounded-[10px] border-[1.5px] border-dashed border-line bg-surface/40 px-5 pb-6 pt-7 text-center opacity-75"
+      >
+        {body}
+      </div>
+    )
+  }
+
   return (
     <button
       type="button"
       onClick={onClick}
-      className="group flex flex-col justify-between rounded-[5px] border border-line bg-surface p-3.5 text-left transition-colors hover:border-edge hover:bg-hover/60 cursor-pointer"
+      style={style}
+      className="group relative flex h-full cursor-pointer flex-col overflow-hidden rounded-[10px] border-[1.5px] border-line bg-paper px-5 pb-6 pt-7 text-center transition-all duration-200 hover:-translate-y-1 hover:border-transparent hover:shadow-[0_4px_16px_rgba(0,0,0,0.12)]"
     >
-      <div>
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex size-7 items-center justify-center rounded-[3px] border border-line bg-sunk text-ink transition-colors group-hover:border-edge">
-            {icon}
-          </div>
-          <div className="flex items-center gap-1.5">
-            {category && (
-              <span className="rounded-[2px] bg-sunk px-1.5 py-0.5 font-mono text-[9px] text-faint border border-line">
-                {category}
-              </span>
-            )}
-            {badge && (
-              <span className="rounded-[2px] bg-warn-soft px-1.5 py-0.5 font-mono text-[9px] text-warn border border-line">
-                {badge}
-              </span>
-            )}
-          </div>
-        </div>
-
-        <h3 className="mt-2.5 text-xs font-semibold text-ink transition-colors group-hover:text-ink">
-          {title}
-        </h3>
-        <p className="mt-1 text-[11px] leading-snug text-muted line-clamp-2">
-          {description}
-        </p>
-      </div>
-
-      <div className="mt-3 flex items-center justify-end text-[10px] text-faint group-hover:text-ink">
-        <span className="font-mono">Open &rarr;</span>
-      </div>
+      {body}
     </button>
   )
 }
-
