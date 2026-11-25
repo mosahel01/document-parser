@@ -26,36 +26,43 @@ export function CategorySection({
   onViewAll,
 }: CategorySectionProps) {
   return (
-    <section className="space-y-3">
-      <div className="flex items-baseline justify-between border-b border-line pb-2">
-        <div>
-          <h2 className="text-sm font-semibold tracking-tight text-ink">
-            {title}
-          </h2>
-          {description && (
-            <p className="mt-0.5 text-xs text-muted">
-              {description}
-            </p>
+    <section className="space-y-4">
+      <div className="flex items-end justify-between gap-4 border-b border-line pb-3">
+        <div className="flex items-start gap-3">
+          <span className="mt-1.5 size-2 shrink-0 bg-accent" aria-hidden="true" />
+          <div>
+            <h2 className="text-lg font-bold tracking-tight text-ink">
+              {title}
+            </h2>
+            {description && (
+              <p className="mt-1 max-w-2xl text-xs leading-relaxed text-muted">
+                {description}
+              </p>
+            )}
+          </div>
+        </div>
+        <div className="flex shrink-0 items-center gap-3">
+          <span className="hidden font-mono text-[10px] uppercase tracking-[0.14em] text-faint sm:inline">
+            {tools.length} tools
+          </span>
+          {onViewAll && (
+            <button
+              type="button"
+              onClick={onViewAll}
+              className="text-xs font-medium text-muted transition-colors hover:text-accent cursor-pointer"
+            >
+              View all &rarr;
+            </button>
           )}
         </div>
-        {onViewAll && (
-          <button
-            type="button"
-            onClick={onViewAll}
-            className="text-xs font-medium text-muted hover:text-ink cursor-pointer"
-          >
-            View all ({tools.length}) &rarr;
-          </button>
-        )}
       </div>
 
-      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {tools.map((tool) => (
           <ToolCard
             key={tool.id}
             id={tool.id}
             title={tool.title}
-            description={tool.description}
             icon={tool.icon}
             category={tool.category}
             badge={tool.badge}
@@ -66,4 +73,3 @@ export function CategorySection({
     </section>
   )
 }
-
